@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity.Data;
+﻿using App.Application.Abstractions;
+using Microsoft.AspNetCore.Http.HttpResults;
+using App.Api.Contracts.Auth;
 
 namespace App.Api.Features.Auth;
 
@@ -29,28 +30,25 @@ public static class AuthEndpoints
             .Produces<ProblemHttpResult>(StatusCodes.Status400BadRequest);
     }
 
-    private static Results<Ok<LoginResponse>, ProblemHttpResult, UnauthorizedHttpResult>
-        Login(LoginRequest loginRequest, CancellationToken ct)
+    private static async Task<Results<Ok<LoginResponse>, ProblemHttpResult, UnauthorizedHttpResult>>
+        Login(LoginRequest dto, IAuthService auth, CancellationToken ct)
     {
-        // TODO: validate credentials; if invalid:
-        // return TypedResults.Unauthorized();
+        var result = await auth.LoginAsync(new(dto.Email, dto.Password), ct);
+        if (!result.IsSuccess)
+            return result.Error?.Code == "unauthorized"
+                ? TypedResults.Unauthorized()
+                : TypedResults.Problem(result.Error?.Message, statusCode: 400);
 
-        // TODO: if bad input (e.g., missing email), return ValidationProblem:
-        // return TypedResults.Problem(title: "Invalid request", statusCode: 400);
-
-        // On success:
-        var loginResponse = new LoginResponse("fake.jwt.token", DateTime.UtcNow.AddHours(1));
-        return TypedResults.Ok(loginResponse);
+        return TypedResults.Ok(new LoginResponse(result.Value!.Token, result.Value.ExpiresAtUtc));
     }
 
-    private static Results<Created<string>, ProblemHttpResult>
-        Register(RegisterRequest registerRequest, CancellationToken ct)
+    private static async Task<Results<Created<string>, ProblemHttpResult>>
+        Register(RegisterRequest dto, IAuthService auth, CancellationToken ct)
     {
-        // TODO: create user; if validation fails:
-        // return TypedResults.Problem(title: "Validation failed", statusCode: 400);
+        var result = await auth.RegisterAsync(new(dto.Email, dto.Password), ct);
+        if (!result.IsSuccess)
+            return TypedResults.Problem(result.Error?.Message, statusCode: 400);
 
-        var userId = "new-user-id"; // from your user store
-        var location = $"/auth/users/{userId}";
-        return TypedResults.Created(location, userId);
+        return TypedResults.Created($"/auth/users/{result.Value!.UserId}", result.Value!.UserId.ToString());
     }
 }

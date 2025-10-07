@@ -1,14 +1,16 @@
-using Aspire.Hosting;
-
 var builder = DistributedApplication.CreateBuilder(args);
 
 // Postgres container
 var pgVersion = builder.Configuration["Postgres:Version"] ?? "16";
-var postgres = builder.AddPostgres("postgres") // name matters here
+//var pgUser = builder.Configuration["Postgres:User"] ?? Environment.GetEnvironmentVariable("POSTGRES_USER");
+//var pgPassword = builder.Configuration["Postgres:Password"] ?? Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
+
+var postgres = builder.AddPostgres("postgres")
     .WithImageTag(pgVersion)
-    .WithDataVolume("pgdata"); // reuse this named Docker volume
-var pgDbName = builder.Configuration["Postgres:Database"] ?? "appdb";
-var appDb = postgres.AddDatabase(pgDbName);
+    .WithDataVolume("pgdata")
+    .WithHostPort(55432);
+
+var appDb = postgres.AddDatabase("appdb");
 
 // API
 builder.AddProject<Projects.App_Api>("App")

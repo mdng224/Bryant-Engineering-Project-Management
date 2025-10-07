@@ -7,7 +7,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UserSecretsId>bd6cb060-8e62-45d0-b435-ee9b5c283b64</UserSecretsId>
+    <UserSecretsId>dotnet-demo-apphost</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
