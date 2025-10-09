@@ -9,13 +9,10 @@ const router = createRouter({
     { path: '/login', name: 'login', component: () => import('../views/LoginView.vue'), meta: { guestOnly: true } },
 
     { path: '/', name: 'home', component: HomeView, },
-    { path: '/cmd-tlm-server',  name: 'cmdTlmServer',   component: () => import('../views/CmdTlmServerView.vue') },
-    { path: '/limits-monitor',  name: 'limitsMonitor',  component: () => import('../views/LimitsMonitorView.vue') },
-    { path: '/command-sender',  name: 'commandSender',  component: () => import('../views/CommandSenderView.vue') },
-    { path: '/data-extractor',  name: 'dataExtractor',  component: () => import('../views/DataExtractorView.vue') },
-    { path: '/data-viewer',     name: 'dataViewer',     component: () => import('../views/DataViewerView.vue') },
-    { path: '/handbooks',       name: 'handbooks',      component: () => import('../views/HandbooksView.vue') },
-    { path: '/calendar',        name: 'calendar',       component: () => import('../views/CalendarView.vue') },
+    { path: '/users',  name: 'users',   component: () => import('../views/UsersView.vue') },
+    { path: '/employees',  name: 'employees',  component: () => import('../views/EmployeesView.vue') },
+    { path: '/clients',  name: 'clients',  component: () => import('../views/ClientsView.vue') },
+    { path: '/projects',  name: 'projects',  component: () => import('../views/ProjectsView.vue') },
     { path: '/:pathMatch(.*)*', name: 'notFound',       component: () => import('../views/NotFoundView.vue') },
   ],
 })

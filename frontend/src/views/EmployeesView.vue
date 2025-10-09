@@ -1,6 +1,6 @@
 <template>
   <div class="about">
-    <h1>Command Sender page</h1>
+    <h1>Employees page</h1>
   </div>
 </template>
 

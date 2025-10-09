@@ -17,7 +17,7 @@ const emit = defineEmits(['toggle']);
       </button>
 
       <nav class="menu">
-       <RouterLink to="/cmd-tlm-server" class="item" aria-label="CmdTlmServer">
+       <RouterLink to="/users" class="item" aria-label="Users">
         <span class="icon">
           <!-- Server icon -->
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -27,10 +27,10 @@ const emit = defineEmits(['toggle']);
             <circle cx="8" cy="17" r="1" stroke-width="2"/>
           </svg>
         </span>
-        <span class="label">CmdTlmServer</span>
+        <span class="label">Users</span>
       </RouterLink>
 
-      <RouterLink to="/limits-monitor" class="item" aria-label="Limits Monitor">
+      <RouterLink to="/employees" class="item" aria-label="Employees">
         <span class="icon">
           <!-- Triangle warning icon -->
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -39,10 +39,10 @@ const emit = defineEmits(['toggle']);
             <circle cx="12" cy="16" r="1" stroke-width="2"/>
           </svg>
         </span>
-        <span class="label">Limits Monitor</span>
+        <span class="label">Employees</span>
       </RouterLink>
 
-      <RouterLink to="/command-sender" class="item" aria-label="Command Sender">
+      <RouterLink to="/clients" class="item" aria-label="Clients">
         <span class="icon">
           <!-- Send/arrow icon -->
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -50,7 +50,18 @@ const emit = defineEmits(['toggle']);
             <polygon points="22,2 15,22 11,13 2,9" stroke-width="2" fill="none"/>
           </svg>
         </span>
-        <span class="label">Command Sender</span>
+        <span class="label">Clients</span>
+      </RouterLink>
+
+      <RouterLink to="/projects" class="item" aria-label="Projects">
+        <span class="icon">
+          <!-- Send/arrow icon -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="22" y1="2" x2="11" y2="13" stroke-width="2"/>
+            <polygon points="22,2 15,22 11,13 2,9" stroke-width="2" fill="none"/>
+          </svg>
+        </span>
+        <span class="label">Projects</span>
       </RouterLink>
     </nav>
   </aside>

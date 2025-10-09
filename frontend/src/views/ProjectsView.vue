@@ -1,6 +1,6 @@
 <template>
   <div class="about">
-    <h1>Handbooks View page</h1>
+    <h1>Projects View page</h1>
   </div>
 </template>
 

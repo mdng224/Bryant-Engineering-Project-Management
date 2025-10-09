@@ -1,6 +1,6 @@
 <template>
   <div class="about">
-    <h1>CmdTlmServer page</h1>
+    <h1>Clients page</h1>
   </div>
 </template>
 
