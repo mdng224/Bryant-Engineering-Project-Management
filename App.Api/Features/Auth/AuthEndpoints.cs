@@ -1,6 +1,9 @@
-﻿using App.Application.Abstractions;
+﻿using App.Api.Contracts.Auth;
+using App.Application.Abstractions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
-using App.Api.Contracts.Auth;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace App.Api.Features.Auth;
 
@@ -9,25 +12,36 @@ public static class AuthEndpoints
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/auth")
+            .RequireAuthorization()
             .WithTags("Auth")
             .WithOpenApi();
 
+        // ---- POST /auth/login
         group.MapPost("/login", Login)
             .AllowAnonymous()
             .WithName("Auth_Login")
             .WithSummary("Login to the application")
             .WithDescription("Login with email and password to receive an access token.")
-            .Produces<Ok<LoginResponse>>(StatusCodes.Status200OK)
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
             .Produces<ProblemHttpResult>(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status401Unauthorized);
 
+        // ---- POST /auth/register
         group.MapPost("/register", Register)
             .AllowAnonymous()
             .WithName("Auth_Register")
             .WithSummary("Register a new user")
             .WithDescription("Create a new user account with email and password.")
-            .Produces<Created<string>>(StatusCodes.Status201Created)
+            .Produces<string>(StatusCodes.Status201Created)
             .Produces<ProblemHttpResult>(StatusCodes.Status400BadRequest);
+
+        // ---- GET /auth/me (requires Bearer token)
+        group.MapGet("/me", [Authorize] (ClaimsPrincipal user) => GetMe(user))
+            .WithName("Auth_Me")
+            .WithSummary("Get current user")
+            .WithDescription("Returns subject and email extracted from the JWT.")
+            .Produces<MeResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized);
     }
 
     private static async Task<Results<Ok<LoginResponse>, ProblemHttpResult, UnauthorizedHttpResult>>
@@ -50,5 +64,31 @@ public static class AuthEndpoints
             return TypedResults.Problem(result.Error?.Message, statusCode: 400);
 
         return TypedResults.Created($"/auth/users/{result.Value!.UserId}", result.Value!.UserId.ToString());
+    }
+
+    /// <summary>
+    /// Returns minimal identity info for the currently authenticated user,
+    /// extracted directly from the JWT (no database call).
+    /// Used by the frontend to confirm the session and hydrate client auth state
+    /// after login/refresh (e.g., /auth/me check).
+    /// </summary>
+    /// <remarks>
+    /// Route: GET /auth/me
+    /// Requires: Authorization: Bearer &lt;token&gt; (handled by [Authorize] on the endpoint)
+    /// Success: 200 OK { sub, email }
+    /// Failure: 401 Unauthorized when the token is missing/invalid/expired
+    /// </remarks>
+    private static Results<Ok<MeResponse>, UnauthorizedHttpResult> GetMe(ClaimsPrincipal user)
+    {
+        var sub = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                  ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrWhiteSpace(sub))
+            return TypedResults.Unauthorized();
+
+        var email = user.FindFirst(JwtRegisteredClaimNames.Email)?.Value
+                    ?? user.FindFirst(ClaimTypes.Email)?.Value;
+
+        return TypedResults.Ok(new MeResponse(sub, email));
     }
 }

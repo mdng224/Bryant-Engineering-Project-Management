@@ -1,14 +1,21 @@
 using App.Api.Features.Auth;
 using App.Application;
+using App.Application.Auth;
 using App.Infrastructure;
 using App.Infrastructure.Data;
 using App.ServiceDefaults;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace App.Api;
 
 public class Program
 {
+    private const string AuthScheme = "AppBearer";   // <— custom scheme name
+    private const string CorsPolicy = "frontend";
+
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -16,10 +23,45 @@ public class Program
         // --- Core & cross-cutting defaults (logging, metrics, etc.)
         builder.AddServiceDefaults();
 
+        // --- Web API specifics (controllers, JSON options, API explorer)
+        builder.Services.AddCors(o => o.AddPolicy(CorsPolicy, p => p
+            .WithOrigins("http://localhost:5173") // Vite dev origin
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+        // add .AllowCredentials() only if you’ll use cookies
+        ));
+
+        // JWT
+        var keyB64 = builder.Configuration["Jwt:KeyBase64"];
+        var keyRaw = builder.Configuration["Jwt:Key"];
+        var keyBytes = !string.IsNullOrWhiteSpace(keyB64)
+            ? Convert.FromBase64String(keyB64)
+            : Encoding.UTF8.GetBytes(keyRaw!);
+        builder.Services
+            .AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = AuthScheme;
+                options.DefaultChallengeScheme = AuthScheme;
+            })
+            .AddJwtBearer(AuthScheme, options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
+                };
+            });
+
         // --- Add application + infrastructure layers
         builder.Services.AddAuthorization();
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
+        builder.Services.AddValidatorsFromAssembly(typeof(LoginDtoValidator).Assembly);
 
         // --- OpenAPI / Swagger setup
         builder.Services.AddOpenApi();      // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -31,10 +73,6 @@ public class Program
 
         using (var scope = app.Services.CreateScope())
         {
-            var cfg = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-            var cs = cfg.GetConnectionString("appdb") ?? cfg["Aspire:Npgsql:ConnectionString"];
-            Console.WriteLine("DB CS: " + System.Text.RegularExpressions.Regex
-                .Replace(cs ?? "", @"(?<=Password=)[^;]+", "****"));
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             db.Database.Migrate();
         }
@@ -64,7 +102,10 @@ public class Program
         }
 
         // --- Middleware pipeline
-        app.UseHttpsRedirection();
+        if (!app.Environment.IsDevelopment())
+            app.UseHttpsRedirection();
+
+        app.UseCors(CorsPolicy);
         app.UseAuthentication();
         app.UseAuthorization();
 

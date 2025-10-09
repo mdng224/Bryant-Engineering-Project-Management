@@ -1,4 +1,6 @@
+// src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
 import HomeView from '../views/HomeView.vue'
 
 const router = createRouter({
@@ -10,26 +12,40 @@ const router = createRouter({
     { path: '/cmd-tlm-server',  name: 'cmdTlmServer',   component: () => import('../views/CmdTlmServerView.vue') },
     { path: '/limits-monitor',  name: 'limitsMonitor',  component: () => import('../views/LimitsMonitorView.vue') },
     { path: '/command-sender',  name: 'commandSender',  component: () => import('../views/CommandSenderView.vue') },
-    { path: '/script-runner',   name: 'scriptRunner',   component: () => import('../views/ScriptRunnerView.vue') },
-    { path: '/packet-viewer',   name: 'packetViewer',   component: () => import('../views/PacketViewerView.vue') },
-    {
-      path: '/telemetry-viewer',
-      name: 'telemetryViewer',
-      component: () => import('../views/TelemetryViewerView.vue')
-    },
-    {
-      path: '/telemetry-grapher',
-      name:'telemetryGrapher',
-      component: () => import('../views/TelemetryGrapherView.vue')
-    },
     { path: '/data-extractor',  name: 'dataExtractor',  component: () => import('../views/DataExtractorView.vue') },
     { path: '/data-viewer',     name: 'dataViewer',     component: () => import('../views/DataViewerView.vue') },
     { path: '/handbooks',       name: 'handbooks',      component: () => import('../views/HandbooksView.vue') },
-    { path: '/table-manager',   name: 'tableManager',   component: () => import('../views/TableManagerView.vue') },
     { path: '/calendar',        name: 'calendar',       component: () => import('../views/CalendarView.vue') },
-    { path: '/autonomic',       name: 'autonomic',      component: () => import('../views/AutonomicView.vue') },
     { path: '/:pathMatch(.*)*', name: 'notFound',       component: () => import('../views/NotFoundView.vue') },
   ],
+})
+
+router.beforeEach(async (to) => {
+  const { ensureAuthState } = useAuth()
+
+  // public pages
+  const publicPaths = new Set(['/login'])
+  const requiresAuth = !publicPaths.has(to.path)
+  const guestOnly = !!to.meta.guestOnly
+
+  // only resolve auth when necessary
+  let authed = false
+  if (requiresAuth || guestOnly) {
+    authed = await ensureAuthState()
+  }
+
+  if (requiresAuth && !authed) {
+    return { path: '/login', query: { redirect: to.fullPath } }
+  }
+
+  if (guestOnly && authed) {
+    // allow only same-origin paths
+    const r = typeof to.query.redirect === 'string' ? to.query.redirect : '/'
+    const safe = r.startsWith('/') ? r : '/'
+    return safe
+  }
+
+  return true
 })
 
 export default router

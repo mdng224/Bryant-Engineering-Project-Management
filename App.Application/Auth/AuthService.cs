@@ -18,8 +18,9 @@ internal sealed class AuthService(
         if (user is null)
             return Result<LoginResult>.Fail("unauthorized", "Invalid credentials.");
 
-        if (!hasher.Verify(user.PasswordHash, dto.Password))
+        if (!hasher.Verify(dto.Password, user.PasswordHash))
             return Result<LoginResult>.Fail("unauthorized", "Invalid credentials.");
+
 
         var (token, exp) = tokens.CreateForUser(user.Id, user.Email);
 

@@ -65,6 +65,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { login } from '@/api/auth'
 import { useAuth } from '../composables/useAuth' // uses /me check as discussed
+import type { LoginPayload } from '@/api/auth'
 
 const route = useRoute()
 const router = useRouter()
@@ -95,8 +96,13 @@ const onSubmit = async () => {
   if (!canSubmit.value || loading.value) return
   loading.value = true
   errorMessage.value = null
+
   try {
-    await login({ email: email.value, password: password.value })
+    const loginPayload: LoginPayload = {
+      email: email.value,
+      password: password.value
+    }
+    await login(loginPayload)
     const authed = await ensureAuthState(true)   // 🔁 force refresh
     
     if (authed) {
@@ -106,7 +112,12 @@ const onSubmit = async () => {
       errorMessage.value = 'Unexpected auth error. Please try again.'
     }
   } catch (err: any) {
-    errorMessage.value = err?.response?.data?.errors || 'Login failed. Please try again.'
+    const msg =
+      err?.response?.data?.message ??
+      err?.response?.data?.error ??
+      err?.message ??
+      'Login failed. Please try again.'
+    errorMessage.value = msg
   } finally {
     loading.value = false
   }
