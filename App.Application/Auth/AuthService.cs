@@ -2,42 +2,51 @@
 using App.Application.Auth;
 using App.Application.Common;
 
-internal sealed class AuthService(
+public sealed class AuthService(
     IUserQueries queries,
     IUserCommands commands,
     IPasswordHasher hasher,
     ITokenService tokens
 ) : IAuthService
 {
-    public async Task<Result<LoginResult>> LoginAsync(LoginDto dto, CancellationToken ct)
+    public async Task<Result<LoginResult>> LoginAsync(LoginDto loginDto, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+        var email = NormalizeEmail(loginDto.Email);
+        var password = loginDto.Password;
+
+        if (HasMissingCredentials(email, password))
             return Result<LoginResult>.Fail("invalid_request", "Email and password are required.");
 
-        var user = await queries.GetByEmailAsync(dto.Email, ct);
+        var user = await queries.GetByEmailAsync(email, ct);
         if (user is null)
             return Result<LoginResult>.Fail("unauthorized", "Invalid credentials.");
 
-        if (!hasher.Verify(dto.Password, user.PasswordHash))
+        if (!hasher.Verify(password, user.PasswordHash))
             return Result<LoginResult>.Fail("unauthorized", "Invalid credentials.");
-
 
         var (token, exp) = tokens.CreateForUser(user.Id, user.Email);
 
         return Result<LoginResult>.Success(new LoginResult(token, exp));
     }
 
-    public async Task<Result<RegisterResult>> RegisterAsync(RegisterDto dto, CancellationToken ct)
+    public async Task<Result<RegisterResult>> RegisterAsync(RegisterDto registerDto, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+        var email = NormalizeEmail(registerDto.Email);
+        var password = registerDto.Password;
+
+        if (HasMissingCredentials(email, password))
             return Result<RegisterResult>.Fail("invalid_request", "Email and password are required.");
 
-        if (await queries.ExistsByEmailAsync(dto.Email, ct))
+        if (await queries.ExistsByEmailAsync(email, ct))
             return Result<RegisterResult>.Fail("conflict", "Email already registered.");
 
-        var hash = hasher.Hash(dto.Password);
-        var user = await commands.CreateAsync(dto.Email, hash, ct);
+        var hash = hasher.Hash(password);
+        var user = await commands.CreateAsync(email, hash, ct);
 
         return Result<RegisterResult>.Success(new RegisterResult(user.Id));
     }
+
+    private static bool HasMissingCredentials(string email, string? password) =>
+        string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password);
+    private static string NormalizeEmail(string? email) => (email ?? string.Empty).Trim().ToLowerInvariant();
 }

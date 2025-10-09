@@ -1,3 +1,4 @@
+using App.Api.Contracts.Auth;
 using App.Api.Features.Auth;
 using App.Application;
 using App.Application.Auth;
@@ -61,7 +62,8 @@ public class Program
         builder.Services.AddAuthorization();
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
-        builder.Services.AddValidatorsFromAssembly(typeof(LoginDtoValidator).Assembly);
+        builder.Services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
+        builder.Services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
 
         // --- OpenAPI / Swagger setup
         builder.Services.AddOpenApi();      // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

@@ -1,8 +1,7 @@
 ﻿using App.Api.Contracts.Auth;
+using App.Api.Filters;
+using App.Api.Mappers;
 using App.Application.Abstractions;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace App.Api.Features.Auth;
@@ -19,76 +18,91 @@ public static class AuthEndpoints
         // ---- POST /auth/login
         group.MapPost("/login", Login)
             .AllowAnonymous()
+            .AddEndpointFilter<Validate<LoginRequest>>()
+            .Accepts<LoginRequest>("application/json")
             .WithName("Auth_Login")
             .WithSummary("Login to the application")
             .WithDescription("Login with email and password to receive an access token.")
             .Produces<LoginResponse>(StatusCodes.Status200OK)
-            .Produces<ProblemHttpResult>(StatusCodes.Status400BadRequest)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status401Unauthorized);
 
         // ---- POST /auth/register
         group.MapPost("/register", Register)
             .AllowAnonymous()
+            .AddEndpointFilter<Validate<RegisterRequest>>()
+            .Accepts<RegisterRequest>("application/json")
             .WithName("Auth_Register")
             .WithSummary("Register a new user")
             .WithDescription("Create a new user account with email and password.")
-            .Produces<string>(StatusCodes.Status201Created)
-            .Produces<ProblemHttpResult>(StatusCodes.Status400BadRequest);
+            .Produces<RegisterResponse>(StatusCodes.Status201Created)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status409Conflict);
 
         // ---- GET /auth/me (requires Bearer token)
-        group.MapGet("/me", [Authorize] (ClaimsPrincipal user) => GetMe(user))
-            .WithName("Auth_Me")
+        group.MapGet("/me", GetMe)
             .WithSummary("Get current user")
             .WithDescription("Returns subject and email extracted from the JWT.")
             .Produces<MeResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized);
     }
 
-    private static async Task<Results<Ok<LoginResponse>, ProblemHttpResult, UnauthorizedHttpResult>>
-        Login(LoginRequest dto, IAuthService auth, CancellationToken ct)
+    private static async Task<IResult> Login(
+        LoginRequest loginRequest,
+        IAuthService authService,
+        CancellationToken ct)
     {
-        var result = await auth.LoginAsync(new(dto.Email, dto.Password), ct);
-        if (!result.IsSuccess)
-            return result.Error?.Code == "unauthorized"
-                ? TypedResults.Unauthorized()
-                : TypedResults.Problem(result.Error?.Message, statusCode: 400);
+        var result = await authService.LoginAsync(loginRequest.ToDto(), ct);
 
-        return TypedResults.Ok(new LoginResponse(result.Value!.Token, result.Value.ExpiresAtUtc));
+        return result.ToHttpResult(loginResult => Results.Ok(loginResult.ToResponse()));
     }
 
-    private static async Task<Results<Created<string>, ProblemHttpResult>>
-        Register(RegisterRequest dto, IAuthService auth, CancellationToken ct)
+    private static async Task<IResult> Register(
+        RegisterRequest registerRequest,
+        IAuthService authService,
+        CancellationToken ct)
     {
-        var result = await auth.RegisterAsync(new(dto.Email, dto.Password), ct);
-        if (!result.IsSuccess)
-            return TypedResults.Problem(result.Error?.Message, statusCode: 400);
+        var result = await authService.RegisterAsync(registerRequest.ToDto(), ct);
 
-        return TypedResults.Created($"/auth/users/{result.Value!.UserId}", result.Value!.UserId.ToString());
+        return result.ToHttpResult(registerResult =>
+        {
+            var registerResponse = registerResult.ToResponse();
+            return Results.Created($"/auth/users/{registerResponse.UserId}", registerResponse);
+        });
     }
 
     /// <summary>
-    /// Returns minimal identity info for the currently authenticated user,
-    /// extracted directly from the JWT (no database call).
-    /// Used by the frontend to confirm the session and hydrate client auth state
-    /// after login/refresh (e.g., /auth/me check).
+    /// Retrieves minimal identity information for the currently authenticated user,
+    /// extracted directly from the JSON Web Token (JWT) without a database lookup.
     /// </summary>
     /// <remarks>
-    /// Route: GET /auth/me
-    /// Requires: Authorization: Bearer &lt;token&gt; (handled by [Authorize] on the endpoint)
-    /// Success: 200 OK { sub, email }
-    /// Failure: 401 Unauthorized when the token is missing/invalid/expired
+    /// <para>
+    /// <b>Route:</b> <c>GET /auth/me</c><br/>
+    /// <b>Authorization:</b> Requires a valid <c>Bearer &lt;token&gt;</c> header.
+    /// </para>
+    /// <para>
+    /// This endpoint is typically used by the frontend to verify an existing session
+    /// and rehydrate client authentication state after login or token refresh.
+    /// </para>
+    /// <para>
+    /// <b>Responses:</b><br/>
+    /// <b>200 OK</b> – Returns the user’s subject (unique identifier) and email extracted from the JWT.<br/>
+    /// <b>401 Unauthorized</b> – Returned when the token is missing, invalid, or expired.
+    /// </para>
     /// </remarks>
-    private static Results<Ok<MeResponse>, UnauthorizedHttpResult> GetMe(ClaimsPrincipal user)
+    /// <returns>
+    /// An <see cref="IResult"/> containing either a <see cref="MeResponse"/> on success
+    /// or an HTTP 401 Unauthorized result when authentication fails.
+    /// </returns>
+    private static IResult GetMe(ClaimsPrincipal user)
     {
-        var sub = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-                  ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrWhiteSpace(sub))
-            return TypedResults.Unauthorized();
-
-        var email = user.FindFirst(JwtRegisteredClaimNames.Email)?.Value
-                    ?? user.FindFirst(ClaimTypes.Email)?.Value;
-
-        return TypedResults.Ok(new MeResponse(sub, email));
+        try
+        {
+            return Results.Ok(user.ToResponse());
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Results.Unauthorized();
+        }
     }
 }
