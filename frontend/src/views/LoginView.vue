@@ -80,12 +80,6 @@ const errorMessage = ref<string | null>(null)
 const emailEl = ref<HTMLInputElement | null>(null)
 onMounted(() => emailEl.value?.focus())
 
-async function handleLogin(email: string, password: string) {
-  await login({ email, password })        // sets HttpOnly cookie server-side
-  await ensureAuthState()                 // refresh local auth state
-  router.replace((route.query.redirect as string) || '/') // go back
-}
-
 const canSubmit = computed(() => {
   // lightweight client-side validation
   const hasEmail = /\S+@\S+\.\S+/.test(email.value)

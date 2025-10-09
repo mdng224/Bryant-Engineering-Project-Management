@@ -19,15 +19,9 @@ public class BcryptPasswordHasher : IPasswordHasher
         if (string.IsNullOrEmpty(password) || string.IsNullOrWhiteSpace(hash))
             return false;
 
-        // never mutate the user's password; only normalize the stored hash
-        var h = hash.Trim();
-
-        // interop: PHP/Ruby often store $2y$; BCrypt.Net handles $2a$/$2b$
-        if (h.StartsWith("$2y$")) h = string.Concat("$2a$", h.AsSpan(4));
-
         try
         {
-            return BCryptNet.Verify(password, h);
+            return BCryptNet.Verify(password, hash.Trim());
         }
         catch
         {
