@@ -1,4 +1,5 @@
 ﻿using App.Application.Abstractions;
+using App.Application.Auth;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace App.Application;

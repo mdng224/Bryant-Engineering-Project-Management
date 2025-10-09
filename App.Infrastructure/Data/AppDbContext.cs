@@ -1,26 +1,40 @@
-﻿using App.Domain.Users;
+﻿using App.Domain.Common;
+using App.Domain.Users;
+using App.Infrastructure.Data.Configurations;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Infrastructure.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
-        : base(options) { }
-
     public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<User>(entity =>
+        modelBuilder.ApplyConfiguration(new UserConfig());
+        modelBuilder.ApplyConfiguration(new RoleConfig());
+        modelBuilder.ApplyConfiguration(new UserRoleConfig());
+        modelBuilder.ApplyConfiguration(new EmployeeConfig());
+        modelBuilder.ApplyConfiguration(new ClientConfig());
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken ct = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var e in ChangeTracker.Entries<IAuditableEntity>())
         {
-            entity.ToTable("users");
-            entity.HasKey(u => u.Id);
-            entity.Property(u => u.Email).IsRequired().HasMaxLength(255);
-            entity.HasIndex(u => u.Email).IsUnique();
-            entity.Property(u => u.PasswordHash).IsRequired();
-            entity.Property(u => u.CreatedAtUtc).IsRequired();
-            entity.Property(u => u.UpdatedAtUtc).IsRequired();
-        });
+            if (e.State == EntityState.Added)
+            {
+                e.Entity.CreatedAtUtc = now;
+                e.Entity.UpdatedAtUtc = now;
+            }
+            else if (e.State == EntityState.Modified)
+            {
+                e.Entity.UpdatedAtUtc = now;
+            }
+        }
+
+        return base.SaveChangesAsync(ct);
     }
 }

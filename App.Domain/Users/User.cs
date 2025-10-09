@@ -7,6 +7,9 @@ public class User : IAuditableEntity
     public Guid Id { get; private set; }
     public string Email { get; private set; } = null!;
     public string PasswordHash { get; private set; } = null!;
+    public ICollection<UserRole> UserRoles { get; } = [];
+
+    // Let the domain set these; EF config maps to timestamptz.
     public DateTimeOffset CreatedAtUtc { get; set; }
     public DateTimeOffset UpdatedAtUtc { get; set; }
 
@@ -15,26 +18,16 @@ public class User : IAuditableEntity
 
     public User(string email, string passwordHash)
     {
-        Id = Guid.NewGuid();
-        SetEmail(email);
-        SetPasswordHash(passwordHash);
-        CreatedAtUtc = UpdatedAtUtc;
+        Id = Guid.CreateVersion7();                 // ordered, time-based GUID (requires .NET 8+)
+        Email = NormalizeEmail(Guard.AgainstNullOrWhiteSpace(email, nameof(email)));
+        PasswordHash = Guard.AgainstNullOrWhiteSpace(passwordHash, nameof(passwordHash));
+
+        var now = DateTimeOffset.UtcNow;            // FIX: set both timestamps to the same 'now'
+        CreatedAtUtc = now;
+        UpdatedAtUtc = now;
     }
 
-    public void SetEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email required.", nameof(email));
-        Email = NormalizeEmail(email);
-        Touch();
-    }
-
-    public void SetPasswordHash(string hash)
-    {
-        if (string.IsNullOrWhiteSpace(hash)) throw new ArgumentException("Password hash required.", nameof(hash));
-        PasswordHash = hash;
-        Touch();
-    }
-
-    private void Touch() => UpdatedAtUtc = DateTimeOffset.UtcNow;
-    private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
+    // Trim only — DO NOT lowercase here if you want to preserve user-entered casing.
+    // Case-insensitive uniqueness is enforced by DB via computed column + unique index.
+    private static string NormalizeEmail(string email) => email.Trim();
 }

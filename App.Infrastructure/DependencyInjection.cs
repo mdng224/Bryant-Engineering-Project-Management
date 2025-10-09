@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using System.Text;
 
 namespace App.Infrastructure;
@@ -14,46 +15,39 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
-        // EF Core DbContext
-        var connectionString = config.GetConnectionString("appdb")
+        // --- DbContext ---
+        var connectionString =
+            config.GetConnectionString("appdb")
             ?? config["Aspire:Npgsql:ConnectionString"]
             ?? throw new InvalidOperationException(
-               "No connection string found. Set ConnectionStrings:appdb (user-secrets or appsettings) " +
-               "or Aspire:Npgsql:ConnectionString."); ;
-        services.AddDbContext<AppDbContext>(o => o.UseNpgsql(connectionString));
+                "No connection string found. Set ConnectionStrings:appdb or Aspire:Npgsql:ConnectionString.");
 
-        // Repositories
+        services.AddDbContextPool<AppDbContext>(o =>
+        {
+            o.UseNpgsql(connectionString, npgsql =>
+            {
+                // optional: resilient retries in cloud envs
+                npgsql.EnableRetryOnFailure();
+            });
+
+            // optional: pick your preference
+            // o.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+        });
+
+        // --- Repositories / Data access ---
         services.AddScoped<IUserCommands, UserCommands>();
         services.AddScoped<IUserQueries, UserQueries>();
 
-        // Auth services
+        // --- Auth helpers (hashing + token creation) ---
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
 
-        // --- JWT Authentication setup ---
-        var jwtSection = config.GetSection("Jwt");
-        var key = jwtSection["Key"] ?? throw new InvalidOperationException("Missing Jwt:Key");
-        var issuer = jwtSection["Issuer"];
-        var audience = jwtSection["Audience"];
+        // ⛔️ Do NOT register Authentication/Authorization here.
+        // Those belong in the API layer (AddApi) so you avoid double-registration
+        // and keep Infra provider-agnostic.
 
-        services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = issuer,
-                    ValidAudience = audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
-                    ClockSkew = TimeSpan.FromMinutes(2)
-                };
-            });
-
-        services.AddAuthorization();
+        // (optional) Npgsql data source for health checks if you use it elsewhere
+        services.AddSingleton(_ => new NpgsqlDataSourceBuilder(connectionString).Build());
 
         return services;
     }

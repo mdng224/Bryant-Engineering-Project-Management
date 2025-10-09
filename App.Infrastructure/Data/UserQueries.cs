@@ -4,37 +4,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Infrastructure.Data;
 
-public class UserQueries : IUserQueries
+public class UserQueries(AppDbContext db) : IUserQueries
 {
-    private readonly AppDbContext _db;
-
-    public UserQueries(AppDbContext db)
-    {
-        _db = db;
-    }
-
     public async Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default)
-    {
-        return await _db.Users
+        => await db.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == id, ct);
-    }
 
-    public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)
-    {
-        var normalized = email.Trim().ToLowerInvariant();
-
-        return await _db.Users
+    public async Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken ct = default)
+        => await db.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email == normalized, ct);
-    }
+            .FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == normalizedEmail, ct);
 
-    public async Task<bool> ExistsByEmailAsync(string email, CancellationToken ct = default)
-    {
-        var normalized = email.Trim().ToLowerInvariant();
-
-        return await _db.Users
+    public async Task<bool> ExistsByEmailAsync(string normalizedEmail, CancellationToken ct = default)
+        => await db.Users
             .AsNoTracking()
-            .AnyAsync(u => u.Email == normalized, ct);
-    }
+            .AnyAsync(u => u.Email.ToLowerInvariant() == normalizedEmail, ct);
 }
