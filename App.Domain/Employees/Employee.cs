@@ -1,4 +1,5 @@
 ﻿namespace App.Domain.Employees;
+
 public sealed class Employee
 {
     public Guid UserId { get; private set; }                 // PK & FK to Users

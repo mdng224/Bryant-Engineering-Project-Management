@@ -2,8 +2,6 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // Postgres container
 var pgVersion = builder.Configuration["Postgres:Version"] ?? "16";
-//var pgUser = builder.Configuration["Postgres:User"] ?? Environment.GetEnvironmentVariable("POSTGRES_USER");
-//var pgPassword = builder.Configuration["Postgres:Password"] ?? Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
 
 var postgres = builder.AddPostgres("postgres")
     .WithImageTag(pgVersion)

@@ -1,13 +1,21 @@
-﻿namespace App.Domain.Users;
+﻿using App.Domain.Common;
+
+namespace App.Domain.Users;
 
 public sealed class Role
 {
-    public Guid Id { get; private set; }
-    public string Name { get; private set; } = null!; // "Administrator", "ProjectManager", "User"
+    // --- Key ------------------------------------------------------------------
+    public Guid Id                  { get; private set; }
 
-    // nav
-    public ICollection<UserRole> UserRoles { get; } = [];
+    // --- Core Fields ----------------------------------------------------------
+    public string Name              { get; private set; } = null!;
+    public ICollection<User> Users  { get; } = [];
 
+    // --- Constructors --------------------------------------------------------
     private Role() { }
-    public Role(Guid id, string name) => (Id, Name) = (id, name);
+    public Role(Guid id, string name)
+    {
+        Id = id;
+        Name = Guard.AgainstNullOrWhiteSpace(name, nameof(name)).ToNormalizedName();
+    }
 }

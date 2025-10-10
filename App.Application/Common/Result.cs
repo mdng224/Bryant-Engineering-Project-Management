@@ -20,7 +20,8 @@ public sealed class Result<T>
     public T? Value { get; }
     public Error? Error { get; }
 
-    private Result(bool ok, T? value, Error? error) => (IsSuccess, Value, Error) = (ok, value, error);
+    private Result(bool isSuccess, T? value, Error? error)
+        => (IsSuccess, Value, Error) = (isSuccess, value, error);
 
     public static Result<T> Success(T value) => new(true, value, null);
     public static Result<T> Fail(string code, string message) => new(false, default, new Error(code, message));

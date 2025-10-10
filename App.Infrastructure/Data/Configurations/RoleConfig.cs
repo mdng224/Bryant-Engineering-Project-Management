@@ -26,10 +26,8 @@ public sealed class RoleConfig : IEntityTypeConfiguration<Role>
         // Use anonymous objects for seeding to avoid constructor/setter visibility issues
         entity.HasData(
             new { Id = RoleIds.Administrator,   Name = RoleNames.Administrator },
-            new { Id = RoleIds.ProjectManager,  Name = RoleNames.ProjectManager },
+            new { Id = RoleIds.Manager,  Name = RoleNames.Manager },
             new { Id = RoleIds.User,            Name = RoleNames.User }
         );
-
-        // TODO: Finalize this and add audit fields
     }
 }

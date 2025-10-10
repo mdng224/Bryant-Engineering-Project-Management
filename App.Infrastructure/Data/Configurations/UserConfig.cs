@@ -10,28 +10,35 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
     {
         entity.ToTable("users");
 
-        entity.Property(u => u.Id)
-              .ValueGeneratedNever(); // supplying Guid v7 in code
+        // IDs are supplied (Guid v7)
+        entity.Property(u => u.Id).ValueGeneratedNever();
 
-        // Email as case-insensitive text
-        entity.Property(u => u.Email)
-              .IsRequired()
-              .HasMaxLength(255);
+        // Email (store as entered), enforce CI uniqueness via normalized shadow column
+        entity.Property(u => u.Email).IsRequired().HasMaxLength(320);
 
         // Normalized email (lowercased) – stored generated column
         entity.Property<string>("EmailNormalized")
               .HasColumnType("text")
               .HasComputedColumnSql("lower(\"Email\")", stored: true);
 
-        // Enforce case-insensitive uniqueness via the normalized value
+        // Unique for non-deleted users only (allows reuse after soft delete)
         entity.HasIndex("EmailNormalized")
               .HasDatabaseName("ux_users_email_normalized")
-              .IsUnique();
+              .IsUnique()
+              .HasFilter("\"DeletedAtUtc\" IS NULL"); // Postgres filter syntax
 
-        entity.Property(u => u.PasswordHash)
-              .IsRequired()
-              .HasMaxLength(60); // typical BCrypt length
+        entity.Property(u => u.PasswordHash).IsRequired().HasMaxLength(100);
 
+        // --- Single role per user -------------------------------------------
+        entity.HasOne(u => u.Role)
+              .WithMany(r => r.Users)
+              .HasForeignKey(u => u.RoleId)
+              .OnDelete(DeleteBehavior.Restrict)   // don’t delete users if a role is removed
+              .IsRequired();
+
+        entity.HasIndex(u => u.RoleId).HasDatabaseName("ix_users_role_id");
+
+        // --- Auditing --------------------------------------------------------
         entity.Property(u => u.CreatedAtUtc)
               .IsRequired()
               .HasColumnType("timestamptz")
@@ -39,6 +46,9 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
 
         entity.Property(u => u.UpdatedAtUtc)
               .IsRequired()
-              .HasColumnType("timestamptz");
+              .HasColumnType("timestamptz")
+              .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        entity.Property(u => u.DeletedAtUtc).HasColumnType("timestamptz");
     }
 }

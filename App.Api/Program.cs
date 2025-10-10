@@ -1,4 +1,3 @@
-using App.Api;
 using App.Api.Extensions;
 using App.Application;
 using App.Infrastructure;

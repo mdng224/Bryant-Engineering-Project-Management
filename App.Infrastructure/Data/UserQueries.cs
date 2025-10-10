@@ -11,13 +11,13 @@ public class UserQueries(AppDbContext db) : IUserQueries
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == id, ct);
 
-    public async Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken ct = default)
+    public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)
         => await db.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == normalizedEmail, ct);
+            .FirstOrDefaultAsync(u => u.Email == email, ct);
 
-    public async Task<bool> ExistsByEmailAsync(string normalizedEmail, CancellationToken ct = default)
+    public async Task<bool> ExistsByEmailAsync(string email, CancellationToken ct = default)
         => await db.Users
             .AsNoTracking()
-            .AnyAsync(u => u.Email.ToLowerInvariant() == normalizedEmail, ct);
+            .AnyAsync(u => u.Email == email, ct);
 }
