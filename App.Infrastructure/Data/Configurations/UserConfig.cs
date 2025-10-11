@@ -10,35 +10,33 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
     {
         entity.ToTable("users");
 
-        // IDs are supplied (Guid v7)
-        entity.Property(u => u.Id).ValueGeneratedNever();
+        // --- Keys ------------------------------------------------------------
+        entity.Property(u => u.Id).ValueGeneratedNever();   // IDs are supplied (Guid v7)
 
-        // Email (store as entered), enforce CI uniqueness via normalized shadow column
-        entity.Property(u => u.Email).IsRequired().HasMaxLength(320);
-
-        // Normalized email (lowercased) – stored generated column
-        entity.Property<string>("EmailNormalized")
-              .HasColumnType("text")
-              .HasComputedColumnSql("lower(\"Email\")", stored: true);
-
-        // Unique for non-deleted users only (allows reuse after soft delete)
-        entity.HasIndex("EmailNormalized")
-              .HasDatabaseName("ux_users_email_normalized")
+        // --- Email -----------------------------------------------------------
+        entity.Property(u => u.Email)
+            .IsRequired()
+            .HasMaxLength(128);                             // Almost all modern providers reject anything longer than 128 chars.
+        entity.HasIndex(u => u.Email)                       //  (case sensitivity handled by the app layer)
+              .HasDatabaseName("ux_users_email")
               .IsUnique()
-              .HasFilter("\"DeletedAtUtc\" IS NULL"); // Postgres filter syntax
+              .HasFilter("\"DeletedAtUtc\" IS NULL");
 
-        entity.Property(u => u.PasswordHash).IsRequired().HasMaxLength(100);
+        // --- Password -------------------------------------------------------
+        entity.Property(u => u.PasswordHash)
+              .IsRequired()
+              .HasMaxLength(60);                            // BCrypt hashes are 60 characters.
 
-        // --- Single role per user -------------------------------------------
+        // --- Relationships --------------------------------------------------
         entity.HasOne(u => u.Role)
               .WithMany(r => r.Users)
               .HasForeignKey(u => u.RoleId)
-              .OnDelete(DeleteBehavior.Restrict)   // don’t delete users if a role is removed
+              .OnDelete(DeleteBehavior.Restrict)
               .IsRequired();
 
         entity.HasIndex(u => u.RoleId).HasDatabaseName("ix_users_role_id");
 
-        // --- Auditing --------------------------------------------------------
+        // --- Auditing -------------------------------------------------------
         entity.Property(u => u.CreatedAtUtc)
               .IsRequired()
               .HasColumnType("timestamptz")

@@ -2,6 +2,5 @@
 
 public interface ITokenService
 {
-    // return compact JWT + expiry
-    (string token, DateTimeOffset expiresAtUtc) CreateForUser(Guid userId, string email);
+    (string token, DateTimeOffset expiresAtUtc) CreateForUser(Guid userId, string email, string roleName);
 }

@@ -7,18 +7,6 @@ namespace App.Infrastructure.Data;
 
 public class UserCommands(AppDbContext db) : IUserCommands
 {
-    public async Task AddUserToRoleAsync(Guid userId, Guid roleId, CancellationToken ct = default)
-    {
-        var exists = await db.Set<UserRole>()
-            .AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId, ct);
-
-        if (!exists)
-        {
-            db.Set<UserRole>().Add(new UserRole(userId, roleId));
-            await db.SaveChangesAsync(ct);
-        }
-    }
-
     public async Task<User> CreateAsync(string email, string passwordHash, CancellationToken ct = default)
     {
         var exists = await db.Users
@@ -35,24 +23,12 @@ public class UserCommands(AppDbContext db) : IUserCommands
         return user;
     }
 
-    public async Task RemoveUserFromRoleAsync(Guid userId, Guid roleId, CancellationToken ct = default)
-    {
-        var link = await db.Set<UserRole>()
-            .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId, ct);
-
-        if (link is not null)
-        {
-            db.Remove(link);
-            await db.SaveChangesAsync(ct);
-        }
-    }
-
-    public async Task UpdatePasswordHashAsync(Guid userId, string hash, CancellationToken ct = default)
+    public async Task SetUserRoleAsync(Guid userId, Guid roleId, CancellationToken ct = default)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct)
-            ?? throw new KeyNotFoundException("User not found.");
+            ?? throw new InvalidOperationException("User not found.");
 
-        user.SetPasswordHash(hash);
+        user.SetRole(roleId);
 
         await db.SaveChangesAsync(ct);
     }

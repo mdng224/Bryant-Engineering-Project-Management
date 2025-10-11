@@ -11,9 +11,10 @@ public class UserQueries(AppDbContext db) : IUserQueries
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == id, ct);
 
-    public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)
+    public async Task<User?> GetByEmailWithRoleAsync(string email, CancellationToken ct = default)
         => await db.Users
             .AsNoTracking()
+            .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Email == email, ct);
 
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken ct = default)

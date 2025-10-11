@@ -1,10 +1,14 @@
-﻿using App.Api.Contracts.Auth;
+﻿// App.Infrastructure/Auth/JwtTokenService.cs
+using App.Api.Contracts.Auth;
+using App.Api.Contracts.Users;
+using App.Application;
+using App.Domain.Security;
 using App.Infrastructure;
 using FluentValidation;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using App.Application;
 
 namespace App.Api.Extensions;
 
@@ -22,47 +26,62 @@ public static class ServiceCollectionExtensions
             .AllowAnyMethod()
         ));
 
-        // JWT auth
+        // --- JWT (symmetric) -------------------------------------------------
         var keyB64 = cfg["Jwt:KeyBase64"];
         var keyRaw = cfg["Jwt:Key"];
+
+        if (string.IsNullOrWhiteSpace(keyB64) && string.IsNullOrWhiteSpace(keyRaw))
+            throw new InvalidOperationException("JWT key not configured. Provide Jwt:KeyBase64 or Jwt:Key.");
+
         var keyBytes = !string.IsNullOrWhiteSpace(keyB64)
             ? Convert.FromBase64String(keyB64!)
             : Encoding.UTF8.GetBytes(keyRaw!);
 
+        // IMPORTANT: do not map inbound claims; keep "role" as "role"
+        JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+
         services
             .AddAuthentication(o =>
             {
-                o.DefaultAuthenticateScheme = AuthScheme;
-                o.DefaultChallengeScheme = AuthScheme;
+                o.DefaultAuthenticateScheme     = AuthScheme;
+                o.DefaultChallengeScheme        = AuthScheme;
             })
             .AddJwtBearer(AuthScheme, o =>
             {
                 o.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = cfg["Jwt:Issuer"],
-                    ValidAudience = cfg["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
-                    // if your token uses "role" claim, set this:
-                    RoleClaimType = ClaimTypes.Role // or "role"
+                    ValidateIssuer              = true,
+                    ValidateAudience            = true,
+                    ValidateLifetime            = true,
+                    ValidateIssuerSigningKey    = true,
+                    ValidIssuer                 = cfg["Jwt:Issuer"],
+                    ValidAudience               = cfg["Jwt:Audience"],
+                    IssuerSigningKey            = new SymmetricSecurityKey(keyBytes),
+
+                    // Match the claim type you emit when creating tokens:
+                    // new Claim(ClaimTypes.Role, RoleNames.Administrator)
+                    RoleClaimType               = ClaimTypes.Role,
+                    ClockSkew                   = TimeSpan.Zero // Avoid hidden 5-minute leniency during tests
                 };
             });
 
-        services.AddAuthorization();
+        // --- Authorization policies ------------------------------------------
+        services.AddAuthorizationBuilder()
+            .AddPolicy("AdminOnly", p => p.RequireRole(RoleNames.Administrator));
 
-        // OpenAPI
-        services.AddOpenApi();
-
-        // App layers
+        // --- OpenAPI & app layers --------------------------------------------
+        services.AddOpenApi(options =>
+        {
+            // register by type
+            options.AddDocumentTransformer<JwtSecuritySchemeTransformer>();
+        });
         services.AddApplication();
         services.AddInfrastructure(cfg);
 
-        // Validators
+        // --- Validators -------------------------------------------------------
         services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
         services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
+        services.AddScoped<IValidator<SetUserRoleRequest>, SetUserRoleRequestValidator>();
 
         return services;
     }

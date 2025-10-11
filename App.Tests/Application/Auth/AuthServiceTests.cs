@@ -15,15 +15,21 @@ public class AuthServiceTests
         // Arrange
         var user = new User("user@example.com", "hash", RoleIds.User);
 
+        var role = new Role(RoleIds.User, RoleNames.User);
+        typeof(User).GetProperty(nameof(User.Role))!
+                    .SetValue(user, role);
+
+        var normalized = "user@example.com";
+
         var queries = new Mock<IUserQueries>();
-        queries.Setup(q => q.GetByEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
+        queries.Setup(q => q.GetByEmailWithRoleAsync(normalized, It.IsAny<CancellationToken>()))
                .ReturnsAsync(user);
 
         var hasher = new Mock<IPasswordHasher>();
         hasher.Setup(h => h.Verify("pw", "hash")).Returns(true);
 
         var tokens = new Mock<ITokenService>();
-        tokens.Setup(t => t.CreateForUser(user.Id, user.Email))
+        tokens.Setup(t => t.CreateForUser(user.Id, user.Email, role.Name))
               .Returns(("tok", DateTimeOffset.UtcNow.AddHours(1)));
 
         var authService = MakeService(queries: queries, hasher: hasher, tokens: tokens);
@@ -33,17 +39,18 @@ public class AuthServiceTests
 
         // Assert
         res.IsSuccess.Should().BeTrue();
-        tokens.Verify(t => t.CreateForUser(user.Id, user.Email), Times.Once);
-        queries.Verify(q => q.GetByEmailAsync("user@example.com", It.IsAny<CancellationToken>()), Times.Once);
+        queries.Verify(q => q.GetByEmailWithRoleAsync(normalized, It.IsAny<CancellationToken>()), Times.Once);
+        tokens.Verify(t => t.CreateForUser(user.Id, user.Email, role.Name), Times.Once);
     }
 
     [Fact]
     public async Task LoginAsync_ReturnsUnauthorized_WhenPasswordInvalid()
     {
+        // Arrange
         var user = new User("user@example.com", "hash", RoleIds.User);
 
         var queries = new Mock<IUserQueries>();
-        queries.Setup(q => q.GetByEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
+        queries.Setup(q => q.GetByEmailWithRoleAsync("user@example.com", It.IsAny<CancellationToken>()))
                .ReturnsAsync(user);
 
         var hasher = new Mock<IPasswordHasher>();
@@ -51,8 +58,10 @@ public class AuthServiceTests
 
         var svc = MakeService(queries: queries, hasher: hasher);
 
+        // Act
         var res = await svc.LoginAsync(new LoginDto("USER@example.com", "bad"), default);
 
+        // Assert
         res.IsSuccess.Should().BeFalse();
         res.Error!.Value.Code.Should().Be("unauthorized");
     }
@@ -60,6 +69,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RegisterAsync_NormalizesEmail_HashesPassword_AndCreates()
     {
+        // Arrange
         var queries = new Mock<IUserQueries>();
         queries.Setup(q => q.ExistsByEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
                .ReturnsAsync(false);
@@ -74,8 +84,10 @@ public class AuthServiceTests
 
         var svc = MakeService(queries: queries, commands: commands, hasher: hasher);
 
+        // Act
         var res = await svc.RegisterAsync(new RegisterDto("  USER@example.com  ", "pw12345A"), default);
 
+        // Assert
         res.IsSuccess.Should().BeTrue();
         commands.Verify(c => c.CreateAsync("user@example.com", "HASHED", It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -83,14 +95,17 @@ public class AuthServiceTests
     [Fact]
     public async Task RegisterAsync_ReturnsConflict_WhenEmailExists()
     {
+        // Arrange
         var queries = new Mock<IUserQueries>();
         queries.Setup(q => q.ExistsByEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
                .ReturnsAsync(true);
 
         var svc = MakeService(queries: queries);
 
+        // Act
         var res = await svc.RegisterAsync(new RegisterDto(" USER@example.com ", "pw12345A"), default);
 
+        // Assert
         res.IsSuccess.Should().BeFalse();
         res.Error!.Value.Code.Should().Be("conflict");
     }

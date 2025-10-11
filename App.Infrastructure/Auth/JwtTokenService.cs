@@ -7,41 +7,53 @@ using System.Text;
 
 namespace App.Infrastructure.Auth;
 
-public class JwtTokenService : ITokenService
+public class JwtTokenService(IConfiguration config) : ITokenService
 {
-    private readonly IConfiguration _config;
-
-    public JwtTokenService(IConfiguration config)
+    public (string token, DateTimeOffset expiresAtUtc) CreateForUser(Guid userId, string email, string roleName)
     {
-        _config = config;
+        var issuer              = config["Jwt:Issuer"];
+        var audience            = config["Jwt:Audience"];
+        var claims              = CreateClaims(userId, email, roleName);
+        var expires             = DateTimeOffset.UtcNow.AddHours(1);
+        var nowUtc              = DateTime.UtcNow;
+        var signingCredentials  = CreateSigningCredentials();
+
+        var jwtSecurityToken = new JwtSecurityToken(
+            issuer: issuer,
+            audience: audience,
+            claims: claims,
+            notBefore: nowUtc,
+            expires: expires.UtcDateTime,
+            signingCredentials: signingCredentials);
+
+        var token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+
+        return (token, expires);
     }
 
-    public (string token, DateTimeOffset expiresAtUtc) CreateForUser(Guid userId, string email)
-    {
-        var issuer = _config["Jwt:Issuer"];
-        var audience = _config["Jwt:Audience"];
-        var claims = CreateClaims(userId, email);
-        var expires = DateTimeOffset.UtcNow.AddHours(1);
-        var signingCredentials = CreateSigningCredentials();
-
-        var token = new JwtSecurityToken(issuer, audience, claims, null, expires.UtcDateTime, signingCredentials);
-        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-
-        return (jwt, expires);
-    }
-
-    private static Claim[] CreateClaims(Guid userId, string email) =>
+    private static Claim[] CreateClaims(Guid userId, string email, string roleName) =>
     [
-        new(JwtRegisteredClaimNames.Sub, userId.ToString()),
-        new(JwtRegisteredClaimNames.Email, email),
-        new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+        // Standard JWT claims
+        new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+        new Claim(JwtRegisteredClaimNames.Email, email),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(
+            JwtRegisteredClaimNames.Iat,
+            DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
+            ClaimValueTypes.Integer64),
+
+        // ASP.NET-friendly
+        new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+        new Claim(ClaimTypes.Name, email),
+
+        // 🔑 Authorize(Roles="...") relies on this
+        new Claim(ClaimTypes.Role, roleName),
     ];
 
     private SigningCredentials CreateSigningCredentials()
     {
-        var keyB64 = _config["Jwt:KeyBase64"];
-        var keyRaw = _config["Jwt:Key"];
+        var keyB64 = config["Jwt:KeyBase64"];
+        var keyRaw = config["Jwt:Key"];
 
         byte[] keyBytes = !string.IsNullOrWhiteSpace(keyB64)
             ? Convert.FromBase64String(keyB64)

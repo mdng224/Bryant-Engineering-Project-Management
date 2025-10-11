@@ -4,8 +4,8 @@ using App.Application.Common;
 namespace App.Application.Auth;
 
 public sealed class AuthService(
-    IUserQueries queries,
-    IUserCommands commands,
+    IUserQueries userQueries,
+    IUserCommands userCommands,
     IPasswordHasher hasher,
     ITokenService tokens
 ) : IAuthService
@@ -15,14 +15,11 @@ public sealed class AuthService(
         var email = NormalizeEmail(loginDto.Email);
         var password = loginDto.Password;
 
-        var user = await queries.GetByEmailAsync(email, ct);
-        if (user is null)
+        var user = await userQueries.GetByEmailWithRoleAsync(email, ct);
+        if (user is null || !hasher.Verify(password, user.PasswordHash))
             return Result<LoginResult>.Fail("unauthorized", "Invalid credentials.");
 
-        if (!hasher.Verify(password, user.PasswordHash))
-            return Result<LoginResult>.Fail("unauthorized", "Invalid credentials.");
-
-        var (token, exp) = tokens.CreateForUser(user.Id, user.Email);
+        var (token, exp) = tokens.CreateForUser(user.Id, user.Email, user.Role.Name);
 
         return Result<LoginResult>.Success(new LoginResult(token, exp));
     }
@@ -33,15 +30,14 @@ public sealed class AuthService(
         var password = registerDto.Password;
 
         // Lookup normalized form only for existence check
-        if (await queries.ExistsByEmailAsync(email, ct))
+        if (await userQueries.ExistsByEmailAsync(email, ct))
             return Result<RegisterResult>.Fail("conflict", "Email already registered.");
 
         var hash = hasher.Hash(password);
-        var user = await commands.CreateAsync(email, hash, ct);
+        var user = await userCommands.CreateAsync(email, hash, ct);
 
         return Result<RegisterResult>.Success(new RegisterResult(user.Id));
     }
 
-    // Trim only — we store the user's original casing.
     private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 }

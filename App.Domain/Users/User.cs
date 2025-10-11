@@ -1,5 +1,4 @@
 ﻿using App.Domain.Common;
-using System.Data;
 
 namespace App.Domain.Users;
 
@@ -50,15 +49,14 @@ public class User : IAuditableEntity
 
     // --- Behavior  -------------------------------------------------------------
 
-    public void ChangeRole(Role newRole)
+    public void SetRole(Guid newRoleId)
     {
         EnsureNotDeleted();
 
-        newRole = Guard.AgainstNull(newRole, nameof(newRole));
-        if (newRole.Id == RoleId) return; // no-operation
+        Guard.AgainstDefault(newRoleId, nameof(newRoleId));
+        if (newRoleId == RoleId) return; // no-op
 
-        Role = newRole;
-        RoleId = newRole.Id;
+        RoleId = newRoleId;
         Touch();
     }
 
