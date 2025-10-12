@@ -21,18 +21,18 @@ public interface IAuditableEntity
     /// The UTC timestamp when the entity was first created/persisted.
     /// Read-only to consumers; set by the persistence layer.
     /// </summary>
-    DateTimeOffset CreatedAtUtc     { get; }
+    DateTimeOffset CreatedAtUtc { get; }
 
     /// <summary>
     /// The UTC timestamp when the entity was last modified.
     /// Read-only to consumers; updated by the persistence layer on each save.
     /// </summary>
-    DateTimeOffset UpdatedAtUtc     { get; }
+    DateTimeOffset UpdatedAtUtc { get; }
 
     /// <summary>
     /// The UTC timestamp when the entity was soft-deleted, or <c>null</c> if not deleted.
     /// Read-only to consumers; set/cleared by domain methods (e.g., <c>SoftDelete()</c>/<c>Restore()</c>)
     /// and persisted by the infrastructure layer.
     /// </summary>
-    DateTimeOffset? DeletedAtUtc    { get; }
+    DateTimeOffset? DeletedAtUtc { get; }
 }

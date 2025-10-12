@@ -36,6 +36,11 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
 
         entity.HasIndex(u => u.RoleId).HasDatabaseName("ix_users_role_id");
 
+        // --- IsActive -------------------------------------------------------
+        entity.Property(u => u.IsActive)
+            .IsRequired()
+            .HasDefaultValue(false);                        // Users are inactive by default until explicitly activated.
+
         // --- Auditing -------------------------------------------------------
         entity.Property(u => u.CreatedAtUtc)
               .IsRequired()

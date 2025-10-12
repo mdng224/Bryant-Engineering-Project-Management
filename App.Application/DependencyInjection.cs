@@ -1,6 +1,6 @@
 ﻿using App.Application.Abstractions;
 using App.Application.Auth;
-using App.Application.Users;
+using App.Application.Admins;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace App.Application;
@@ -11,7 +11,7 @@ public static class DependencyInjection
     {
         // application-layer services
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IAdminService, AdminService>();
 
         return services;
     }

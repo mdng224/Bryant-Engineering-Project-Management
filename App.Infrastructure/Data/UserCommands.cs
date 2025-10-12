@@ -13,23 +13,42 @@ public class UserCommands(AppDbContext db) : IUserCommands
             .AsNoTracking()
             .AnyAsync(u => u.Email == email, ct);
 
-        if (exists) throw new InvalidOperationException("Email already exists.");
+        if (exists)
+            throw new InvalidOperationException("Email already exists.");
 
-        var user = new User(email, passwordHash, RoleIds.User);
+        var user = new User(email, passwordHash, RoleIds.User); // IsActive defaults (false) in domain
 
         db.Users.Add(user);
-        await db.SaveChangesAsync(ct);
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // In case of a race with the unique index on Email
+            throw new InvalidOperationException("Email already exists.");
+        }
 
         return user;
     }
 
-    public async Task SetUserRoleAsync(Guid userId, Guid roleId, CancellationToken ct = default)
+    public async Task UpdateAsync(Guid userId, Guid? roleId, bool? isActive, CancellationToken ct)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct)
             ?? throw new InvalidOperationException("User not found.");
 
-        user.SetRole(roleId);
+        if (roleId.HasValue)
+            user.SetRole(roleId.Value);
 
-        await db.SaveChangesAsync(ct);
+        if (isActive.HasValue)
+        {
+            if (isActive.Value)
+                user.Activate();
+            else
+                user.Deactivate();
+        }
+
+        await db.SaveChangesAsync(ct); // one transaction
     }
 }

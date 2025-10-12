@@ -1,9 +1,9 @@
 ﻿using App.Domain.Security;
 using FluentValidation;
 
-namespace App.Api.Contracts.Users;
+namespace App.Api.Contracts.Admins;
 
-public sealed class SetUserRoleRequestValidator : AbstractValidator<SetUserRoleRequest>
+public sealed class SetUserRoleRequestValidator : AbstractValidator<AdminUpdateUserRequest>
 {
     private static readonly HashSet<string> Allowed =
         new(RoleNames.All, StringComparer.OrdinalIgnoreCase);

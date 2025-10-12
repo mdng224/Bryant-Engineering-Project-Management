@@ -11,12 +11,12 @@ public class JwtTokenService(IConfiguration config) : ITokenService
 {
     public (string token, DateTimeOffset expiresAtUtc) CreateForUser(Guid userId, string email, string roleName)
     {
-        var issuer              = config["Jwt:Issuer"];
-        var audience            = config["Jwt:Audience"];
-        var claims              = CreateClaims(userId, email, roleName);
-        var expires             = DateTimeOffset.UtcNow.AddHours(1);
-        var nowUtc              = DateTime.UtcNow;
-        var signingCredentials  = CreateSigningCredentials();
+        var issuer = config["Jwt:Issuer"];
+        var audience = config["Jwt:Audience"];
+        var claims = CreateClaims(userId, email, roleName);
+        var expires = DateTimeOffset.UtcNow.AddHours(1);
+        var nowUtc = DateTime.UtcNow;
+        var signingCredentials = CreateSigningCredentials();
 
         var jwtSecurityToken = new JwtSecurityToken(
             issuer: issuer,

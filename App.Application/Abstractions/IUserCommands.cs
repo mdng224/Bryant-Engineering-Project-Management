@@ -5,5 +5,5 @@ namespace App.Application.Abstractions;
 public interface IUserCommands
 {
     Task<User> CreateAsync(string email, string passwordHash, CancellationToken ct = default);
-    Task SetUserRoleAsync(Guid userId, Guid roleId, CancellationToken ct = default);
+    Task UpdateAsync(Guid userId, Guid? roleId, bool? isActive, CancellationToken ct);
 }

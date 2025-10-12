@@ -19,9 +19,9 @@ public static class HttpResultMappers
 
         return error.Value.Code switch
         {
-            "unauthorized"  => Results.Unauthorized(),
-            "conflict"      => Results.Conflict(error.Value.Message),
-            _               => Results.Problem(error.Value.Message, statusCode: 400)
+            "unauthorized" => Results.Unauthorized(),
+            "conflict" => Results.Conflict(error.Value.Message),
+            _ => Results.Problem(error.Value.Message, statusCode: 400)
         };
     }
 }

@@ -9,14 +9,15 @@ namespace App.Domain.Users;
 public class User : IAuditableEntity
 {
     // --- Key ------------------------------------------------------------------
-    public Guid Id                      { get; private set; }
+    public Guid Id { get; private set; }
 
     // --- Core Fields ----------------------------------------------------------
 
-    public string Email                 { get; private set; } = null!;  // Normalized (trimmed) on creation.
-    public string PasswordHash          { get; private set; } = null!;  // Secure password hash (BCrypt). Never stored in plain text.
-    public Role Role                    { get; private set; } = null!;
-    public Guid RoleId                  { get; private set; }
+    public string Email { get; private set; } = null!;  // Normalized (trimmed) on creation.
+    public string PasswordHash { get; private set; } = null!;  // Secure password hash (BCrypt). Never stored in plain text.
+    public Role Role { get; private set; } = null!;
+    public Guid RoleId { get; private set; }
+    public bool IsActive { get; private set; }
 
 
     // TODO: Point to a client when that domain is ready.
@@ -25,9 +26,9 @@ public class User : IAuditableEntity
     // --- Auditing ------------------------------------------------------------
 
     /// <inheritdoc/>
-    public DateTimeOffset CreatedAtUtc  { get; private set; }
+    public DateTimeOffset CreatedAtUtc { get; private set; }
     /// <inheritdoc/>
-    public DateTimeOffset UpdatedAtUtc  { get; private set; }
+    public DateTimeOffset UpdatedAtUtc { get; private set; }
     /// <inheritdoc/>
     public DateTimeOffset? DeletedAtUtc { get; private set; }
 
@@ -36,19 +37,21 @@ public class User : IAuditableEntity
 
     public User(string email, string passwordHash, Guid roleId)
     {
-        Id              = Guid.CreateVersion7();            // ordered, time-based GUID (requires .NET 8+)
+        Id = Guid.CreateVersion7();            // ordered, time-based GUID (requires .NET 8+)
 
-        Email           = Guard.AgainstNullOrWhiteSpace(email, nameof(email)).ToNormalizedEmail();
-        PasswordHash    = Guard.AgainstNullOrWhiteSpace(passwordHash, nameof(passwordHash));
-        RoleId          = roleId;
+        Email = Guard.AgainstNullOrWhiteSpace(email, nameof(email)).ToNormalizedEmail();
+        PasswordHash = Guard.AgainstNullOrWhiteSpace(passwordHash, nameof(passwordHash));
+        RoleId = roleId;
 
-        var now         = DateTimeOffset.UtcNow;
-        CreatedAtUtc    = now;
-        UpdatedAtUtc    = now;
+        var now = DateTimeOffset.UtcNow;
+        CreatedAtUtc = now;
+        UpdatedAtUtc = now;
     }
 
-    // --- Behavior  -------------------------------------------------------------
+    // --- Mutators  -------------------------------------------------------------
 
+    public void Activate() => IsActive = true;
+    public void Deactivate() => IsActive = false;
     public void SetRole(Guid newRoleId)
     {
         EnsureNotDeleted();

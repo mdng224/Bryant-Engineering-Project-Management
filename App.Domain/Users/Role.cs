@@ -5,11 +5,11 @@ namespace App.Domain.Users;
 public sealed class Role
 {
     // --- Key ------------------------------------------------------------------
-    public Guid Id                  { get; private set; }
+    public Guid Id { get; private set; }
 
     // --- Core Fields ----------------------------------------------------------
-    public string Name              { get; private set; } = null!;
-    public ICollection<User> Users  { get; } = [];
+    public string Name { get; private set; } = null!;
+    public ICollection<User> Users { get; } = [];
 
     // --- Constructors --------------------------------------------------------
     private Role() { }

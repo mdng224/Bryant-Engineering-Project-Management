@@ -19,6 +19,9 @@ public sealed class AuthService(
         if (user is null || !hasher.Verify(password, user.PasswordHash))
             return Result<LoginResult>.Fail("unauthorized", "Invalid credentials.");
 
+        if (!user.IsActive)
+            return Result<LoginResult>.Fail("forbidden", "Account is not active. Approval required by administrator.");
+
         var (token, exp) = tokens.CreateForUser(user.Id, user.Email, user.Role.Name);
 
         return Result<LoginResult>.Success(new LoginResult(token, exp));

@@ -14,15 +14,15 @@ public class AuthServiceTests
     {
         // Arrange
         var user = new User("user@example.com", "hash", RoleIds.User);
-
+        // hydrate role
         var role = new Role(RoleIds.User, RoleNames.User);
-        typeof(User).GetProperty(nameof(User.Role))!
-                    .SetValue(user, role);
-
-        var normalized = "user@example.com";
+        typeof(User).GetProperty(nameof(User.Role))!.SetValue(user, role);
+        // activate user
+        typeof(User).GetMethod("Activate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)!
+            .Invoke(user, null);
 
         var queries = new Mock<IUserQueries>();
-        queries.Setup(q => q.GetByEmailWithRoleAsync(normalized, It.IsAny<CancellationToken>()))
+        queries.Setup(q => q.GetByEmailWithRoleAsync("user@example.com", It.IsAny<CancellationToken>()))
                .ReturnsAsync(user);
 
         var hasher = new Mock<IPasswordHasher>();
@@ -39,7 +39,7 @@ public class AuthServiceTests
 
         // Assert
         res.IsSuccess.Should().BeTrue();
-        queries.Verify(q => q.GetByEmailWithRoleAsync(normalized, It.IsAny<CancellationToken>()), Times.Once);
+        queries.Verify(q => q.GetByEmailWithRoleAsync("user@example.com", It.IsAny<CancellationToken>()), Times.Once);
         tokens.Verify(t => t.CreateForUser(user.Id, user.Email, role.Name), Times.Once);
     }
 

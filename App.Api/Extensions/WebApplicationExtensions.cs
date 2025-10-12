@@ -1,5 +1,5 @@
 ﻿using App.Api.Features.Auth;
-using App.Api.Features.Users;
+using App.Api.Features.Admins;
 using App.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -40,8 +40,8 @@ public static class WebApplicationExtensions
 
         // feature endpoints
         app.MapDefaultEndpoints();
+        app.MapAdminEndpoints();
         app.MapAuthEndpoints();
-        app.MapUserEndpoints();
 
         return app;
     }

@@ -1,6 +1,6 @@
 ﻿// App.Infrastructure/Auth/JwtTokenService.cs
+using App.Api.Contracts.Admins;
 using App.Api.Contracts.Auth;
-using App.Api.Contracts.Users;
 using App.Application;
 using App.Domain.Security;
 using App.Infrastructure;
@@ -43,25 +43,25 @@ public static class ServiceCollectionExtensions
         services
             .AddAuthentication(o =>
             {
-                o.DefaultAuthenticateScheme     = AuthScheme;
-                o.DefaultChallengeScheme        = AuthScheme;
+                o.DefaultAuthenticateScheme = AuthScheme;
+                o.DefaultChallengeScheme = AuthScheme;
             })
             .AddJwtBearer(AuthScheme, o =>
             {
                 o.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer              = true,
-                    ValidateAudience            = true,
-                    ValidateLifetime            = true,
-                    ValidateIssuerSigningKey    = true,
-                    ValidIssuer                 = cfg["Jwt:Issuer"],
-                    ValidAudience               = cfg["Jwt:Audience"],
-                    IssuerSigningKey            = new SymmetricSecurityKey(keyBytes),
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = cfg["Jwt:Issuer"],
+                    ValidAudience = cfg["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
 
                     // Match the claim type you emit when creating tokens:
                     // new Claim(ClaimTypes.Role, RoleNames.Administrator)
-                    RoleClaimType               = ClaimTypes.Role,
-                    ClockSkew                   = TimeSpan.Zero // Avoid hidden 5-minute leniency during tests
+                    RoleClaimType = ClaimTypes.Role,
+                    ClockSkew = TimeSpan.Zero // Avoid hidden 5-minute leniency during tests
                 };
             });
 
@@ -81,7 +81,8 @@ public static class ServiceCollectionExtensions
         // --- Validators -------------------------------------------------------
         services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
         services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
-        services.AddScoped<IValidator<SetUserRoleRequest>, SetUserRoleRequestValidator>();
+        services.AddScoped<IValidator<AdminUpdateUserRequest>, SetUserRoleRequestValidator>();
+        services.AddScoped<IValidator<AdminUpdateUserRequest>, AdminUpdateUserRequestValidator>();
 
         return services;
     }

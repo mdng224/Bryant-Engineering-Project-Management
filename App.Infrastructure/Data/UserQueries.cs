@@ -21,4 +21,7 @@ public class UserQueries(AppDbContext db) : IUserQueries
         => await db.Users
             .AsNoTracking()
             .AnyAsync(u => u.Email == email, ct);
+
+    public Task<bool> ExistsByIdAsync(Guid userId, CancellationToken ct) =>
+        db.Users.AsNoTracking().AnyAsync(u => u.Id == userId, ct);
 }
