@@ -19,7 +19,9 @@ public class AdminUpdateUserRequestValidatorTests
 
         // Assert
         // Top-level rule -> easiest is to check any error with the expected message
-        result.Errors.Should().ContainSingle(e => e.ErrorMessage == "Provide roleName and/or isActive.");
+        result.Errors
+            .Should()
+            .ContainSingle(e => e.ErrorMessage == "Provide roleName and/or isActive.");
     }
 
     [Fact]
@@ -46,7 +48,7 @@ public class AdminUpdateUserRequestValidatorTests
 
         // Assert
         result.ShouldHaveValidationErrorFor(m => m.RoleName)
-              .WithErrorMessage("roleName cannot be empty.");
+            .WithErrorMessage("roleName cannot be empty.");
     }
 
     [Fact]
@@ -60,7 +62,7 @@ public class AdminUpdateUserRequestValidatorTests
 
         // Assert
         result.ShouldHaveValidationErrorFor(m => m.RoleName)
-              .WithErrorMessage("roleName is too long.");
+            .WithErrorMessage("roleName is too long.");
     }
 
     [Theory]
@@ -78,7 +80,7 @@ public class AdminUpdateUserRequestValidatorTests
 
         // Assert
         result.ShouldHaveValidationErrorFor(m => m.RoleName)
-              .WithErrorMessage("roleName contains invalid characters.");
+            .WithErrorMessage("roleName contains invalid characters.");
     }
 
     [Theory]
