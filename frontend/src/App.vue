@@ -11,67 +11,34 @@ const subtitle = computed(() => {
   if (!route.name) return ''
   const name = String(route.name)
   const spaced = name.replace(/([A-Z])/g, ' $1').trim()
-
   return spaced.charAt(0).toUpperCase() + spaced.slice(1) + ' Page'
 })
-const title = "Hello Daniel"
+const title = 'Hello Daniel'
 </script>
 
 <template>
-  <div class="layout" >
-    <SidebarMenu :expanded @toggle="expanded = !expanded" />
-    
-    <main class="content">
-      <header class="topbar">
-        <HelloWorld :title :subtitle />
+  <!-- page wrapper -->
+  <div class="min-h-screen bg-slate-950 text-slate-100">
+    <!-- fixed sidebar lives here -->
+    <SidebarMenu :expanded="expanded" @toggle="expanded = !expanded" />
+
+    <!-- content area shifts based on sidebar width -->
+    <main
+      :class="[
+        'min-h-screen overflow-x-hidden flex flex-col transition-all duration-200',
+        expanded
+          ? 'ml-[240px] w-[calc(100vw-240px)]'  // sidebar open
+          : 'ml-16 w-[calc(100vw-64px)]'        // sidebar collapsed
+      ]"
+    >
+      <header class="px-5 py-4 border-b border-white/10">
+        <!-- pass props explicitly -->
+        <HelloWorld :title="title" :subtitle="subtitle" />
       </header>
-      <section class="page">
+
+      <section class="p-5">
         <RouterView />
       </section>
     </main>
   </div>
 </template>
-
-<style scoped>
-.layout { min-height: 100vh; }
-
-.toggle {
-  position: absolute; right: -10px; top: 12px;
-  width: 24px; height: 24px; border-radius: 999px;
-  border: none; cursor: pointer; background: #334155; color: #e5e7eb;
-}
-
-.brand { display: flex; align-items: center; gap: .75rem; margin-bottom: 1rem; }
-.brand-text { font-weight: 600; white-space: nowrap; }
-.logo { display: block; }
-
-/* icon + label */
-.icon {
-  display: inline-flex;
-  width: 20px;
-  height: 20px;
-  align-items: center;
-  justify-content: center;
-}
-
-/* menu container */
-.menu {
-  display: grid;
-  gap: .25rem;
-  margin-top: .75rem;
-}
-
-.content {
-  /* fills the rest of the screen beside the fixed sidebar */
-  margin-left: 240px;                 /* 64px when collapsed */
-  width: calc(100vw - 240px);         /* prevents narrow column */
-  min-height: 100vh;
-  transition: margin-left .2s ease, width .2s ease;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.topbar { padding: 1rem 1.25rem; border-bottom: 1px solid #ffffff1a; }
-.page { padding: 1.25rem; }
-</style>

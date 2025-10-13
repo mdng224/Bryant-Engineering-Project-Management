@@ -1,5 +1,5 @@
 // src/main.ts
-import './assets/main.css'
+import './assets/index.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
@@ -9,5 +9,4 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
-// Wait for initial navigation so guards run before first paint
 router.isReady().then(() => app.mount('#app'))
