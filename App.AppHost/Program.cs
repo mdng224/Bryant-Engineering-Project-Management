@@ -14,7 +14,7 @@ var appDb = postgres.AddDatabase("appdb");
 builder.AddProject<Projects.App_Api>("App")
        .WithReference(appDb)
        .WaitFor(appDb)
-       .WithHttpEndpoint(port: 5000, name: "api");
+       .WithHttpEndpoint(port: 5000, targetPort: 5041, name: "api");
 
 // --- Vue dev server (Vite) ---
 builder.AddExecutable(
