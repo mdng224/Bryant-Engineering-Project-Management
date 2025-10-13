@@ -1,13 +1,10 @@
 ﻿using App.Application.Abstractions;
 using App.Infrastructure.Auth;
 using App.Infrastructure.Data;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 using Npgsql;
-using System.Text;
 
 namespace App.Infrastructure;
 
@@ -24,14 +21,7 @@ public static class DependencyInjection
 
         services.AddDbContextPool<AppDbContext>(o =>
         {
-            o.UseNpgsql(connectionString, npgsql =>
-            {
-                // optional: resilient retries in cloud envs
-                npgsql.EnableRetryOnFailure();
-            });
-
-            // optional: pick your preference
-            // o.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+            o.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure());
         });
 
         // --- Repositories / Data access ---

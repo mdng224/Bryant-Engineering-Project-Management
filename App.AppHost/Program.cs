@@ -1,9 +1,9 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Postgres container
+// Postgres
 var pgVersion = builder.Configuration["Postgres:Version"] ?? "16";
-
-var postgres = builder.AddPostgres("postgres")
+var pgPassword = builder.AddParameter("postgres-password", secret: true);
+var postgres = builder.AddPostgres("postgres", password: pgPassword)
     .WithImageTag(pgVersion)
     .WithDataVolume("pgdata")
     .WithHostPort(55432);
@@ -13,10 +13,9 @@ var appDb = postgres.AddDatabase("appdb");
 // API
 builder.AddProject<Projects.App_Api>("App")
        .WithReference(appDb)
-       .WaitFor(appDb)
-       .WithHttpEndpoint(port: 5000, targetPort: 5041, name: "api");
+       .WaitFor(appDb);
 
-// --- Vue dev server (Vite) ---
+// Frontend
 builder.AddExecutable(
         name: "frontend",
         command: "npm",
