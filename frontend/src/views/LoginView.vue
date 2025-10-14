@@ -1,12 +1,15 @@
 <!-- src/views/LoginView.vue -->
 <template>
-  <main class="login-page">
-    <section class="card">
-      <h1>Sign in</h1>
+  <main class="min-h-[50dvh] grid place-items-center p-4">
+    <section
+      class="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-6 text-slate-100 shadow-xl backdrop-blur"
+    >
+      <h1 class="mb-4 text-2xl font-semibold tracking-tight">Sign in</h1>
 
-      <form @submit.prevent="onSubmit" novalidate>
-        <div class="field">
-          <label for="email">Email</label>
+      <form @submit.prevent="onSubmit" novalidate class="grid gap-4">
+        <!-- Email -->
+        <div class="grid gap-1.5">
+          <label for="email" class="text-sm text-slate-300">Email</label>
           <input
             id="email"
             ref="emailEl"
@@ -18,12 +21,18 @@
             required
             :disabled="loading"
             placeholder="you@example.com"
+            class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-slate-100 outline-none transition
+                   placeholder:text-slate-500
+                   focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
+                   disabled:opacity-60 disabled:cursor-not-allowed"
           />
         </div>
 
-        <div class="field">
-          <label for="password">Password</label>
-          <div class="password-wrap">
+        <!-- Password -->
+        <div class="grid gap-1.5">
+          <label for="password" class="text-sm text-slate-300">Password</label>
+
+          <div class="grid grid-cols-[1fr_auto] items-center gap-2">
             <input
               id="password"
               v-model="password"
@@ -33,25 +42,41 @@
               minlength="6"
               :disabled="loading"
               placeholder="••••••••"
+              class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-slate-100 outline-none transition
+                     placeholder:text-slate-500
+                     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
+                     disabled:opacity-60 disabled:cursor-not-allowed"
             />
             <button
               type="button"
-              class="link"
+              class="px-2 text-sm font-medium text-indigo-300 hover:text-indigo-200 hover:underline disabled:opacity-50"
               @click="showPassword = !showPassword"
               :aria-pressed="showPassword"
+              :disabled="loading"
             >
               {{ showPassword ? 'Hide' : 'Show' }}
             </button>
           </div>
         </div>
 
-        <p v-if="errorMessage" class="error" role="alert">{{ errorMessage }}</p>
+        <!-- Error -->
+        <p
+          v-if="errorMessage"
+          class="rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm text-rose-200"
+          role="alert"
+        >
+          {{ errorMessage }}
+        </p>
 
+        <!-- Submit -->
         <button
           type="submit"
-          class="primary"
           :disabled="!canSubmit || loading"
           :aria-busy="loading"
+          class="inline-flex items-center justify-center rounded-lg border border-indigo-500 bg-indigo-500 px-4 py-2.5
+                 text-sm font-semibold text-white shadow-sm transition
+                 hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500
+                 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {{ loading ? 'Signing in…' : 'Sign in' }}
         </button>
@@ -64,7 +89,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { login } from '@/api/auth'
-import { useAuth } from '../composables/useAuth' // uses /me check as discussed
+import { useAuth } from '@/composables/useAuth'
 import type { LoginPayload } from '@/api/auth'
 
 const route = useRoute()
@@ -81,7 +106,6 @@ const emailEl = ref<HTMLInputElement | null>(null)
 onMounted(() => emailEl.value?.focus())
 
 const canSubmit = computed(() => {
-  // lightweight client-side validation
   const hasEmail = /\S+@\S+\.\S+/.test(email.value)
   return hasEmail && password.value.length >= 1
 })
@@ -97,11 +121,11 @@ const onSubmit = async () => {
       password: password.value
     }
     await login(loginPayload)
-    const authed = await ensureAuthState(true)   // 🔁 force refresh
-    
+    const authed = await ensureAuthState(true)
+
     if (authed) {
       const redirectTo = (route.query.redirect as string) || '/'
-      router.replace(redirectTo)
+      router.replace(redirectTo.startsWith('/') ? redirectTo : '/')
     } else {
       errorMessage.value = 'Unexpected auth error. Please try again.'
     }
@@ -116,80 +140,4 @@ const onSubmit = async () => {
     loading.value = false
   }
 }
-
 </script>
-
-<style scoped>
-.login-page {
-  min-height: 50dvh;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-}
-.card {
-  width: 100%;
-  max-width: 420px;
-  background: #11151c;
-  border: 1px solid #1f2630;
-  border-radius: 16px;
-  padding: 24px;
-  color: #e6ebf2;
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
-}
-h1 {
-  margin: 0 0 1rem;
-  font-size: 1.5rem;
-  letter-spacing: .2px;
-}
-form { display: grid; gap: 14px; }
-.field { display: grid; gap: 6px; }
-label { font-size: .9rem; color: #c9d3e1; }
-input {
-  appearance: none;
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid #2a3340;
-  background: #0e131a;
-  color: #e6ebf2;
-  outline: none;
-}
-input:focus { border-color: #4b89ff; box-shadow: 0 0 0 3px rgba(75,137,255,.2); }
-.password-wrap {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 8px;
-}
-.link {
-  background: transparent;
-  border: none;
-  color: #8fb0ff;
-  cursor: pointer;
-  padding: 0 6px;
-}
-.link:hover { text-decoration: underline; }
-
-.primary {
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid #4b89ff;
-  background: #4b89ff;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-}
-.primary[disabled] {
-  opacity: .6;
-  cursor: not-allowed;
-}
-.error {
-  color: #ffa8a8;
-  background: #2a1212;
-  border: 1px solid #6b1d1d;
-  padding: 10px 12px;
-  border-radius: 10px;
-}
-.hint { margin-top: 10px; color: #9fb0c6; font-size: .9rem; }
-.hint a { color: #c7d7ff; }
-</style>
