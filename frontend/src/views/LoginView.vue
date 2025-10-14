@@ -17,6 +17,7 @@
             type="email"
             inputmode="email"
             autocomplete="email"
+            :maxlength="maxEmail"
             spellcheck="false"
             required
             :disabled="loading"
@@ -36,7 +37,8 @@
               :type="showPassword ? 'text' : 'password'"
               autocomplete="current-password"
               required
-              minlength="6"
+              :minlength="minPassword"
+              :maxlength="maxPassword"
               :disabled="loading"
               placeholder="••••••••"
               :class="formClass"
@@ -88,6 +90,7 @@
 <script setup lang="ts">
   import { login } from '@/api/auth';
   import { useAuth } from '@/composables/useAuth';
+  import { useAuthFields } from '@/composables/useAuthFields';
   import type { ApiErrorData, LoginPayload } from '@/types/api';
   import { isAxiosError } from 'axios';
   import { computed, onMounted, ref } from 'vue';
@@ -96,13 +99,20 @@
   const route = useRoute();
   const router = useRouter();
   const { ensureAuthState } = useAuth();
+  const {
+    email,
+    password,
+    showPassword,
+    isEmailValid,
+    isPasswordValid,
+    normalizedEmail,
+    minPassword,
+    maxEmail,
+    maxPassword,
+  } = useAuthFields();
 
-  const email = ref('');
-  const password = ref('');
-  const showPassword = ref(false);
   const loading = ref(false);
   const errorMessage = ref<string | null>(null);
-
   const emailEl = ref<HTMLInputElement | null>(null);
   const formClass: string = `
     w-full rounded-lg border border-slate-700 bg-slate-950
@@ -113,17 +123,16 @@
   `;
   onMounted(() => emailEl.value?.focus());
 
-  const isEmailValid = computed(() => /\S+@\S+\.\S+/.test(email.value));
-  const canSubmit = computed(() => isEmailValid.value && password.value.length >= 8);
+  const canSubmit = computed(() => isEmailValid.value && isPasswordValid.value);
 
-  const onSubmit = async () => {
+  const onSubmit = async (): Promise<void> => {
     if (!canSubmit.value || loading.value) return;
     loading.value = true;
     errorMessage.value = null;
 
     try {
       const loginPayload: LoginPayload = {
-        email: email.value.trim().toLowerCase(), // locale-insensitive for emails
+        email: normalizedEmail.value, // locale-insensitive for emails
         password: password.value,
       };
       await login(loginPayload);
@@ -140,13 +149,23 @@
       let msg = 'Login failed. Please try again.';
 
       if (isAxiosError<ApiErrorData>(err)) {
-        const data = err.response?.data;
-        msg = data?.message ?? data?.error ?? err.message ?? msg;
+        const { status, data } = err.response ?? {};
+
+        // Prefer ProblemDetails.detail, then message, then legacy error
+        const detail = data?.detail ?? data?.message ?? data?.error;
+
+        if (status === 401) {
+          msg = detail ?? 'Invalid email or password.';
+        } else {
+          msg = detail ?? msg;
+        }
       } else if (err instanceof Error) {
         msg = err.message || msg;
       }
+
       errorMessage.value = msg;
       password.value = '';
+      emailEl.value?.focus(); // optional UX
     } finally {
       loading.value = false;
     }

@@ -31,10 +31,10 @@ function setAuth(data: LoginResponse): void {
  * @description Exchanges email/password for a JWT token and stores it in localStorage.
  * @returns The login response containing the token and expiration timestamp.
  */
-export async function login(payload: LoginPayload): Promise<LoginResponse> {
+export async function login(loginPayload: LoginPayload): Promise<LoginResponse> {
   const { data }: { data: LoginResponse } = await apiClient.post<LoginResponse>(
     '/auth/login',
-    payload,
+    loginPayload,
   );
 
   setAuth(data);
@@ -62,10 +62,10 @@ export async function me(): Promise<MeResponse> {
  * The backend marks the user as inactive (IsActive = false) until approved.
  * @returns The register response containing userId, status ("pending"), and message.
  */
-export async function register(payload: RegisterPayload): Promise<RegisterResponse> {
+export async function register(registerPayload: RegisterPayload): Promise<RegisterResponse> {
   const { data }: { data: RegisterResponse } = await apiClient.post<RegisterResponse>(
     '/auth/register',
-    payload,
+    registerPayload,
   );
 
   // Ensure no prior auth session remains after registration

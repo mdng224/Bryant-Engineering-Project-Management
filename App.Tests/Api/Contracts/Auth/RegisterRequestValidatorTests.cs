@@ -135,4 +135,47 @@ public class RegisterRequestValidatorTests
         result.ShouldHaveValidationErrorFor(x => x.Email);
         result.ShouldHaveValidationErrorFor(x => x.Password);
     }
+
+    [Fact]
+    public void Password_Length_72_Passes()
+    {
+        // Arrange
+        var password = new string('A', 71) + "1"; // 72 chars incl. digit+uppercase
+
+        // Act
+        var result = _validator.TestValidate(new RegisterRequest("user@example.com", password));
+
+        // Assert
+        result.ShouldNotHaveValidationErrorFor(x => x.Password);
+    }
+
+    [Fact]
+    public void Password_Length_73_Fails()
+    {
+        // Arrange
+        var password = new string('A', 72) + "1"; // 73
+
+        // Act
+        var result = _validator.TestValidate(new RegisterRequest("user@example.com", password));
+
+        // Assert
+        result.ShouldHaveValidationErrorFor(x => x.Password)
+         .WithErrorMessage("Password cannot exceed 72 characters.");
+    }
+
+    [Fact]
+    public void Email_Max_254_Passes()
+    {
+        // Arrange
+        var local = new string('a', 64);
+        var domain = string.Join(".", new string('b', 63), new string('c', 63), "d".PadLeft(61, 'd')); // craft to reach 254 total
+        var email = $"{local}@{domain}"[..254]; // ensure 254
+
+        // Act
+        var result = _validator.TestValidate(new RegisterRequest(email, "SuperSecret1"));
+
+        // Assert
+        result.ShouldNotHaveValidationErrorFor(x => x.Email);
+    }
+
 }

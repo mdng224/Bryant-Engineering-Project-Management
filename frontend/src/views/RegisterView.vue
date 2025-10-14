@@ -195,16 +195,24 @@
       const registerResponse: RegisterResponse = await register(payload);
       success.value = registerResponse;
     } catch (err: unknown) {
-      let msg = 'Login failed. Please try again.';
+      let msg = 'Registration failed. Please try again.';
+      let emailFieldError: string | null = null;
 
       if (isAxiosError<ApiErrorData>(err)) {
         const data = err.response?.data;
-        msg = data?.message ?? data?.error ?? err.message ?? msg;
+        const emailErr = data?.errors?.['email'];
+        emailFieldError =
+          typeof emailErr === 'string' ? emailErr : Array.isArray(emailErr) ? emailErr[0] : null;
+
+        msg = emailFieldError ?? data?.detail ?? data?.message ?? err.message ?? msg;
       } else if (err instanceof Error) {
         msg = err.message || msg;
       }
+
       errorMessage.value = msg;
       password.value = '';
+      password2.value = '';
+      emailEl.value?.focus();
     } finally {
       loading.value = false;
     }
