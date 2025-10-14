@@ -1,6 +1,6 @@
 <!-- src/views/RegisterView.vue -->
 <template>
-  <main class="min-h-[50dvh] grid place-items-center p-4">
+  <main class="grid min-h-[50dvh] place-items-center p-4">
     <section
       class="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-6 text-slate-100 shadow-xl backdrop-blur"
     >
@@ -10,8 +10,12 @@
 
       <!-- Success state -->
       <div v-if="success" class="grid pb-4">
-        <p class="rounded-lg border border-emerald-800 bg-emerald-900/30 px-3.5 py-2 text-sm text-emerald-200" role="status" aria-live="polite">
-          (Status: {{ success.status }}) {{ success.message }} 
+        <p
+          class="rounded-lg border border-emerald-800 bg-emerald-900/30 px-3.5 py-2 text-sm text-emerald-200"
+          role="status"
+          aria-live="polite"
+        >
+          (Status: {{ success.status }}) {{ success.message }}
         </p>
         <p class="pt-6 text-sm text-slate-400">
           Already have an account?
@@ -39,11 +43,9 @@
             spellcheck="false"
             required
             :disabled="loading"
+            :maxlength="maxEmail"
             placeholder="you@example.com"
-            class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-slate-100 outline-none transition
-                   placeholder:text-slate-500
-                   focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
-                   disabled:opacity-60 disabled:cursor-not-allowed"
+            class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
 
@@ -58,13 +60,11 @@
               :type="showPassword ? 'text' : 'password'"
               autocomplete="new-password"
               required
-              minlength="minPassword"
+              :minlength="minPassword"
+              :maxlength="maxPassword"
               :disabled="loading"
               placeholder="••••••••"
-              class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-slate-100 outline-none transition
-                     placeholder:text-slate-500
-                     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
-                     disabled:opacity-60 disabled:cursor-not-allowed"
+              :class="formClass"
             />
             <button
               type="button"
@@ -88,13 +88,11 @@
               :type="showPassword2 ? 'text' : 'password'"
               autocomplete="new-password"
               required
-              :minlength="min"
+              :minlength="minPassword"
+              :maxlength="maxPassword"
               :disabled="loading"
               placeholder="••••••••"
-              class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-slate-100 outline-none transition
-                     placeholder:text-slate-500
-                     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
-                     disabled:opacity-60 disabled:cursor-not-allowed"
+              :class="formClass"
             />
             <button
               type="button"
@@ -125,10 +123,7 @@
           type="submit"
           :disabled="!canSubmit || loading"
           :aria-busy="loading"
-          class="inline-flex items-center justify-center rounded-lg border border-indigo-500 bg-indigo-500 px-4 py-2.5
-                 text-sm font-semibold text-white shadow-sm transition
-                 hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500
-                 disabled:cursor-not-allowed disabled:opacity-60"
+          :class="formClass"
         >
           {{ loading ? 'Creating…' : 'Create account' }}
         </button>
@@ -148,50 +143,65 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { register, type RegisterPayload, type RegisterResponse } from '@/api/auth'
-import { useAuthFields } from '@/composables/useAuthFields'
+  import { ref, computed, onMounted } from 'vue';
+  import { useRoute } from 'vue-router';
+  import { register, type RegisterPayload, type RegisterResponse } from '@/api/auth';
+  import { useAuthFields } from '@/composables/useAuthFields';
 
-const route = useRoute()
-const router = useRouter()
-const {
-  email, password, showPassword,
-  isEmailValid, isPasswordValid, normalizedEmail, min
-} = useAuthFields()
+  const route = useRoute();
+  const {
+    email,
+    password,
+    showPassword,
+    isEmailValid,
+    isPasswordValid,
+    normalizedEmail,
+    minPassword,
+    maxEmail,
+    maxPassword,
+  } = useAuthFields();
 
-// Register-specific local state
-const password2 = ref('')
-const showPassword2 = ref(false)
-const loading = ref(false)
-const errorMessage = ref<string | null>(null)
-const success = ref<RegisterResponse | null>(null)
-const emailEl = ref<HTMLInputElement | null>(null)
-onMounted(() => emailEl.value?.focus())
+  // Register-specific local state
+  const password2 = ref('');
+  const showPassword2 = ref(false);
+  const loading = ref(false);
+  const errorMessage = ref<string | null>(null);
+  const success = ref<RegisterResponse | null>(null);
+  const emailEl = ref<HTMLInputElement | null>(null);
+  const formClass: string = `
+  w-full rounded-lg border border-slate-700 bg-slate-950
+  px-3.5 py-2.5 text-slate-100 outline-none transition
+  placeholder:text-slate-500
+  focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
+  disabled:opacity-60 disabled:cursor-not-allowed
+`;
+  onMounted(() => emailEl.value?.focus());
 
-const passwordsMatch = computed(() => password2.value === password.value)
-const canSubmit = computed(() => isEmailValid.value && isPasswordValid.value && passwordsMatch.value)
+  const passwordsMatch = computed(() => password2.value === password.value);
+  const canSubmit = computed(
+    () => isEmailValid.value && isPasswordValid.value && passwordsMatch.value,
+  );
 
-const onSubmit = async (): Promise<void> => {
-  if (!canSubmit.value || loading.value)
-    return
+  const onSubmit = async (): Promise<void> => {
+    if (!canSubmit.value || loading.value) return;
 
-  loading.value = true
-  errorMessage.value = null
+    loading.value = true;
+    errorMessage.value = null;
 
-  try {
-    const payload: RegisterPayload = { email: normalizedEmail.value, password: password.value }
-    const registerResponse: RegisterResponse = await register(payload)
-    success.value = registerResponse
-  } catch (err: any) {
-    errorMessage.value =
-      err?.response?.data?.message ??
-      err?.response?.data?.error ??
-      err?.message ?? 'Registration failed. Please try again.'
-    password.value = ''
-    password2.value = ''
-  } finally {
-    loading.value = false
-  }
-}
+    try {
+      const payload: RegisterPayload = { email: normalizedEmail.value, password: password.value };
+      const registerResponse: RegisterResponse = await register(payload);
+      success.value = registerResponse;
+    } catch (err: any) {
+      errorMessage.value =
+        err?.response?.data?.message ??
+        err?.response?.data?.error ??
+        err?.message ??
+        'Registration failed. Please try again.';
+      password.value = '';
+      password2.value = '';
+    } finally {
+      loading.value = false;
+    }
+  };
 </script>
