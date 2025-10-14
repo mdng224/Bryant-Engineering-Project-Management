@@ -10,27 +10,43 @@
         <!-- Email -->
         <div class="grid gap-1.5">
           <label for="email" class="text-sm text-slate-300">Email</label>
-          <input
-            id="email"
-            ref="emailEl"
-            v-model.trim="email"
-            type="email"
-            inputmode="email"
-            autocomplete="email"
-            :maxlength="maxEmail"
-            spellcheck="false"
-            required
-            :disabled="loading"
-            placeholder="you@example.com"
-            :class="formClass"
-          />
+
+          <div class="relative">
+            <!-- icon -->
+            <Mail
+              class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            />
+            <!-- input -->
+            <input
+              id="email"
+              ref="emailEl"
+              v-model.trim="email"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              :maxlength="maxEmail"
+              spellcheck="false"
+              required
+              :disabled="loading"
+              placeholder="you@example.com"
+              :class="[formClass, 'pl-10']"
+            />
+          </div>
         </div>
 
         <!-- Password -->
         <div class="grid gap-1.5">
           <label for="password" class="text-sm text-slate-300">Password</label>
 
-          <div class="grid grid-cols-[1fr_auto] items-center gap-2">
+          <div class="relative">
+            <!-- left icon -->
+            <Lock
+              class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            />
+
+            <!-- input -->
             <input
               id="password"
               v-model="password"
@@ -41,16 +57,19 @@
               :maxlength="maxPassword"
               :disabled="loading"
               placeholder="••••••••"
-              :class="formClass"
+              :class="[formClass, 'pl-10 pr-10']"
             />
+
+            <!-- right toggle button -->
             <button
               type="button"
-              class="px-2 text-sm font-medium text-indigo-300 hover:text-indigo-200 hover:underline disabled:opacity-50"
               :aria-pressed="showPassword"
               :disabled="loading"
               @click="showPassword = !showPassword"
+              class="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-indigo-300 hover:text-indigo-200 disabled:opacity-50"
+              :aria-label="showPassword ? 'Hide password' : 'Show password'"
             >
-              {{ showPassword ? 'Hide' : 'Show' }}
+              <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -58,10 +77,13 @@
         <!-- Error -->
         <p
           v-if="errorMessage"
-          class="rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm text-rose-200"
+          class="flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
           role="alert"
+          aria-live="assertive"
+          tabindex="-1"
         >
-          {{ errorMessage }}
+          <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+          <span>{{ errorMessage }}</span>
         </p>
 
         <!-- Submit -->
@@ -71,7 +93,7 @@
           :aria-busy="loading"
           class="inline-flex items-center justify-center rounded-lg border border-indigo-500 bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {{ loading ? 'Signing in…' : 'Sign in' }}
+          <span>{{ loading ? 'Signing in…' : 'Sign in' }}</span>
         </button>
 
         <p class="text-sm text-slate-400">
@@ -93,7 +115,8 @@
   import { useAuthFields } from '@/composables/useAuthFields';
   import type { ApiErrorData, LoginPayload } from '@/types/api';
   import { isAxiosError } from 'axios';
-  import { computed, onMounted, ref } from 'vue';
+  import { AlertTriangle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
+  import { computed, nextTick, onMounted, ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
 
   const route = useRoute();
@@ -114,6 +137,7 @@
   const loading = ref(false);
   const errorMessage = ref<string | null>(null);
   const emailEl = ref<HTMLInputElement | null>(null);
+  const errorEl = ref<HTMLElement | null>(null);
   const formClass: string = `
     w-full rounded-lg border border-slate-700 bg-slate-950
     px-3.5 py-2.5 text-slate-100 outline-none transition
@@ -164,10 +188,18 @@
       }
 
       errorMessage.value = msg;
-      password.value = '';
-      emailEl.value?.focus(); // optional UX
+      resetForms();
     } finally {
       loading.value = false;
     }
+  };
+
+  const resetForms = async (): Promise<void> => {
+    showPassword.value = false;
+    password.value = '';
+    await nextTick();
+
+    if (errorMessage.value) errorEl.value?.focus();
+    else emailEl.value?.focus();
   };
 </script>
