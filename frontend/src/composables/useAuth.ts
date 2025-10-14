@@ -1,6 +1,7 @@
 // src/composables/useAuth.ts
 import { ref } from 'vue'
 import { me } from '@/api/auth'
+import { useRouter } from 'vue-router'
 
 const isAuthed = ref<boolean | null>(null)
 let inFlight: Promise<void> | null = null
@@ -34,4 +35,20 @@ export const ensureAuthState = async (force = false): Promise<boolean> => {
   return isAuthed.value!
 }
 
-export const useAuth = () => ({ isAuthed, ensureAuthState })
+export const useAuth = () => {
+  const router = useRouter()
+
+  const logout = async () => {
+    // Clear auth data
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('authExp')
+
+    // Reset state so ensureAuthState() knows we’re logged out
+    isAuthed.value = false
+
+    // Redirect to login
+    await router.push('/login')
+  }
+
+  return { isAuthed, ensureAuthState, logout }
+}
