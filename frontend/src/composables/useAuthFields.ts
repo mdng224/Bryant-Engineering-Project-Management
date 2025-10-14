@@ -1,5 +1,5 @@
 // src/composables/useAuthFields.ts
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 
 /**
  * Composable providing reactive state and validation logic for authentication forms.

@@ -1,7 +1,6 @@
 // src/api/index.ts
-import axios from 'axios';
-import type { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from 'axios';
-import { AxiosHeaders } from 'axios';
+import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 
 /**
  * Axios client preconfigured for your backend API.

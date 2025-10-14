@@ -9,5 +9,22 @@
   "bracketSpacing": true,
   "vueIndentScriptAndStyle": true,
   "htmlWhitespaceSensitivity": "ignore",
-  "plugins": ["prettier-plugin-tailwindcss"]
+
+  "plugins": ["@trivago/prettier-plugin-sort-imports", "prettier-plugin-tailwindcss"],
+
+  "importOrder": [
+    "^vue",
+    "^@?\\w",
+    "",
+    "^@/api/(.*)$",
+    "^@/components/(.*)$",
+    "^@/composables/(.*)$",
+    "^@/router/(.*)$",
+    "^@/stores/(.*)$",
+    "^@/views/(.*)$",
+    "",
+    "^[./]"
+  ],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true
 }

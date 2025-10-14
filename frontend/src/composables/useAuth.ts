@@ -1,7 +1,8 @@
 // src/composables/useAuth.ts
 import { ref } from 'vue';
-import { me } from '@/api/auth';
 import { useRouter } from 'vue-router';
+
+import { me } from '@/api/auth';
 
 /* -------------------------------------------------------------------------- */
 /*                                State / Cache                               */

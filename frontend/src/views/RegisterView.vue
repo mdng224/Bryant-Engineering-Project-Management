@@ -143,10 +143,10 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue';
-  import { useRoute } from 'vue-router';
   import { register, type RegisterPayload, type RegisterResponse } from '@/api/auth';
   import { useAuthFields } from '@/composables/useAuthFields';
+  import { computed, onMounted, ref } from 'vue';
+  import { useRoute } from 'vue-router';
 
   const route = useRoute();
   const {

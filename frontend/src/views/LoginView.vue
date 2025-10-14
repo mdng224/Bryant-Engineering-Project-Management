@@ -86,11 +86,11 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue';
-  import { useRoute, useRouter } from 'vue-router';
+  import type { LoginPayload } from '@/api/auth';
   import { login } from '@/api/auth';
   import { useAuth } from '@/composables/useAuth';
-  import type { LoginPayload } from '@/api/auth';
+  import { computed, onMounted, ref } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
 
   const route = useRoute();
   const router = useRouter();
