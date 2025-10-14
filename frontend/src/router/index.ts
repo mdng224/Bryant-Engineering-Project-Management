@@ -7,6 +7,7 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/login', name: 'login', component: () => import('../views/LoginView.vue'), meta: { guestOnly: true } },
+    { path: '/register', name: 'register', component: () => import('../views/RegisterView.vue'), meta: { guestOnly: true } },
 
     { path: '/', name: 'home', component: HomeView, },
     { path: '/users',  name: 'users',   component: () => import('../views/UsersView.vue') },
@@ -21,7 +22,8 @@ router.beforeEach(async (to) => {
   const { ensureAuthState } = useAuth()
 
   // public pages
-  const publicPaths = new Set(['/login'])
+  const publicPaths = new Set(['/login', '/register'])
+
   const requiresAuth = !publicPaths.has(to.path)
   const guestOnly = !!to.meta.guestOnly
 

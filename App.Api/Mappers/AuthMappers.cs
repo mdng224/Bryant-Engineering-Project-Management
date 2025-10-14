@@ -31,5 +31,5 @@ public static class AuthMappers
     }
 
     public static RegisterResponse ToResponse(this RegisterResult result)
-        => new(result.UserId);
+        => new(result.UserId, "pending", "Your account is pending administrator approval.");
 }
