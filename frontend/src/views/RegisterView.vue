@@ -28,7 +28,7 @@
         </p>
       </div>
 
-      <form v-else @submit.prevent="onSubmit" novalidate class="grid gap-4">
+      <form v-else novalidate class="grid gap-4" @submit.prevent="onSubmit">
         <!-- Email -->
         <div class="grid gap-1.5">
           <label for="email" class="text-sm text-slate-300">Email</label>
@@ -69,9 +69,9 @@
             <button
               type="button"
               class="px-2 text-sm font-medium text-indigo-300 hover:text-indigo-200 hover:underline disabled:opacity-50"
-              @click="showPassword = !showPassword"
               :aria-pressed="showPassword"
               :disabled="loading"
+              @click="showPassword = !showPassword"
             >
               {{ showPassword ? 'Hide' : 'Show' }}
             </button>
@@ -97,9 +97,9 @@
             <button
               type="button"
               class="px-2 text-sm font-medium text-indigo-300 hover:text-indigo-200 hover:underline disabled:opacity-50"
-              @click="showPassword2 = !showPassword2"
               :aria-pressed="showPassword2"
               :disabled="loading"
+              @click="showPassword2 = !showPassword2"
             >
               {{ showPassword2 ? 'Hide' : 'Show' }}
             </button>
@@ -143,8 +143,10 @@
 </template>
 
 <script setup lang="ts">
-  import { register, type RegisterPayload, type RegisterResponse } from '@/api/auth';
+  import { register } from '@/api/auth';
   import { useAuthFields } from '@/composables/useAuthFields';
+  import type { ApiErrorData, RegisterPayload, RegisterResponse } from '@/types/api';
+  import { isAxiosError } from 'axios';
   import { computed, onMounted, ref } from 'vue';
   import { useRoute } from 'vue-router';
 
@@ -169,12 +171,12 @@
   const success = ref<RegisterResponse | null>(null);
   const emailEl = ref<HTMLInputElement | null>(null);
   const formClass: string = `
-  w-full rounded-lg border border-slate-700 bg-slate-950
-  px-3.5 py-2.5 text-slate-100 outline-none transition
-  placeholder:text-slate-500
-  focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
-  disabled:opacity-60 disabled:cursor-not-allowed
-`;
+    w-full rounded-lg border border-slate-700 bg-slate-950
+    px-3.5 py-2.5 text-slate-100 outline-none transition
+    placeholder:text-slate-500
+    focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
+    disabled:opacity-60 disabled:cursor-not-allowed
+  `;
   onMounted(() => emailEl.value?.focus());
 
   const passwordsMatch = computed(() => password2.value === password.value);
@@ -192,14 +194,17 @@
       const payload: RegisterPayload = { email: normalizedEmail.value, password: password.value };
       const registerResponse: RegisterResponse = await register(payload);
       success.value = registerResponse;
-    } catch (err: any) {
-      errorMessage.value =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        err?.message ??
-        'Registration failed. Please try again.';
+    } catch (err: unknown) {
+      let msg = 'Login failed. Please try again.';
+
+      if (isAxiosError<ApiErrorData>(err)) {
+        const data = err.response?.data;
+        msg = data?.message ?? data?.error ?? err.message ?? msg;
+      } else if (err instanceof Error) {
+        msg = err.message || msg;
+      }
+      errorMessage.value = msg;
       password.value = '';
-      password2.value = '';
     } finally {
       loading.value = false;
     }

@@ -6,7 +6,7 @@
     >
       <h1 class="mb-4 text-2xl font-semibold tracking-tight">Sign in</h1>
 
-      <form @submit.prevent="onSubmit" novalidate class="grid gap-4">
+      <form novalidate class="grid gap-4" @submit.prevent="onSubmit">
         <!-- Email -->
         <div class="grid gap-1.5">
           <label for="email" class="text-sm text-slate-300">Email</label>
@@ -21,7 +21,7 @@
             required
             :disabled="loading"
             placeholder="you@example.com"
-            class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-60"
+            :class="formClass"
           />
         </div>
 
@@ -39,14 +39,14 @@
               minlength="6"
               :disabled="loading"
               placeholder="••••••••"
-              class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-60"
+              :class="formClass"
             />
             <button
               type="button"
               class="px-2 text-sm font-medium text-indigo-300 hover:text-indigo-200 hover:underline disabled:opacity-50"
-              @click="showPassword = !showPassword"
               :aria-pressed="showPassword"
               :disabled="loading"
+              @click="showPassword = !showPassword"
             >
               {{ showPassword ? 'Hide' : 'Show' }}
             </button>
@@ -86,9 +86,10 @@
 </template>
 
 <script setup lang="ts">
-  import type { LoginPayload } from '@/api/auth';
   import { login } from '@/api/auth';
   import { useAuth } from '@/composables/useAuth';
+  import type { ApiErrorData, LoginPayload } from '@/types/api';
+  import { isAxiosError } from 'axios';
   import { computed, onMounted, ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
 
@@ -103,10 +104,17 @@
   const errorMessage = ref<string | null>(null);
 
   const emailEl = ref<HTMLInputElement | null>(null);
+  const formClass: string = `
+    w-full rounded-lg border border-slate-700 bg-slate-950
+    px-3.5 py-2.5 text-slate-100 outline-none transition
+    placeholder:text-slate-500
+    focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
+    disabled:opacity-60 disabled:cursor-not-allowed
+  `;
   onMounted(() => emailEl.value?.focus());
 
   const isEmailValid = computed(() => /\S+@\S+\.\S+/.test(email.value));
-  const canSubmit = computed(() => isEmailValid && password.value.length >= 8);
+  const canSubmit = computed(() => isEmailValid.value && password.value.length >= 8);
 
   const onSubmit = async () => {
     if (!canSubmit.value || loading.value) return;
@@ -115,11 +123,11 @@
 
     try {
       const loginPayload: LoginPayload = {
-        email: email.value.trim().toLocaleLowerCase(),
+        email: email.value.trim().toLowerCase(), // locale-insensitive for emails
         password: password.value,
       };
       await login(loginPayload);
-      const authed: boolean = await ensureAuthState(true);
+      const authed = await ensureAuthState(true);
 
       if (authed) {
         const redirectTo = (route.query.redirect as string) || '/';
@@ -128,12 +136,15 @@
         errorMessage.value = 'Unexpected auth error. Please try again.';
         password.value = '';
       }
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        err?.message ??
-        'Login failed. Please try again.';
+    } catch (err: unknown) {
+      let msg = 'Login failed. Please try again.';
+
+      if (isAxiosError<ApiErrorData>(err)) {
+        const data = err.response?.data;
+        msg = data?.message ?? data?.error ?? err.message ?? msg;
+      } else if (err instanceof Error) {
+        msg = err.message || msg;
+      }
       errorMessage.value = msg;
       password.value = '';
     } finally {

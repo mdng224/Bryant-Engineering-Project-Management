@@ -26,17 +26,14 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem('authToken');
   if (!token) return config;
 
-  // Ensure headers is an AxiosHeaders instance or plain object
+  // Normalize headers to AxiosHeaders so we can use .set safely
   if (!config.headers) {
     config.headers = new AxiosHeaders();
+  } else if (!(config.headers instanceof AxiosHeaders)) {
+    config.headers = new AxiosHeaders(config.headers); // Wrap plain object / RawAxiosRequestHeaders
   }
 
-  if (config.headers instanceof AxiosHeaders) {
-    config.headers.set('Authorization', `Bearer ${token}`);
-  } else {
-    (config.headers as any)['Authorization'] = `Bearer ${token}`;
-  }
-
+  config.headers.set('Authorization', `Bearer ${token}`);
   return config;
 });
 

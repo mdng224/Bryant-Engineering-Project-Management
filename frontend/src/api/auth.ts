@@ -1,12 +1,12 @@
 // src/api/auth.ts
+import type {
+  LoginPayload,
+  LoginResponse,
+  MeResponse,
+  RegisterPayload,
+  RegisterResponse,
+} from '@/types/api';
 import apiClient from '.';
-
-/* ----------------------------- Types ----------------------------- */
-export type LoginPayload = { email: string; password: string };
-export type LoginResponse = { token: string; expiresAtUtc: string };
-export type MeResponse = { sub: string; email?: string };
-export type RegisterPayload = { email: string; password: string };
-export type RegisterResponse = { userId: string; status: string; message: string };
 
 /* --------------------------- Constants --------------------------- */
 const TOKEN_KEY: string = 'authToken';
