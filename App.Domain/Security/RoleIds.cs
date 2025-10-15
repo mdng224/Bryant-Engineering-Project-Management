@@ -1,4 +1,6 @@
-﻿namespace App.Domain.Security;
+﻿using System.Collections.Immutable;
+
+namespace App.Domain.Security;
 
 public static class RoleIds
 {
@@ -6,15 +8,21 @@ public static class RoleIds
     public static readonly Guid Manager = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
     public static readonly Guid User = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
 
-    // exact (case-sensitive) mapping – matches your “verbatim” choice
-    private static readonly IReadOnlyDictionary<string, Guid> NameToId =
-        new Dictionary<string, Guid>(StringComparer.Ordinal)
-        {
-            [RoleNames.Administrator] = Administrator,
-            [RoleNames.Manager] = Manager,
-            [RoleNames.User] = User,
-        };
+    private static readonly ImmutableDictionary<string, Guid> NameToId =
+    ImmutableDictionary.CreateRange(
+        StringComparer.Ordinal,
+        [
+            new KeyValuePair<string, Guid>(RoleNames.Administrator, Administrator),
+            new KeyValuePair<string, Guid>(RoleNames.Manager,       Manager),
+            new KeyValuePair<string, Guid>(RoleNames.User,          User),
+        ]);
 
-    public static bool TryFromName(string roleName, out Guid roleId)
-        => NameToId.TryGetValue(roleName, out roleId);
+    private static readonly ImmutableDictionary<Guid, string> IdToName =
+        NameToId.ToImmutableDictionary(kvp => kvp.Value, kvp => kvp.Key);
+
+    public static bool TryFromName(string roleName, out Guid roleId) =>
+        NameToId.TryGetValue(roleName, out roleId);
+
+    public static string ToName(this Guid roleId) =>
+        IdToName.TryGetValue(roleId, out var name) ? name : "Unknown";
 }

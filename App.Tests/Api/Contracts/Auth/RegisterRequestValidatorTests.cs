@@ -30,7 +30,7 @@ public class RegisterRequestValidatorTests
 
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.Email)
-              .WithErrorMessage("Email is required.");
+            .WithErrorMessage("Email is required.");
     }
 
     [Theory]
@@ -48,7 +48,7 @@ public class RegisterRequestValidatorTests
 
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.Email)
-              .WithErrorMessage("A valid email address is required.");
+            .WithErrorMessage("A valid email address is required.");
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class RegisterRequestValidatorTests
 
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
-              .WithErrorMessage("Password is required.");
+            .WithErrorMessage("Password is required.");
     }
 
     [Theory]
@@ -78,7 +78,7 @@ public class RegisterRequestValidatorTests
 
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
-              .WithErrorMessage("Password must be at least 8 characters long.");
+            .WithErrorMessage("Password must be at least 8 characters long.");
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class RegisterRequestValidatorTests
 
         // assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
-              .WithErrorMessage("Password must contain at least one uppercase letter.");
+            .WithErrorMessage("Password must contain at least one uppercase letter.");
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public class RegisterRequestValidatorTests
 
         // assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
-              .WithErrorMessage("Password must contain at least one digit.");
+            .WithErrorMessage("Password must contain at least one digit.");
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class RegisterRequestValidatorTests
 
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
-         .WithErrorMessage("Password cannot exceed 72 characters.");
+            .WithErrorMessage("Password cannot exceed 72 characters.");
     }
 
     [Fact]

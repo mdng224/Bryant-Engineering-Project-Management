@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace App.Api.Contracts.Admins;
 
-public sealed class SetUserRoleRequestValidator : AbstractValidator<AdminUpdateUserRequest>
+public sealed class SetUserRoleRequestValidator : AbstractValidator<UpdateUserRequest>
 {
     private static readonly HashSet<string> Allowed =
         new(RoleNames.All, StringComparer.OrdinalIgnoreCase);

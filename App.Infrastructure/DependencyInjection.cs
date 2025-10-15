@@ -1,6 +1,7 @@
 ﻿using App.Application.Abstractions;
 using App.Infrastructure.Auth;
-using App.Infrastructure.Data;
+using App.Infrastructure.Persistence;
+using App.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,8 +26,8 @@ public static class DependencyInjection
         });
 
         // --- Repositories / Data access ---
-        services.AddScoped<IUserCommands, UserCommands>();
-        services.AddScoped<IUserQueries, UserQueries>();
+        services.AddScoped<IUserReader, UserRepository>();
+        services.AddScoped<IUserWriter, UserRepository>();
 
         // --- Auth helpers (hashing + token creation) ---
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();

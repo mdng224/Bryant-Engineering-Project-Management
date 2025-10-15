@@ -1,7 +1,7 @@
 using App.Api.Extensions;
 using App.Application;
 using App.Infrastructure;
-using App.Infrastructure.Data;
+using App.Infrastructure.Persistence;
 using App.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -19,7 +19,6 @@ public class User : IAuditableEntity
     public Guid RoleId { get; private set; }
     public bool IsActive { get; private set; }
 
-
     // TODO: Point to a client when that domain is ready.
     // TODO: Point to an employee when that domain is ready.
 

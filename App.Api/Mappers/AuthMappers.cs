@@ -1,5 +1,6 @@
 ﻿using App.Api.Contracts.Auth;
-using App.Application.Auth;
+using App.Application.Auth.Commands.Register;
+using App.Application.Auth.Queries.Login;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -7,14 +8,8 @@ namespace App.Api.Mappers;
 
 public static class AuthMappers
 {
-    public static LoginDto ToDto(this LoginRequest loginRequest) =>
-        new(loginRequest.Email, loginRequest.Password);
-
-    public static RegisterDto ToDto(this RegisterRequest registerRequest) =>
-        new(registerRequest.Email, registerRequest.Password);
-
-    public static LoginResponse ToResponse(this LoginResult loginResult) =>
-        new(loginResult.Token, loginResult.ExpiresAtUtc);
+    public static LoginResponse ToResponse(this LoginResult result) =>
+        new(result.Token, result.ExpiresAtUtc);
 
     public static MeResponse ToResponse(this ClaimsPrincipal user)
     {

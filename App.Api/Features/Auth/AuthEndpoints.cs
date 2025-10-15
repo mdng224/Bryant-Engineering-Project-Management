@@ -2,6 +2,9 @@
 using App.Api.Filters;
 using App.Api.Mappers;
 using App.Application.Abstractions;
+using App.Application.Auth.Commands.Register;
+using App.Application.Auth.Queries.Login;
+using App.Application.Common;
 using System.Security.Claims;
 
 namespace App.Api.Features.Auth;
@@ -48,21 +51,23 @@ public static class AuthEndpoints
     }
 
     private static async Task<IResult> Login(
-        LoginRequest loginRequest,
-        IAuthService authService,
+        LoginRequest request,
+        IQueryHandler<LoginQuery, Result<LoginResult>> handler,
         CancellationToken ct)
     {
-        var result = await authService.LoginAsync(loginRequest.ToDto(), ct);
+        var loginQuery = new LoginQuery(request.Email, request.Password);
+        var result = await handler.Handle(loginQuery, ct);
 
         return result.ToHttpResult(loginResult => Results.Ok(loginResult.ToResponse()));
     }
 
     private static async Task<IResult> Register(
         RegisterRequest registerRequest,
-        IAuthService authService,
+         ICommandHandler<RegisterCommand, Result<RegisterResult>> handler,
         CancellationToken ct)
     {
-        var result = await authService.RegisterAsync(registerRequest.ToDto(), ct);
+        var registerCommand = new RegisterCommand(registerRequest.Email, registerRequest.Password);
+        var result = await handler.Handle(registerCommand, ct);
 
         return result.ToHttpResult(registerResult =>
         {
@@ -98,7 +103,9 @@ public static class AuthEndpoints
     {
         try
         {
-            return Results.Ok(user.ToResponse());
+            var meResponse = user.ToResponse();
+
+            return Results.Ok(meResponse);
         }
         catch (UnauthorizedAccessException)
         {
