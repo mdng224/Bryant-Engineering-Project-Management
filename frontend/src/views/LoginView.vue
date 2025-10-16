@@ -53,7 +53,6 @@
               :type="showPassword ? 'text' : 'password'"
               autocomplete="current-password"
               required
-              :minlength="minPassword"
               :maxlength="maxPassword"
               :disabled="loading"
               placeholder="••••••••"
@@ -110,29 +109,22 @@
 </template>
 
 <script setup lang="ts">
+  import { computed, nextTick, onMounted, ref } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
+
+  import { isAxiosError } from 'axios';
+  import { AlertTriangle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
+
   import { login } from '@/api/auth';
   import { useAuth } from '@/composables/useAuth';
   import { useAuthFields } from '@/composables/useAuthFields';
   import type { ApiErrorData, LoginPayload } from '@/types/api';
-  import { isAxiosError } from 'axios';
-  import { AlertTriangle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
-  import { computed, nextTick, onMounted, ref } from 'vue';
-  import { useRoute, useRouter } from 'vue-router';
 
   const route = useRoute();
   const router = useRouter();
   const { ensureAuthState } = useAuth();
-  const {
-    email,
-    password,
-    showPassword,
-    isEmailValid,
-    isPasswordValid,
-    normalizedEmail,
-    minPassword,
-    maxEmail,
-    maxPassword,
-  } = useAuthFields();
+  const { email, password, showPassword, isEmailValid, normalizedEmail, maxEmail, maxPassword } =
+    useAuthFields();
 
   const loading = ref(false);
   const errorMessage = ref<string | null>(null);
@@ -147,7 +139,7 @@
   `;
   onMounted(() => emailEl.value?.focus());
 
-  const canSubmit = computed(() => isEmailValid.value && isPasswordValid.value);
+  const canSubmit = computed(() => isEmailValid.value && password.value);
 
   const onSubmit = async (): Promise<void> => {
     if (!canSubmit.value || loading.value) return;

@@ -10,7 +10,7 @@
   "vueIndentScriptAndStyle": true,
   "htmlWhitespaceSensitivity": "ignore",
 
-  "plugins": ["@trivago/prettier-plugin-sort-imports", "prettier-plugin-tailwindcss"],
+  "plugins": ["prettier-plugin-tailwindcss"],
 
   "importOrder": [
     "^vue",
