@@ -56,17 +56,17 @@ public sealed class GetUsersHandlerTests
     }
 
     [Fact]
-    public async Task Caps_PageSize_At_200_And_Computes_Skip()
+    public async Task Caps_PageSize_At_100_And_Computes_Skip()
     {
-        // Arrange: page=3, requested pageSize=500 -> capped at 200
+        // Arrange: page=3, requested pageSize=500 -> capped at 100
         var query = new GetUsersQuery(Page: 3, PageSize: 500);
 
-        // Expect skip = (3 - 1) * 200 = 400; take = 200
+        // Expect skip = (3 - 1) * 100 = 200; take = 100
         _reader.Setup(r => r.GetPagedAsync(
-                It.Is<int>(s => s == 400),
-                It.Is<int>(t => t == 200),
+                It.Is<int>(s => s == 200),
+                It.Is<int>(t => t == 100),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MakeUsers(200), 1_234));
+            .ReturnsAsync((MakeUsers(100), 1_234));
 
         // Act
         var res = await _handler.Handle(query, CancellationToken.None);
@@ -75,10 +75,10 @@ public sealed class GetUsersHandlerTests
         res.IsSuccess.Should().BeTrue();
         var payload = res.Value;
         payload!.Page.Should().Be(3);
-        payload!.PageSize.Should().Be(200);
-        payload.Users.Count.Should().Be(200);
+        payload!.PageSize.Should().Be(100);
+        payload.Users.Count.Should().Be(100);
         payload.TotalCount.Should().Be(1234);
-        payload.TotalPages.Should().Be((int)Math.Ceiling(1234 / 200.0)); // 7
+        payload.TotalPages.Should().Be((int)Math.Ceiling(1234 / 100.0)); // 13
     }
 
     [Fact]

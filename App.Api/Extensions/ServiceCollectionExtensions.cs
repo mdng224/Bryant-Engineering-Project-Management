@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 
 namespace App.Api.Extensions;
 
@@ -19,12 +20,18 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApi(this IServiceCollection services, IConfiguration cfg)
     {
-        // CORS (Vite dev)
+        // --- CORS (Vite dev) -----------------------------------------------
         services.AddCors(o => o.AddPolicy(CorsPolicy, p => p
             .WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
             .AllowAnyMethod()
         ));
+
+        // --- JSON naming policy (camelCase globally) ------------------------
+        services.ConfigureHttpJsonOptions(o =>
+        {
+            o.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        });
 
         // --- JWT (symmetric) -------------------------------------------------
         var keyB64 = cfg["Jwt:KeyBase64"];

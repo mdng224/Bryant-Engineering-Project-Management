@@ -26,14 +26,11 @@ public sealed class UpdateUserHandler(IUserWriter userWriter)
         }
 
         if (command.IsActive is bool active)
-        {
-            if (active)
-                user.Activate();
-            else
-                user.Deactivate();
-        }
+            if (active) user.Activate();
+            else        user.Deactivate();
 
         await userWriter.SaveChangesAsync(ct);
+
         return Ok(UpdateUserResult.Ok);
     }
 }

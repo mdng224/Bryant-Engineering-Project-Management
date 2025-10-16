@@ -1,5 +1,6 @@
 ﻿using App.Application.Abstractions;
 using App.Application.Common;
+using App.Domain.Common;
 using App.Domain.Security;
 using App.Domain.Users;
 using static App.Application.Common.R;
@@ -14,13 +15,13 @@ public sealed class RegisterHandler(
 {
     public async Task<Result<RegisterResult>> Handle(RegisterCommand command, CancellationToken ct)
     {
-        var email = command.Email.Trim().ToLowerInvariant();
+        var normalizedEmail = command.Email.ToNormalizedEmail();
 
-        if (await userReader.ExistsByEmailAsync(email, ct))
+        if (await userReader.ExistsByEmailAsync(normalizedEmail, ct))
             return Fail<RegisterResult>("conflict", "Email already registered.");
 
         var passwordHash = passwordHasher.Hash(command.Password);
-        var user = new User(email, passwordHash, RoleIds.User); // IsActive defaults (false) in domain
+        var user = new User(normalizedEmail, passwordHash, RoleIds.User); // IsActive defaults (false) in domain
 
         await userWriter.AddAsync(user, ct);
         await userWriter.SaveChangesAsync(ct);

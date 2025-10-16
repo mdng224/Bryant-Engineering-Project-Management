@@ -1,8 +1,14 @@
 <!-- src/views/LoginView.vue -->
 <template>
   <main class="grid min-h-[50dvh] place-items-center p-4">
+    <!-- UNDERLAY: blurred background with radial fade -->
+    <div
+      class="pointer-events-none fixed inset-0 z-0 bg-slate-900/40 backdrop-blur-3xl [mask-image:radial-gradient(circle_at_center,white_38%,transparent_100%)]"
+    ></div>
+
+    <!-- Foreground content (card area) -->
     <section
-      class="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-6 text-slate-100 shadow-xl backdrop-blur"
+      class="relative z-10 w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-100 shadow-2xl"
     >
       <h1 class="mb-4 text-2xl font-semibold tracking-tight">Sign in</h1>
 

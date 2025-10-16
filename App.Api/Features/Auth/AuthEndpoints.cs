@@ -1,11 +1,13 @@
 ﻿using App.Api.Contracts.Auth;
 using App.Api.Filters;
 using App.Api.Mappers;
+using App.Api.Mappers.Auth;
 using App.Application.Abstractions;
 using App.Application.Auth.Commands.Register;
 using App.Application.Auth.Queries.Login;
 using App.Application.Common;
 using System.Security.Claims;
+using static Microsoft.AspNetCore.Http.Results;
 
 namespace App.Api.Features.Auth;
 
@@ -55,10 +57,10 @@ public static class AuthEndpoints
         IQueryHandler<LoginQuery, Result<LoginResult>> handler,
         CancellationToken ct)
     {
-        var loginQuery = new LoginQuery(request.Email, request.Password);
-        var result = await handler.Handle(loginQuery, ct);
+        var query = request.ToQuery();
+        var result = await handler.Handle(query, ct);
 
-        return result.ToHttpResult(loginResult => Results.Ok(loginResult.ToResponse()));
+        return result.ToHttpResult(loginResult => Ok(loginResult.ToResponse()));
     }
 
     private static async Task<IResult> Register(
@@ -66,50 +68,24 @@ public static class AuthEndpoints
          ICommandHandler<RegisterCommand, Result<RegisterResult>> handler,
         CancellationToken ct)
     {
-        var registerCommand = new RegisterCommand(registerRequest.Email, registerRequest.Password);
-        var result = await handler.Handle(registerCommand, ct);
+        var command = registerRequest.ToCommand();
+        var result = await handler.Handle(command, ct);
 
         return result.ToHttpResult(registerResult =>
         {
             var registerResponse = registerResult.ToResponse();
-            return Results.Created($"/auth/users/{registerResponse.UserId}", registerResponse);
+            return Created($"/auth/users/{registerResponse.UserId}", registerResponse);
         });
     }
 
     /// <summary>
-    /// Retrieves minimal identity information for the currently authenticated user,
-    /// extracted directly from the JSON Web Token (JWT) without a database lookup.
+    /// GET /auth/me – returns the authenticated user's ID and email
+    /// from the JWT without a database lookup.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// <b>Route:</b> <c>GET /auth/me</c><br/>
-    /// <b>Authorization:</b> Requires a valid <c>Bearer &lt;token&gt;</c> header.
-    /// </para>
-    /// <para>
-    /// This endpoint is typically used by the frontend to verify an existing session
-    /// and rehydrate client authentication state after login or token refresh.
-    /// </para>
-    /// <para>
-    /// <b>Responses:</b><br/>
-    /// <b>200 OK</b> – Returns the user’s subject (unique identifier) and email extracted from the JWT.<br/>
-    /// <b>401 Unauthorized</b> – Returned when the token is missing, invalid, or expired.
-    /// </para>
+    /// Requires a valid Bearer token.
+    /// Returns 200 with <see cref="MeResponse"/> on success or 401 if unauthorized.
     /// </remarks>
-    /// <returns>
-    /// An <see cref="IResult"/> containing either a <see cref="MeResponse"/> on success
-    /// or an HTTP 401 Unauthorized result when authentication fails.
-    /// </returns>
-    private static IResult GetMe(ClaimsPrincipal user)
-    {
-        try
-        {
-            var meResponse = user.ToResponse();
-
-            return Results.Ok(meResponse);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Results.Unauthorized();
-        }
-    }
+    private static IResult GetMe(ClaimsPrincipal user) =>
+        user.Identity?.IsAuthenticated is true ? Ok(user.ToResponse()) : Unauthorized();
 }

@@ -2,7 +2,7 @@
 
 namespace App.Api.Mappers;
 
-public static class HttpResultMappers
+internal static class HttpResultMappers
 {
     public static IResult ToHttpResult(this Result result) =>
         result.IsSuccess ? Results.Ok() : MapError(result.Error);

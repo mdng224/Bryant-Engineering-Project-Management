@@ -4,10 +4,14 @@ using App.Application.Auth.Queries.Login;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace App.Api.Mappers;
+namespace App.Api.Mappers.Auth;
 
-public static class AuthMappers
+internal static class AuthMappers
 {
+    public static RegisterCommand ToCommand(this RegisterRequest request) => new(request.Email, request.Password);
+
+    public static LoginQuery ToQuery(this LoginRequest request) => new(request.Email, request.Password);
+
     public static LoginResponse ToResponse(this LoginResult result) =>
         new(result.Token, result.ExpiresAtUtc);
 

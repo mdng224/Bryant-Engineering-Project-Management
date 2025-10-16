@@ -3,15 +3,11 @@
 /// <summary>
 /// Provides normalization and cleaning helpers for domain values (names, emails, phones, addresses, etc.).
 /// </summary>
-internal static class Normalize
+public static class Normalize
 {
     // --- Names / general text ------------------------------------------------
-    public static string ToNormalizedName(this string value) =>
-        CollapseSpaces(value.Trim()); // collapse OK for names
-
-    public static string ToNormalizedEmail(this string value) =>
-        value.Trim(); // keep casing; DB uses CITEXT for CI
-
+    public static string ToNormalizedName(this string value) => CollapseSpaces(value.Trim()); // collapse OK for names
+    public static string ToNormalizedEmail(this string value) => value.Trim().ToLowerInvariant();
     public static string? ToNormalizedPhone(this string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return null;

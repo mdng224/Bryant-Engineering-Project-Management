@@ -9,7 +9,7 @@
               :key="header.id"
               class="px-4 py-3 text-left font-semibold uppercase tracking-wider"
             >
-              <FlexRender :render="header.column.columnDef.header" :props="header.getContext()" />
+              {{ header.column.columnDef.header as string }}
             </th>
           </tr>
         </thead>
@@ -21,9 +21,49 @@
               :key="cell.id"
               class="whitespace-nowrap px-4 py-3"
             >
-              <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+              <!-- Render per column 'kind' (no JSX / no h()) -->
+              <template v-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'codeId'">
+                <code class="font-mono text-xs text-slate-300">
+                  {{ shortId(cell.getValue() as string | undefined) }}
+                </code>
+              </template>
+
+              <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'text'">
+                {{ cell.getValue() as string }}
+              </template>
+
+              <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'status'">
+                <span
+                  v-if="cell.getValue() as boolean"
+                  class="rounded-full bg-emerald-800/30 px-2 py-0.5 text-xs text-emerald-300"
+                >
+                  Active
+                </span>
+                <span v-else class="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-slate-300">
+                  Inactive
+                </span>
+              </template>
+
+              <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'datetime'">
+                {{ formatUtc(cell.getValue() as string | null) }}
+              </template>
+
+              <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'actions'">
+                <button
+                  class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-500"
+                  @click="onEdit(row.original as UserDto)"
+                >
+                  Edit
+                </button>
+              </template>
+
+              <!-- Fallback -->
+              <template v-else>
+                {{ cell.getValue() as any }}
+              </template>
             </td>
           </tr>
+
           <tr v-if="!loading && users.length === 0">
             <td class="px-6 py-6 text-slate-400" :colspan="table.getAllLeafColumns().length">
               No results.
@@ -75,15 +115,15 @@
 </template>
 
 <script setup lang="ts">
-  import api from '@/api'; // your axios instance
+  import api from '@/api';
   import {
-    FlexRender,
     createColumnHelper,
     getCoreRowModel,
     useVueTable,
     type ColumnDef,
+    type ColumnHelper,
   } from '@tanstack/vue-table';
-  import { h, reactive, ref, watchEffect } from 'vue';
+  import { reactive, ref, watchEffect } from 'vue';
 
   type UserDto = {
     Id: string;
@@ -103,6 +143,13 @@
     TotalPages: number;
   };
 
+  type ColMeta =
+    | { kind: 'codeId' }
+    | { kind: 'text' }
+    | { kind: 'status' }
+    | { kind: 'datetime' }
+    | { kind: 'actions' };
+
   const users = ref<UserDto[]>([]);
   const totalCount = ref(0);
   const totalPages = ref(0);
@@ -120,47 +167,36 @@
   const shortId = (id: string | undefined) =>
     id && id.length > 8 ? id.slice(0, 8) + '…' : (id ?? '—');
 
-  const col = createColumnHelper<UserDto>();
+  const col: ColumnHelper<UserDto> = createColumnHelper<UserDto>();
   const columns: ColumnDef<UserDto, unknown>[] = [
-    col.accessor('Id', {
-      header: 'Id',
-      cell: info =>
-        h('code', { class: 'font-mono text-xs text-slate-300' }, shortId(info.getValue())),
-      enableSorting: false,
+    col.accessor('Email', {
+      header: 'Email',
+      meta: { kind: 'text' },
     }),
-    col.accessor('Email', { header: 'Email', cell: i => i.getValue() }),
-    col.accessor('RoleName', { header: 'Role', cell: i => i.getValue() }),
+    col.accessor('RoleName', {
+      header: 'Role Name',
+      meta: { kind: 'text' },
+    }),
     col.accessor('IsActive', {
       header: 'Status',
-      cell: i =>
-        i.getValue()
-          ? h(
-              'span',
-              { class: 'rounded-full bg-emerald-800/30 px-2 py-0.5 text-xs text-emerald-300' },
-              'Active',
-            )
-          : h(
-              'span',
-              { class: 'rounded-full bg-slate-700 px-2 py-0.5 text-xs text-slate-300' },
-              'Inactive',
-            ),
+      meta: { kind: 'status' },
     }),
-    col.accessor('CreatedAtUtc', { header: 'Created', cell: i => formatUtc(i.getValue()) }),
-    col.accessor('UpdatedAtUtc', { header: 'Updated', cell: i => formatUtc(i.getValue()) }),
-    col.accessor('DeletedAtUtc', { header: 'Deleted', cell: i => formatUtc(i.getValue()) }),
+    col.accessor('CreatedAtUtc', {
+      header: 'Created',
+      meta: { kind: 'datetime' },
+    }),
+    col.accessor('CreatedAtUtc', {
+      header: 'Last Modified',
+      meta: { kind: 'datetime' },
+    }),
+    col.accessor('CreatedAtUtc', {
+      header: 'Soft Deleted?',
+      meta: { kind: 'datetime' },
+    }),
     {
       id: 'actions',
       header: 'Actions',
-      cell: ({ row }) =>
-        h(
-          'button',
-          {
-            class:
-              'rounded-md bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-500',
-            onClick: () => onEdit(row.original),
-          },
-          'Edit',
-        ),
+      meta: { kind: 'actions' },
       enableSorting: false,
     },
   ];
@@ -175,7 +211,7 @@
     columns,
     get pageCount() {
       return totalPages.value;
-    }, // server total pages
+    },
     state: { pagination },
     manualPagination: true,
     onPaginationChange: updater => {

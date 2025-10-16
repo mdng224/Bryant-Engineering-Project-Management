@@ -1,5 +1,7 @@
 ﻿using App.Application.Abstractions;
 using App.Application.Common;
+using App.Domain.Common;
+using static App.Application.Common.R;
 
 namespace App.Application.Auth.Queries.Login;
 
@@ -8,20 +10,20 @@ public sealed class LoginHandler(IUserReader users, IPasswordHasher hasher, ITok
 {
     public async Task<Result<LoginResult>> Handle(LoginQuery query, CancellationToken ct)
     {
-        var normalizedEmail = query.Email.Trim().ToLowerInvariant();
+        var normalizedEmail = query.Email.ToNormalizedEmail();
         var user = await users.GetByEmailAsync(normalizedEmail, ct);
 
         if (user is null)
-            return Result<LoginResult>.Fail("unauthorized", "Invalid credentials.");
+            return Fail<LoginResult>("unauthorized", "Invalid credentials.");
 
         if (!user.IsActive)
-            return Result<LoginResult>.Fail("forbidden", "Account is not active.");
+            return Fail<LoginResult>("forbidden", "Account is not active.");
 
         if (!hasher.Verify(query.Password, user.PasswordHash))
-            return Result<LoginResult>.Fail("unauthorized", "Invalid credentials.");
+            return Fail<LoginResult>("unauthorized", "Invalid credentials.");
 
         var (token, exp) = tokenService.CreateForUser(user.Id, user.Email, user.Role.Name);
 
-        return Result<LoginResult>.Success(new LoginResult(token, exp));
+        return Ok(new LoginResult(token, exp));
     }
 }
