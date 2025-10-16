@@ -1,113 +1,130 @@
 <template>
-  <div class="p-6">
-    <div class="overflow-x-auto rounded-xl border border-slate-700 bg-slate-900/70 shadow">
-      <table class="min-w-full divide-y divide-slate-700 text-sm text-slate-200">
-        <thead class="bg-slate-800/80 text-slate-300">
-          <tr v-for="hg in table.getHeaderGroups()" :key="hg.id">
-            <th
-              v-for="header in hg.headers"
-              :key="header.id"
-              class="px-4 py-3 text-left font-semibold uppercase tracking-wider"
-            >
-              {{ header.column.columnDef.header as string }}
-            </th>
-          </tr>
-        </thead>
+  <div class="pb-4">
+    <input
+      placeholder="Search email…"
+      class="h-9 min-w-[260px] rounded-md border border-slate-700 bg-slate-900/70 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 sm:w-1/2 lg:w-1/3"
+    />
+  </div>
 
-        <tbody class="divide-y divide-slate-800">
-          <tr v-for="row in table.getRowModel().rows" :key="row.id" class="hover:bg-slate-800/40">
-            <td
-              v-for="cell in row.getVisibleCells()"
-              :key="cell.id"
-              class="whitespace-nowrap px-4 py-3"
-            >
-              <!-- Render per column 'kind' (no JSX / no h()) -->
-              <template v-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'codeId'">
-                <code class="font-mono text-xs text-slate-300">
-                  {{ shortId(cell.getValue() as string | undefined) }}
-                </code>
-              </template>
+  <div class="overflow-x-auto rounded-xl border border-slate-700 bg-slate-900/70 shadow">
+    <table
+      class="sticky top-0 z-10 min-w-full divide-y divide-slate-700 text-sm text-slate-200 backdrop-blur"
+    >
+      <thead class="bg-slate-800/80 text-slate-100">
+        <tr v-for="hg in table.getHeaderGroups()" :key="hg.id">
+          <th
+            v-for="header in hg.headers"
+            :key="header.id"
+            class="px-4 py-3 text-left font-semibold uppercase tracking-wider"
+          >
+            {{ header.column.columnDef.header as string }}
+          </th>
+        </tr>
+      </thead>
 
-              <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'text'">
-                {{ cell.getValue() as string }}
-              </template>
+      <tbody class="divide-y divide-slate-800">
+        <tr v-if="loading" v-for="i in 10" :key="i">
+          <td class="px-4 py-3"><div :class="loadingTd" /></td>
+          <td class="px-4 py-3"><div :class="loadingTd" /></td>
+          <td class="px-4 py-3"><div :class="loadingTd" /></td>
+          <td class="px-4 py-3"><div :class="loadingTd" /></td>
+          <td class="px-4 py-3"><div :class="loadingTd" /></td>
+          <td class="px-4 py-3"><div :class="loadingTd" /></td>
+        </tr>
+        <tr
+          v-else
+          v-for="row in table.getRowModel().rows"
+          :key="row.id"
+          class="odd:bg-slate-900/40 even:bg-slate-700/30 hover:bg-slate-800/40 ..."
+        >
+          <td
+            v-for="cell in row.getVisibleCells()"
+            :key="cell.id"
+            class="whitespace-nowrap px-4 py-2.5"
+          >
+            <template v-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'text'">
+              <span class="text-md text-slate-100">{{ cell.getValue() as string }}</span>
+            </template>
 
-              <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'status'">
-                <span
-                  v-if="cell.getValue() as boolean"
-                  class="rounded-full bg-emerald-800/30 px-2 py-0.5 text-xs text-emerald-300"
-                >
-                  Active
-                </span>
-                <span v-else class="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-slate-300">
-                  Inactive
-                </span>
-              </template>
+            <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'status'">
+              <span
+                v-if="cell.getValue() as boolean"
+                class="rounded-full bg-emerald-700 px-2 py-0.5 text-sm text-emerald-200"
+              >
+                Active
+              </span>
+              <span v-else class="rounded-full bg-slate-800/60 px-2 py-0.5 text-sm text-slate-400">
+                Inactive
+              </span>
+            </template>
 
-              <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'datetime'">
+            <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'datetime'">
+              <span class="text-[12px] tracking-wide text-slate-100">
                 {{ formatUtc(cell.getValue() as string | null) }}
-              </template>
+              </span>
+            </template>
 
-              <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'actions'">
-                <button
-                  class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-500"
-                  @click="onEdit(row.original as UserDto)"
-                >
-                  Edit
-                </button>
-              </template>
+            <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'actions'">
+              <button
+                class="rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500"
+                @click="onEdit(row.original as UserResponse)"
+                aria-label="Edit user"
+              >
+                <Pencil class="h-4 w-4" />
+              </button>
+            </template>
 
-              <!-- Fallback -->
-              <template v-else>
-                {{ cell.getValue() as any }}
-              </template>
-            </td>
-          </tr>
+            <template v-else>{{ cell.getValue() as any }}</template>
+          </td>
+        </tr>
 
-          <tr v-if="!loading && users.length === 0">
-            <td class="px-6 py-6 text-slate-400" :colspan="table.getAllLeafColumns().length">
-              No results.
-            </td>
-          </tr>
-          <tr v-if="loading">
-            <td class="px-6 py-6 text-slate-400" :colspan="table.getAllLeafColumns().length">
-              Loading…
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <tr v-if="!loading && users.length === 0">
+          <td class="px-6 py-6 text-slate-400" :colspan="table.getAllLeafColumns().length">
+            No results.
+          </td>
+        </tr>
+        <tr v-if="loading">
+          <td class="px-6 py-6 text-slate-400" :colspan="table.getAllLeafColumns().length">
+            Loading…
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination / info -->
+  <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-300">
+    <div class="flex items-center gap-3">
+      <span>Total: {{ totalCount }}</span>
+      <span>Page {{ pagination.pageIndex + 1 }} / {{ totalPages }}</span>
     </div>
 
-    <!-- Pagination / info -->
-    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-300">
-      <div class="flex items-center gap-3">
-        <span>Total: {{ totalCount }}</span>
-        <span>Page {{ pagination.pageIndex + 1 }} / {{ totalPages }}</span>
-      </div>
+    <div class="flex items-center gap-2">
+      <label>Rows:</label>
+      <select
+        class="rounded-md border border-slate-700 bg-slate-900 px-2 py-1"
+        :value="pagination.pageSize"
+        @change="setPageSize(($event.target as HTMLSelectElement).value)"
+      >
+        <option v-for="s in [10, 25, 50]" :key="s" :value="s">{{ s }}</option>
+      </select>
 
       <div class="flex items-center gap-2">
-        <label class="mr-1">Rows:</label>
-        <select
-          class="rounded-md border border-slate-700 bg-slate-900 px-2 py-1"
-          :value="pagination.pageSize"
-          @change="setPageSize(($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="s in [10, 25, 50]" :key="s" :value="s">{{ s }}</option>
-        </select>
-
         <button
-          class="rounded-md border border-slate-700 px-3 py-1 disabled:opacity-50"
+          class="flex items-center justify-center rounded-md border border-slate-700 p-2 disabled:opacity-50"
           :disabled="!table.getCanPreviousPage()"
           @click="table.previousPage()"
+          aria-label="Previous page"
         >
-          Prev
+          <ChevronLeft class="h-4 w-4" />
         </button>
         <button
-          class="rounded-md border border-slate-700 px-3 py-1 disabled:opacity-50"
+          class="flex items-center justify-center rounded-md border border-slate-700 p-2 disabled:opacity-50"
           :disabled="!table.getCanNextPage()"
           @click="table.nextPage()"
+          aria-label="Next page"
         >
-          Next
+          <ChevronRight class="h-4 w-4" />
         </button>
       </div>
     </div>
@@ -115,7 +132,11 @@
 </template>
 
 <script setup lang="ts">
-  import api from '@/api';
+  // TODO: 1) search email
+  // 2) sort by column
+  // 3) Edit button working
+  import { getUsers } from '@/api/admin/users';
+  import type { GetUsersRequest, GetUsersResponse, UserResponse } from '@/types/api';
   import {
     createColumnHelper,
     getCoreRowModel,
@@ -123,38 +144,17 @@
     type ColumnDef,
     type ColumnHelper,
   } from '@tanstack/vue-table';
+  import { ChevronLeft, ChevronRight, Pencil } from 'lucide-vue-next';
   import { reactive, ref, watchEffect } from 'vue';
 
-  type UserDto = {
-    Id: string;
-    Email: string;
-    RoleName: string;
-    IsActive: boolean;
-    CreatedAtUtc: string;
-    UpdatedAtUtc: string;
-    DeletedAtUtc: string | null;
-  };
+  type ColMeta = { kind: 'text' } | { kind: 'status' } | { kind: 'datetime' } | { kind: 'actions' };
 
-  type GetUsersResult = {
-    Users: UserDto[];
-    TotalCount: number;
-    Page: number;
-    PageSize: number;
-    TotalPages: number;
-  };
-
-  type ColMeta =
-    | { kind: 'codeId' }
-    | { kind: 'text' }
-    | { kind: 'status' }
-    | { kind: 'datetime' }
-    | { kind: 'actions' };
-
-  const users = ref<UserDto[]>([]);
+  const loading = ref(false);
+  let reqSeq = 0;
   const totalCount = ref(0);
   const totalPages = ref(0);
-  const loading = ref(false);
-
+  const users = ref<UserResponse[]>([]);
+  const loadingTd = 'h-3 w-40 animate-pulse rounded bg-slate-700/50';
   // formatting helpers
   const fmt = new Intl.DateTimeFormat(undefined, {
     year: 'numeric',
@@ -164,39 +164,37 @@
     minute: '2-digit',
   });
   const formatUtc = (iso: string | null) => (iso ? fmt.format(new Date(iso)) : '—');
-  const shortId = (id: string | undefined) =>
-    id && id.length > 8 ? id.slice(0, 8) + '…' : (id ?? '—');
 
-  const col: ColumnHelper<UserDto> = createColumnHelper<UserDto>();
-  const columns: ColumnDef<UserDto, unknown>[] = [
-    col.accessor('Email', {
+  const col: ColumnHelper<UserResponse> = createColumnHelper<UserResponse>();
+  const columns: ColumnDef<UserResponse>[] = [
+    col.accessor('email', {
       header: 'Email',
-      meta: { kind: 'text' },
+      meta: { kind: 'text' as const },
     }),
-    col.accessor('RoleName', {
+    col.accessor('roleName', {
       header: 'Role Name',
-      meta: { kind: 'text' },
+      meta: { kind: 'text' as const },
     }),
-    col.accessor('IsActive', {
+    col.accessor('isActive', {
       header: 'Status',
-      meta: { kind: 'status' },
+      meta: { kind: 'status' as const },
     }),
-    col.accessor('CreatedAtUtc', {
+    col.accessor('createdAtUtc', {
       header: 'Created',
-      meta: { kind: 'datetime' },
+      meta: { kind: 'datetime' as const },
     }),
-    col.accessor('CreatedAtUtc', {
+    col.accessor('updatedAtUtc', {
       header: 'Last Modified',
-      meta: { kind: 'datetime' },
+      meta: { kind: 'datetime' as const },
     }),
-    col.accessor('CreatedAtUtc', {
-      header: 'Soft Deleted?',
-      meta: { kind: 'datetime' },
+    col.accessor('deletedAtUtc', {
+      header: 'Delete Date',
+      meta: { kind: 'datetime' as const },
     }),
     {
       id: 'actions',
       header: 'Actions',
-      meta: { kind: 'actions' },
+      meta: { kind: 'actions' as const },
       enableSorting: false,
     },
   ];
@@ -204,7 +202,7 @@
   // TanStack state (server mode)
   const pagination = reactive({ pageIndex: 0, pageSize: 25 });
 
-  const table = useVueTable<UserDto>({
+  const table = useVueTable<UserResponse>({
     get data() {
       return users.value;
     },
@@ -222,24 +220,34 @@
     initialState: { pagination },
   });
 
-  // Fetch from API whenever page or size changes
-  async function fetchUsers() {
+  async function fetchUsers(): Promise<void> {
     loading.value = true;
+    const seq = ++reqSeq; // capture this call's sequence
+
     try {
-      const page = pagination.pageIndex + 1; // backend 1-based
+      const page = pagination.pageIndex + 1; // backend is 1-based
       const pageSize = pagination.pageSize;
 
-      const { data } = await api.get<GetUsersResult>('/api/admin/users', {
-        params: { page, pageSize },
-      });
+      const params: GetUsersRequest = { page, pageSize };
+      const response: GetUsersResponse = await getUsers(params);
 
-      users.value = data.Users;
-      totalCount.value = data.TotalCount;
-      totalPages.value = data.TotalPages;
+      // Ignore stale responses
+      if (seq !== reqSeq) return;
 
-      // sync if backend adjusted values
-      pagination.pageIndex = Math.max(0, (data.Page ?? page) - 1);
-      pagination.pageSize = data.PageSize ?? pageSize;
+      // assign from response
+      users.value = response.users;
+      totalCount.value = response.totalCount;
+      totalPages.value = response.totalPages;
+
+      // sync pagination if server adjusted it (cap/normalize)
+      pagination.pageIndex = Math.max(0, (response.page ?? page) - 1);
+      pagination.pageSize = response.pageSize ?? pageSize;
+    } catch (err) {
+      console.error('Failed to fetch users', err);
+      // optional safety resets:
+      users.value = [];
+      totalCount.value = 0;
+      totalPages.value = 0;
     } finally {
       loading.value = false;
     }
@@ -247,12 +255,12 @@
 
   watchEffect(fetchUsers);
 
-  function onEdit(user: UserDto) {
-    console.log('edit', user.Id);
-  }
+  const onEdit = (user: UserResponse): void => {
+    console.log('edit', user.id);
+  };
 
-  function setPageSize(val: string) {
+  const setPageSize = (val: string): void => {
     pagination.pageSize = Number(val);
     pagination.pageIndex = 0;
-  }
+  };
 </script>

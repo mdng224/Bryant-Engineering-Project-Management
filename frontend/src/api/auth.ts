@@ -32,10 +32,7 @@ function setAuth(data: LoginResponse): void {
  * @returns The login response containing the token and expiration timestamp.
  */
 export async function login(loginPayload: LoginPayload): Promise<LoginResponse> {
-  const { data }: { data: LoginResponse } = await apiClient.post<LoginResponse>(
-    '/auth/login',
-    loginPayload,
-  );
+  const { data } = await apiClient.post<LoginResponse>('/auth/login', loginPayload);
 
   setAuth(data);
   return data;
@@ -49,7 +46,7 @@ export async function login(loginPayload: LoginPayload): Promise<LoginResponse> 
  * @returns The decoded JWT claims (subject, email, etc.).
  */
 export async function me(): Promise<MeResponse> {
-  const { data }: { data: MeResponse } = await apiClient.get<MeResponse>('/auth/me');
+  const { data } = await apiClient.get<MeResponse>('/auth/me');
 
   return data;
 }
@@ -63,10 +60,7 @@ export async function me(): Promise<MeResponse> {
  * @returns The register response containing userId, status ("pending"), and message.
  */
 export async function register(registerPayload: RegisterPayload): Promise<RegisterResponse> {
-  const { data }: { data: RegisterResponse } = await apiClient.post<RegisterResponse>(
-    '/auth/register',
-    registerPayload,
-  );
+  const { data } = await apiClient.post<RegisterResponse>('/auth/register', registerPayload);
 
   // Ensure no prior auth session remains after registration
   clearAuth();
