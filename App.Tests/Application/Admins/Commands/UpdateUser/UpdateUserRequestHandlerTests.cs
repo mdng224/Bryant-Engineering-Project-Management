@@ -5,7 +5,7 @@ using App.Domain.Users;
 using FluentAssertions;
 using Moq;
 
-namespace App.Tests.Application.Admins;
+namespace App.Tests.Application.Admins.Commands.UpdateUser;
 
 public class UpdateUserHandlerTests
 {
