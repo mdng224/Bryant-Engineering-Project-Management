@@ -4,17 +4,14 @@ public static class Guard
 {
     public static string AgainstNullOrWhiteSpace(string? input, string paramName)
     {
-        if (string.IsNullOrWhiteSpace(input))
-            throw new ArgumentException($"{paramName} cannot be null or empty.", paramName);
-
-        return input;
+        return string.IsNullOrWhiteSpace(input)
+            ? throw new ArgumentException($"{paramName} cannot be null or empty.", paramName)
+            : input;
     }
 
     public static T AgainstNull<T>(T? input, string paramName) where T : class
     {
-        if (input is null) throw new ArgumentNullException(paramName);
-
-        return input;
+        return input ?? throw new ArgumentNullException(paramName);
     }
 
     public static void AgainstInvalid<T>(T input, Func<T, bool> predicate, string message, string paramName)
@@ -26,9 +23,9 @@ public static class Guard
     public static T AgainstDefault<T>(T input, string paramName)
         where T : struct, IEquatable<T>
     {
-        if (input.Equals(default))
-            throw new ArgumentException($"{paramName} cannot be the default value.", paramName);
-        return input;
+        return input.Equals(default)
+            ? throw new ArgumentException($"{paramName} cannot be the default value.", paramName)
+            : input;
     }
 
     // default-value guard (nullable)

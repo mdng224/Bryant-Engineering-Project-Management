@@ -12,6 +12,7 @@ public sealed class Role
     public ICollection<User> Users { get; } = [];
 
     // --- Constructors --------------------------------------------------------
+    // ReSharper disable once UnusedMember.Local
     private Role() { }
     public Role(Guid id, string name)
     {

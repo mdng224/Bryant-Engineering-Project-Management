@@ -4,21 +4,21 @@ using App.Application.Admins.Commands.UpdateUser;
 using App.Application.Admins.Queries;
 using App.Application.Common;
 using App.Application.Common.Dtos;
+using App.Domain.Common;
 
 namespace App.Api.Mappers.Admins;
 
 internal static class AdminMappers
 {
-    public static GetUsersResponse ToResponse(this GetUsersResult result)
-        => new(
-            [.. result.Users.Select(u => u.ToResponse())],
+    public static GetUsersResponse ToResponse(this GetUsersResult result) =>
+        new(
+            [
+                .. result.Users.Select(u => u.ToResponse())
+            ],
             result.TotalCount,
             result.Page,
             result.PageSize,
             result.TotalPages);
-
-    public static UserResponse ToResponse(this UserDto dto)
-        => new(dto.Id, dto.Email, dto.RoleName, dto.IsActive, dto.CreatedAtUtc, dto.UpdatedAtUtc, dto.DeletedAtUtc);
 
     public static GetUsersQuery ToQuery(this GetUsersRequest request)
     {
@@ -30,13 +30,14 @@ internal static class AdminMappers
             : PagingDefaults.DefaultPageSize;
 
         // normalize: trim, then null if empty
-        var email = string.IsNullOrWhiteSpace(request.Email)
-            ? null
-            : request.Email.Trim();
+        var normalizedEmail = request.Email?.ToNormalizedEmail();
 
-        return new GetUsersQuery(page, size, email);
+        return new GetUsersQuery(page, size, normalizedEmail);
     }
 
     public static UpdateUserCommand ToCommand(this UpdateUserRequest request, Guid userId)
         => new(userId, request.RoleName, request.IsActive);
+    
+    private static UserResponse ToResponse(this UserDto dto) =>
+        new(dto.Id, dto.Email, dto.RoleName, dto.IsActive, dto.CreatedAtUtc, dto.UpdatedAtUtc, dto.DeletedAtUtc);
 }

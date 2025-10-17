@@ -75,20 +75,16 @@ public class User : IAuditableEntity
 
     public void SoftDelete()
     {
-        if (DeletedAtUtc is null)
-        {
-            DeletedAtUtc = DateTimeOffset.UtcNow;
-            UpdatedAtUtc = DeletedAtUtc.Value;
-        }
+        if (DeletedAtUtc is not null) return;
+        DeletedAtUtc = DateTimeOffset.UtcNow;
+        UpdatedAtUtc = DeletedAtUtc.Value;
     }
 
     public void Restore()
     {
-        if (DeletedAtUtc is not null)
-        {
-            DeletedAtUtc = null;
-            Touch();
-        }
+        if (DeletedAtUtc is null) return;
+        DeletedAtUtc = null;
+        Touch();
     }
 
     private void EnsureNotDeleted()

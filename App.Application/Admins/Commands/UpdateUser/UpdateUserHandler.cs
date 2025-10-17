@@ -25,7 +25,7 @@ public sealed class UpdateUserHandler(IUserWriter userWriter)
             user.SetRole(roleId);
         }
 
-        if (command.IsActive is bool active)
+        if (command.IsActive is { } active)
             if (active) user.Activate();
             else        user.Deactivate();
 

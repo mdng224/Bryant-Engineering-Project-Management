@@ -14,23 +14,23 @@ public static class AdminEndpoints
     public static void MapAdminEndpoints(this IEndpointRouteBuilder app)
     {
         var admins = app.MapGroup("/admins")
-                        .WithTags("Admins")
-                        .RequireAuthorization("AdminOnly");
+            .WithTags("Admins")
+            .RequireAuthorization("AdminOnly");
 
         // GET /admins/users?page=&pageSize=
         admins.MapGet("/users", GetUsers)
-              .WithSummary("List users (paginated)")
-              .Produces<GetUsersResponse>(StatusCodes.Status200OK)
-              .Produces(StatusCodes.Status403Forbidden);
+            .WithSummary("List users (paginated)")
+            .Produces<GetUsersResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status403Forbidden);
 
         // PUT /admins/users/{id}
         admins.MapPatch("/users/{userId:guid}", UpdateUser)
-              .AddEndpointFilter<Validate<UpdateUserRequest>>()
-              .WithSummary("Update a user's role and/or active status")
-              .Produces(StatusCodes.Status204NoContent)
-              .Produces(StatusCodes.Status404NotFound)
-              .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-              .Produces(StatusCodes.Status403Forbidden);
+            .AddEndpointFilter<Validate<UpdateUserRequest>>()
+            .WithSummary("Update a user's role and/or active status")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status403Forbidden);
     }
 
     private static async Task<IResult> GetUsers(

@@ -10,18 +10,21 @@ public sealed class UpdateUserRequestValidator : AbstractValidator<UpdateUserReq
     public UpdateUserRequestValidator()
     {
         // Require at least one field
-        RuleFor(x => x)
-            .Must(x => !string.IsNullOrWhiteSpace(x.RoleName) || x.IsActive.HasValue)
+        RuleFor(uur => uur)
+            .Must(uur => !string.IsNullOrWhiteSpace(uur.RoleName) || uur.IsActive.HasValue)
             .WithMessage("Provide roleName and/or isActive.");
 
         // Validate role only when provided
         When(x => x.RoleName is not null, () =>
         {
-            RuleFor(x => x.RoleName!)
+            RuleFor(uur => uur.RoleName!)
                 .Cascade(CascadeMode.Stop)
-                .Must(s => !string.IsNullOrWhiteSpace(s)).WithMessage("roleName cannot be empty.")
-                .Must(s => s!.Trim().Length <= 64).WithMessage("roleName is too long.")
-                .Must(s => RoleRegex.IsMatch(s!.Trim())).WithMessage("roleName contains invalid characters.");
+                .Must(s => !string.IsNullOrWhiteSpace(s))
+                .WithMessage("roleName cannot be empty.")
+                .Must(s => s!.Trim().Length <= 64)
+                .WithMessage("roleName is too long.")
+                .Must(s => RoleRegex.IsMatch(s!.Trim()))
+                .WithMessage("roleName contains invalid characters.");
         });
     }
 }

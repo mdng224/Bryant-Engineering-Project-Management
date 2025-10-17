@@ -4,11 +4,11 @@ namespace App.Api.Mappers;
 
 internal static class HttpResultMappers
 {
-    public static IResult ToHttpResult(this Result result) =>
-        result.IsSuccess ? Results.Ok() : MapError(result.Error);
+    public static IResult ToHttpResult(this Result result)
+        => result.IsSuccess ? Results.Ok() : MapError(result.Error);
 
-    public static IResult ToHttpResult<T>(this Result<T> result, Func<T, IResult> onOk) =>
-        result.IsSuccess ? onOk(result.Value!) : MapError(result.Error);
+    public static IResult ToHttpResult<T>(this Result<T> result, Func<T, IResult> onOk)
+        => result.IsSuccess ? onOk(result.Value!) : MapError(result.Error);
 
     private static IResult MapError(Error? error)
     {

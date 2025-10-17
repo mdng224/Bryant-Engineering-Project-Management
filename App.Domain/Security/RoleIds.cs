@@ -24,5 +24,5 @@ public static class RoleIds
         NameToId.TryGetValue(roleName, out roleId);
 
     public static string ToName(this Guid roleId) =>
-        IdToName.TryGetValue(roleId, out var name) ? name : "Unknown";
+        CollectionExtensions.GetValueOrDefault(IdToName, roleId, "Unknown");
 }

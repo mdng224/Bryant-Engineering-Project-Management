@@ -87,5 +87,7 @@ public static class AuthEndpoints
     /// Returns 200 with <see cref="MeResponse"/> on success or 401 if unauthorized.
     /// </remarks>
     private static IResult GetMe(ClaimsPrincipal user) =>
-        user.Identity?.IsAuthenticated is true ? Ok(user.ToResponse()) : Unauthorized();
+        user.Identity?.IsAuthenticated is true
+            ? Ok(user.ToResponse())
+            : Unauthorized();
 }

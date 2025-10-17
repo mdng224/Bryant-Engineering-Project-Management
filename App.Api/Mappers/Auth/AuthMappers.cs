@@ -24,9 +24,9 @@ internal static class AuthMappers
             throw new UnauthorizedAccessException("Invalid or missing 'subject' claim.");
 
         var email = user.FindFirst(JwtRegisteredClaimNames.Email)?.Value
-                 ?? user.FindFirst(ClaimTypes.Email)?.Value;
+                    ?? user.FindFirst(ClaimTypes.Email)?.Value;
 
-        return new(userId.ToString(), email);
+        return new MeResponse(userId.ToString(), email);
     }
 
     public static RegisterResponse ToResponse(this RegisterResult result)

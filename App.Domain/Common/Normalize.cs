@@ -6,8 +6,10 @@
 public static class Normalize
 {
     // --- Names / general text ------------------------------------------------
-    public static string ToNormalizedName(this string value) => CollapseSpaces(value.Trim()); // collapse OK for names
-    public static string ToNormalizedEmail(this string value) => value.Trim().ToLowerInvariant();
+    public static string ToNormalizedName(this string value)
+        => CollapseSpaces(value.Trim()); // collapse OK for names
+    public static string ToNormalizedEmail(this string value)
+        => value.Trim().ToLowerInvariant();
     public static string? ToNormalizedPhone(this string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return null;
@@ -23,12 +25,8 @@ public static class Normalize
     public static string? ToNormalizedCity(this string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : CollapseSpaces(value.Trim()); // collapse OK
 
-    public static string? ToNormalizedState(this string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return null;
-
-        return CollapseSpaces(value.Trim()).ToUpperInvariant();
-    }
+    public static string? ToNormalizedState(this string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : CollapseSpaces(value.Trim()).ToUpperInvariant();
 
     public static string? ToNormalizedPostal(this string? value)
     {
@@ -43,13 +41,9 @@ public static class Normalize
 
     // --- Free-form -----------------------------------------------------------
     public static string? ToNormalizedNote(this string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return null;
-        // preserve interior spacing/newlines; just trim ends
-
-        return value.Trim();
-    }
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     // --- Private helpers -----------------------------------------------------
-    private static string CollapseSpaces(this string s) => string.Join(' ', s.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+    private static string CollapseSpaces(this string s)
+        => string.Join(' ', s.Split(' ', StringSplitOptions.RemoveEmptyEntries));
 }

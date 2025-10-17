@@ -108,7 +108,7 @@ public sealed class Client : IAuditableEntity
         var p = postalCode.ToNormalizedPostal();
         var co = country.ToNormalizedCountry();
 
-        bool changed = false;
+        var changed = false;
 
         if (a1 != AddressLine1) { AddressLine1 = a1; changed = true; }
         if (a2 != AddressLine2) { AddressLine2 = a2; changed = true; }
@@ -133,20 +133,16 @@ public sealed class Client : IAuditableEntity
 
     public void SoftDelete()
     {
-        if (DeletedAtUtc is null)
-        {
-            DeletedAtUtc = DateTimeOffset.UtcNow;
-            UpdatedAtUtc = DeletedAtUtc.Value;
-        }
+        if (DeletedAtUtc is not null) return;
+        DeletedAtUtc = DateTimeOffset.UtcNow;
+        UpdatedAtUtc = DeletedAtUtc.Value;
     }
 
     public void Restore()
     {
-        if (DeletedAtUtc is not null)
-        {
-            DeletedAtUtc = null;
-            Touch();
-        }
+        if (DeletedAtUtc is null) return;
+        DeletedAtUtc = null;
+        Touch();
     }
 
     // --- Helpers --------------------------------------------------------------
