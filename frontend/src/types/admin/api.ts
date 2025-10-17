@@ -3,6 +3,7 @@
 export type GetUsersRequest = {
   page: number;
   pageSize: number;
+  email?: string;
 };
 
 export type GetUsersResponse = {

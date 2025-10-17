@@ -3,25 +3,25 @@ using App.Application.Common;
 using App.Domain.Security;
 using static App.Application.Common.R;
 
-namespace App.Application.Admins.Commands.UpdateUser;
+namespace App.Application.Admins.Commands.PatchUser;
 
-public sealed class UpdateUserHandler(IUserWriter userWriter)
-    : ICommandHandler<UpdateUserCommand, Result<UpdateUserResult>>
+public sealed class PatchUserHandler(IUserWriter userWriter)
+    : ICommandHandler<PatchUserCommand, Result<PatchUserResult>>
 {
-    public async Task<Result<UpdateUserResult>> Handle(UpdateUserCommand command, CancellationToken ct)
+    public async Task<Result<PatchUserResult>> Handle(PatchUserCommand command, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(command.RoleName) && !command.IsActive.HasValue)
-            return Ok(UpdateUserResult.NoChangesSpecified);
+            return Ok(PatchUserResult.NoChangesSpecified);
 
         // single tracked load → mutate → one save
-        var user = await userWriter.GetForUpdateAsync(command.UserId, ct);
+        var user = await userWriter.GetForPatchAsync(command.UserId, ct);
         if (user is null)
-            return Fail<UpdateUserResult>("not_found", "User not found.");
+            return Fail<PatchUserResult>("not_found", "User not found.");
 
         if (command.RoleName is { } roleName)   // rolename != null
         {
             if (!RoleIds.TryFromName(roleName.Trim(), out Guid roleId))
-                return Fail<UpdateUserResult>("not_found", "Role not found.");
+                return Fail<PatchUserResult>("not_found", "Role not found.");
             user.SetRole(roleId);
         }
 
@@ -31,6 +31,6 @@ public sealed class UpdateUserHandler(IUserWriter userWriter)
 
         await userWriter.SaveChangesAsync(ct);
 
-        return Ok(UpdateUserResult.Ok);
+        return Ok(PatchUserResult.Ok);
     }
 }

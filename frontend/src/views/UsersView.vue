@@ -1,6 +1,7 @@
 <template>
   <div class="pb-4">
     <input
+      v-model="emailSearchTerm"
       placeholder="Search email…"
       class="h-9 min-w-[260px] rounded-md border border-slate-700 bg-slate-900/70 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 sm:w-1/2 lg:w-1/3"
     />
@@ -135,14 +136,13 @@
     :user="userBeingEdited"
     :roles="['User', 'Manager', 'Administrator']"
     @close="editUserDialogIsOpen = false"
-    @saved="applyRowUpdate"
+    @saved="fetchUsers"
   />
 </template>
 
 <script setup lang="ts">
   // TODO: 1) search email
   // 2) sort by column
-
   import { getUsers } from '@/api/admin/users';
   import EditUserDialog from '@/components/EditUserDialog.vue';
   import type { GetUsersRequest, GetUsersResponse, UserResponse } from '@/types';
@@ -154,13 +154,15 @@
     type ColumnHelper,
   } from '@tanstack/vue-table';
   import { ChevronLeft, ChevronRight, Pencil } from 'lucide-vue-next';
-  import { reactive, ref, watchEffect } from 'vue';
+  import { reactive, ref, watch, watchEffect } from 'vue';
 
   type ColMeta = { kind: 'text' } | { kind: 'status' } | { kind: 'datetime' } | { kind: 'actions' };
 
   const editUserDialogIsOpen = ref(false);
+  const emailSearchTerm = ref('');
   const loading = ref(false);
   let reqSeq = 0;
+  let searchTimeout: ReturnType<typeof setTimeout> | null = null;
   const totalCount = ref(0);
   const totalPages = ref(0);
   const users = ref<UserResponse[]>([]);
@@ -230,17 +232,10 @@
     },
     getCoreRowModel: getCoreRowModel(),
     initialState: { pagination },
+    getRowId: row => String(row.id),
   });
 
   // --------------------- FUNCTIONS --------------------------------
-  const applyRowUpdate = (updated: UserResponse): void => {
-    const i = users.value.findIndex(u => u.id === updated.id);
-    if (i >= 0) {
-      // preserve array identity for reactivity
-      users.value[i] = { ...users.value[i], ...updated };
-    }
-  };
-
   async function fetchUsers(): Promise<void> {
     loading.value = true;
     const seq = ++reqSeq; // capture this call's sequence
@@ -255,6 +250,7 @@
       // Ignore stale responses
       if (seq !== reqSeq) return;
 
+      // TODO: Maybe map this to a user model
       // assign from response
       users.value = response.users;
       totalCount.value = response.totalCount;
@@ -275,6 +271,37 @@
   }
 
   watchEffect(fetchUsers);
+
+  watch(emailSearchTerm, val => {
+    if (searchTimeout) clearTimeout(searchTimeout);
+
+    searchTimeout = setTimeout(() => {
+      search(val.trim());
+    }, 500);
+  });
+
+  const search = async (email: string): Promise<void> => {
+    loading.value = true;
+    const seq = ++reqSeq;
+
+    try {
+      const page = 1;
+      const pageSize = pagination.pageSize;
+      const request: GetUsersRequest = { page, pageSize, email };
+      const response: GetUsersResponse = await getUsers(request);
+
+      if (seq !== reqSeq) return; // ignore stale results
+
+      users.value = response.users;
+      totalCount.value = response.totalCount;
+      totalPages.value = response.totalPages;
+    } catch (err) {
+      console.error('Search failed', err);
+      users.value = [];
+    } finally {
+      loading.value = false;
+    }
+  };
 
   const onEdit = (user: UserResponse): void => {
     userBeingEdited.value = user;

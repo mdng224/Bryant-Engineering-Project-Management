@@ -1,6 +1,6 @@
 ﻿// App.Api/Mappers/Admins/AdminMappers.cs
 using App.Api.Contracts.Admins;
-using App.Application.Admins.Commands.UpdateUser;
+using App.Application.Admins.Commands.PatchUser;
 using App.Application.Admins.Queries;
 using App.Application.Common;
 using App.Application.Common.Dtos;
@@ -29,9 +29,14 @@ internal static class AdminMappers
             ? request.PageSize
             : PagingDefaults.DefaultPageSize;
 
-        return new GetUsersQuery(page, size);
+        // normalize: trim, then null if empty
+        var email = string.IsNullOrWhiteSpace(request.Email)
+            ? null
+            : request.Email.Trim();
+
+        return new GetUsersQuery(page, size, email);
     }
 
-    public static UpdateUserCommand ToCommand(this UpdateUserRequest request, Guid userId)
+    public static PatchUserCommand ToCommand(this PatchUserRequest request, Guid userId)
         => new(userId, request.RoleName, request.IsActive);
 }

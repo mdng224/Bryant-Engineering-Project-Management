@@ -28,17 +28,17 @@ public sealed class GetUsersHandlerTests
         return list;
     }
 
-
     [Fact]
     public async Task Returns_Paged_Users_With_Normalized_Paging()
     {
         // Arrange: page < 1 -> normalized to 1; pageSize < 1 -> default to 25
-        var query = new GetUsersQuery(Page: 0, PageSize: 0);
+        var query = new GetUsersQuery(Page: 0, PageSize: 0, Email: null);
 
-        // Expect skip = (1 - 1) * 25 = 0; take = 25
+        // Expect skip = (1 - 1) * 25 = 0; take = 25; email = null
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),
                 It.Is<int>(t => t == 25),
+                It.Is<string?>(e => e == null),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((MakeUsers(10), 42));
 
@@ -47,61 +47,63 @@ public sealed class GetUsersHandlerTests
 
         // Assert
         res.IsSuccess.Should().BeTrue();
-        var payload = res.Value;
-        payload!.TotalCount.Should().Be(42);
-        payload!.Page.Should().Be(1);
-        payload!.PageSize.Should().Be(25);
-        payload.Users.Count.Should().Be(10); // mapped count matches source
+        var payload = res.Value!;
+        payload.TotalCount.Should().Be(42);
+        payload.Page.Should().Be(1);
+        payload.PageSize.Should().Be(25);
+        payload.Users.Count.Should().Be(10);
         payload.TotalPages.Should().Be((int)Math.Ceiling(42 / 25.0)); // 2
     }
 
     [Fact]
-    public async Task Caps_PageSize_At_100_And_Computes_Skip()
+    public async Task Caps_PageSize_At_200_And_Computes_Skip()
     {
-        // Arrange: page=3, requested pageSize=500 -> capped at 100
-        var query = new GetUsersQuery(Page: 3, PageSize: 500);
+        // Arrange: page=3, requested pageSize=500 -> capped at 200
+        var query = new GetUsersQuery(Page: 3, PageSize: 500, Email: null);
 
-        // Expect skip = (3 - 1) * 100 = 200; take = 100
+        // Expect skip = (3 - 1) * 200 = 400; take = 200; email = null
         _reader.Setup(r => r.GetPagedAsync(
-                It.Is<int>(s => s == 200),
-                It.Is<int>(t => t == 100),
+                It.Is<int>(s => s == 400),
+                It.Is<int>(t => t == 200),
+                It.Is<string?>(e => e == null),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MakeUsers(100), 1_234));
+            .ReturnsAsync((MakeUsers(200), 1_234));
 
         // Act
         var res = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
         res.IsSuccess.Should().BeTrue();
-        var payload = res.Value;
-        payload!.Page.Should().Be(3);
-        payload!.PageSize.Should().Be(100);
-        payload.Users.Count.Should().Be(100);
+        var payload = res.Value!;
+        payload.Page.Should().Be(3);
+        payload.PageSize.Should().Be(200);
+        payload.Users.Count.Should().Be(200);
         payload.TotalCount.Should().Be(1234);
-        payload.TotalPages.Should().Be((int)Math.Ceiling(1234 / 100.0)); // 13
+        payload.TotalPages.Should().Be((int)Math.Ceiling(1234 / 200.0)); // 7
     }
 
     [Fact]
     public async Task Uses_Provided_PageSize_When_Within_Bounds()
     {
         // Arrange: page=2, pageSize=50 (valid)
-        var query = new GetUsersQuery(Page: 2, PageSize: 50);
+        var query = new GetUsersQuery(Page: 2, PageSize: 50, Email: null);
 
-        // Expect skip = (2 - 1) * 50 = 50; take = 50
+        // Expect skip = (2 - 1) * 50 = 50; take = 50; email = null
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 50),
                 It.Is<int>(t => t == 50),
+                It.Is<string?>(e => e == null),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MakeUsers(50), 120));  // total spans multiple pages
+            .ReturnsAsync((MakeUsers(50), 120));
 
         // Act
         var res = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
         res.IsSuccess.Should().BeTrue();
-        var payload = res.Value;
-        payload!.Page.Should().Be(2);
-        payload!.PageSize.Should().Be(50);
+        var payload = res.Value!;
+        payload.Page.Should().Be(2);
+        payload.PageSize.Should().Be(50);
         payload.Users.Count.Should().Be(50);
         payload.TotalPages.Should().Be((int)Math.Ceiling(120 / 50.0)); // 3
     }
@@ -109,50 +111,90 @@ public sealed class GetUsersHandlerTests
     [Fact]
     public async Task TotalPages_Is_Zero_When_Total_Is_Zero()
     {
-        // Arrange: any paging, but total=0
-        var query = new GetUsersQuery(Page: 5, PageSize: 25);
+        var query = new GetUsersQuery(Page: 5, PageSize: 25, Email: null);
 
         _reader.Setup(r => r.GetPagedAsync(
                 It.IsAny<int>(),
                 It.IsAny<int>(),
+                It.Is<string?>(e => e == null),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<User>(), 0));
 
-        // Act
         var res = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         res.IsSuccess.Should().BeTrue();
-        var payload = res.Value;
-        payload!.TotalCount.Should().Be(0);
+        var payload = res.Value!;
+        payload.TotalCount.Should().Be(0);
         payload.Users.Should().BeEmpty();
         payload.TotalPages.Should().Be(0);
-        // Note: handler still echoes normalized page/pageSize back
-        payload!.Page.Should().Be(5);
-        payload!.PageSize.Should().Be(25);
+        payload.Page.Should().Be(5);
+        payload.PageSize.Should().Be(25);
     }
 
     [Fact]
     public async Task Normalizes_Negative_Page_To_1_And_Defaults_PageSize_To_25()
     {
-        // Arrange
-        var query = new GetUsersQuery(Page: -10, PageSize: -3);
+        var query = new GetUsersQuery(Page: -10, PageSize: -3, Email: null);
 
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),   // (1-1)*25
                 It.Is<int>(t => t == 25),
+                It.Is<string?>(e => e == null),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((MakeUsers(3), 3));
 
-        // Act
         var res = await _handler.Handle(query, CancellationToken.None);
 
-        // Assert
         res.IsSuccess.Should().BeTrue();
-        var payload = res.Value;
-        payload!.Page.Should().Be(1);
-        payload!.PageSize.Should().Be(25);
+        var payload = res.Value!;
+        payload.Page.Should().Be(1);
+        payload.PageSize.Should().Be(25);
         payload.TotalPages.Should().Be(1);
         payload.Users.Count.Should().Be(3);
+    }
+
+    // ---------- New tests for email search ----------
+
+    [Fact]
+    public async Task Applies_Email_Filter_When_Provided()
+    {
+        var query = new GetUsersQuery(Page: 1, PageSize: 25, Email: "dan");
+
+        _reader.Setup(r => r.GetPagedAsync(
+                It.Is<int>(s => s == 0),
+                It.Is<int>(t => t == 25),
+                It.Is<string?>(e => e == "dan"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MakeUsers(2), 2));
+
+        var res = await _handler.Handle(query, CancellationToken.None);
+
+        res.IsSuccess.Should().BeTrue();
+        var payload = res.Value!;
+        payload.Page.Should().Be(1);
+        payload.PageSize.Should().Be(25);
+        payload.Users.Count.Should().Be(2);
+        payload.TotalCount.Should().Be(2);
+        payload.TotalPages.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Trims_Email_Filter_Before_Passing_To_Reader()
+    {
+        var query = new GetUsersQuery(Page: 1, PageSize: 25, Email: "  dan  ");
+
+        _reader.Setup(r => r.GetPagedAsync(
+                It.Is<int>(s => s == 0),
+                It.Is<int>(t => t == 25),
+                It.Is<string?>(e => e == "dan"), // trimmed
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MakeUsers(1), 1));
+
+        var res = await _handler.Handle(query, CancellationToken.None);
+
+        res.IsSuccess.Should().BeTrue();
+        var payload = res.Value!;
+        payload.Users.Count.Should().Be(1);
+        payload.TotalCount.Should().Be(1);
     }
 }
