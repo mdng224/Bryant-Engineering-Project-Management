@@ -124,7 +124,7 @@
   import { login } from '@/api/auth';
   import { useAuth } from '@/composables/useAuth';
   import { useAuthFields } from '@/composables/useAuthFields';
-  import type { ApiErrorData, LoginPayload } from '@/types/api';
+  import type { ApiErrorResponse, LoginRequest } from '@/types/';
 
   const route = useRoute();
   const router = useRouter();
@@ -137,12 +137,12 @@
   const emailEl = ref<HTMLInputElement | null>(null);
   const errorEl = ref<HTMLElement | null>(null);
   const formClass: string = `
-    w-full rounded-lg border border-slate-700 bg-slate-950
-    px-3.5 py-2.5 text-slate-100 outline-none transition
-    placeholder:text-slate-500
-    focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
-    disabled:opacity-60 disabled:cursor-not-allowed
-  `;
+      w-full rounded-lg border border-slate-700 bg-slate-950
+      px-3.5 py-2.5 text-slate-100 outline-none transition
+      placeholder:text-slate-500
+      focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
+      disabled:opacity-60 disabled:cursor-not-allowed
+    `;
   onMounted(() => emailEl.value?.focus());
 
   const canSubmit = computed(() => isEmailValid.value && password.value);
@@ -153,11 +153,11 @@
     errorMessage.value = null;
 
     try {
-      const loginPayload: LoginPayload = {
+      const LoginRequest: LoginRequest = {
         email: normalizedEmail.value, // locale-insensitive for emails
         password: password.value,
       };
-      await login(loginPayload);
+      await login(LoginRequest);
       const authed = await ensureAuthState(true);
 
       if (authed) {
@@ -170,7 +170,7 @@
     } catch (err: unknown) {
       let msg = 'Login failed. Please try again.';
 
-      if (isAxiosError<ApiErrorData>(err)) {
+      if (isAxiosError<ApiErrorResponse>(err)) {
         const { status, data } = err.response ?? {};
 
         // Prefer ProblemDetails.detail, then message, then legacy error

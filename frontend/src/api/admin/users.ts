@@ -1,5 +1,10 @@
 import api from '@/api';
-import type { GetUsersRequest, GetUsersResponse } from '@/types/api';
+import type {
+  GetUsersRequest,
+  GetUsersResponse,
+  UpdateUserRequest,
+  UserResponse,
+} from '@/types/admin/api';
 
 /**
  * Fetches a paginated list of users from the admin API.
@@ -38,4 +43,10 @@ export async function getUsers(params: GetUsersRequest): Promise<GetUsersRespons
     }
     throw err;
   }
+}
+
+export async function updateUser(id: string, body: UpdateUserRequest): Promise<UserResponse> {
+  const { data } = await api.patch<UserResponse>(`/admins/users/${id}`, body);
+
+  return data;
 }

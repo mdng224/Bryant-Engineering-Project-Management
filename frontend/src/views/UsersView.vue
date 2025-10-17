@@ -129,14 +129,23 @@
       </div>
     </div>
   </div>
+
+  <EditUserDialog
+    :open="editUserDialogIsOpen"
+    :user="userBeingEdited"
+    :roles="['User', 'Manager', 'Administrator']"
+    @close="editUserDialogIsOpen = false"
+    @saved="applyRowUpdate"
+  />
 </template>
 
 <script setup lang="ts">
   // TODO: 1) search email
   // 2) sort by column
-  // 3) Edit button working
+
   import { getUsers } from '@/api/admin/users';
-  import type { GetUsersRequest, GetUsersResponse, UserResponse } from '@/types/api';
+  import EditUserDialog from '@/components/EditUserDialog.vue';
+  import type { GetUsersRequest, GetUsersResponse, UserResponse } from '@/types';
   import {
     createColumnHelper,
     getCoreRowModel,
@@ -149,12 +158,15 @@
 
   type ColMeta = { kind: 'text' } | { kind: 'status' } | { kind: 'datetime' } | { kind: 'actions' };
 
+  const editUserDialogIsOpen = ref(false);
   const loading = ref(false);
   let reqSeq = 0;
   const totalCount = ref(0);
   const totalPages = ref(0);
   const users = ref<UserResponse[]>([]);
   const loadingTd = 'h-3 w-40 animate-pulse rounded bg-slate-700/50';
+  const userBeingEdited = ref<UserResponse | null>(null);
+
   // formatting helpers
   const fmt = new Intl.DateTimeFormat(undefined, {
     year: 'numeric',
@@ -220,6 +232,15 @@
     initialState: { pagination },
   });
 
+  // --------------------- FUNCTIONS --------------------------------
+  const applyRowUpdate = (updated: UserResponse): void => {
+    const i = users.value.findIndex(u => u.id === updated.id);
+    if (i >= 0) {
+      // preserve array identity for reactivity
+      users.value[i] = { ...users.value[i], ...updated };
+    }
+  };
+
   async function fetchUsers(): Promise<void> {
     loading.value = true;
     const seq = ++reqSeq; // capture this call's sequence
@@ -256,7 +277,8 @@
   watchEffect(fetchUsers);
 
   const onEdit = (user: UserResponse): void => {
-    console.log('edit', user.id);
+    userBeingEdited.value = user;
+    editUserDialogIsOpen.value = true;
   };
 
   const setPageSize = (val: string): void => {

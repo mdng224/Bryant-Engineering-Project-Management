@@ -1,11 +1,11 @@
 // src/api/auth.ts
 import type {
-  LoginPayload,
+  LoginRequest,
   LoginResponse,
   MeResponse,
-  RegisterPayload,
+  RegisterRequest,
   RegisterResponse,
-} from '@/types/api';
+} from '@/types/auth/api';
 import apiClient from '.';
 
 /* --------------------------- Constants --------------------------- */
@@ -31,8 +31,8 @@ function setAuth(data: LoginResponse): void {
  * @description Exchanges email/password for a JWT token and stores it in localStorage.
  * @returns The login response containing the token and expiration timestamp.
  */
-export async function login(loginPayload: LoginPayload): Promise<LoginResponse> {
-  const { data } = await apiClient.post<LoginResponse>('/auth/login', loginPayload);
+export async function login(LoginRequest: LoginRequest): Promise<LoginResponse> {
+  const { data } = await apiClient.post<LoginResponse>('/auth/login', LoginRequest);
 
   setAuth(data);
   return data;
@@ -59,8 +59,8 @@ export async function me(): Promise<MeResponse> {
  * The backend marks the user as inactive (IsActive = false) until approved.
  * @returns The register response containing userId, status ("pending"), and message.
  */
-export async function register(registerPayload: RegisterPayload): Promise<RegisterResponse> {
-  const { data } = await apiClient.post<RegisterResponse>('/auth/register', registerPayload);
+export async function register(RegisterRequest: RegisterRequest): Promise<RegisterResponse> {
+  const { data } = await apiClient.post<RegisterResponse>('/auth/register', RegisterRequest);
 
   // Ensure no prior auth session remains after registration
   clearAuth();

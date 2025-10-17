@@ -188,7 +188,7 @@
 <script setup lang="ts">
   import { register } from '@/api/auth';
   import { useAuthFields } from '@/composables/useAuthFields';
-  import type { ApiErrorData, RegisterPayload, RegisterResponse } from '@/types/api';
+  import type { ApiErrorResponse, RegisterRequest, RegisterResponse } from '@/types';
   import { isAxiosError } from 'axios';
   import { AlertTriangle, CheckCircle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
   import { computed, nextTick, onMounted, ref } from 'vue';
@@ -237,14 +237,14 @@
     errorMessage.value = null;
 
     try {
-      const payload: RegisterPayload = { email: normalizedEmail.value, password: password.value };
+      const payload: RegisterRequest = { email: normalizedEmail.value, password: password.value };
       const registerResponse: RegisterResponse = await register(payload);
       success.value = registerResponse;
     } catch (err: unknown) {
       let msg = 'Registration failed. Please try again.';
       let emailFieldError: string | null = null;
 
-      if (isAxiosError<ApiErrorData>(err)) {
+      if (isAxiosError<ApiErrorResponse>(err)) {
         const data = err.response?.data;
         const emailErr = data?.errors?.['email'];
         emailFieldError =
