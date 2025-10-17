@@ -10,10 +10,10 @@ public class RegisterRequestValidatorTests
     public void Valid_Payload_Passes()
     {
         // Arrange
-        var registerRequest = new RegisterRequest("user@example.com", "SuperSecret1");
+        var request = new RegisterRequest("user@example.com", "SuperSecret1");
 
         // Act
-        var result = _validator.TestValidate(registerRequest);
+        var result = _validator.TestValidate(request);
 
         // Assert
         result.ShouldNotHaveAnyValidationErrors();
@@ -23,10 +23,10 @@ public class RegisterRequestValidatorTests
     public void Empty_Email_Fails_With_Message()
     {
         // Arrange
-        var registerRequest = new RegisterRequest(string.Empty, "supersecret1");
+        var request = new RegisterRequest(string.Empty, "supersecret1");
 
         // Act
-        var result = _validator.TestValidate(registerRequest);
+        var result = _validator.TestValidate(request);
 
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.Email)
@@ -41,10 +41,10 @@ public class RegisterRequestValidatorTests
     public void Invalid_Email_Format_Fails(string badEmail)
     {
         // Arrange
-        var registerRequest = new RegisterRequest(badEmail, "SuperSecret1");
+        var request = new RegisterRequest(badEmail, "SuperSecret1");
 
         // Act
-        var result = _validator.TestValidate(registerRequest);
+        var result = _validator.TestValidate(request);
 
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.Email)
@@ -55,10 +55,10 @@ public class RegisterRequestValidatorTests
     public void Empty_Password_Fails_With_Message()
     {
         // Arrange
-        var registerRequest = new RegisterRequest("user@example.com", string.Empty);
+        var request = new RegisterRequest("user@example.com", string.Empty);
 
         // Act
-        var result = _validator.TestValidate(registerRequest);
+        var result = _validator.TestValidate(request);
 
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
@@ -71,10 +71,10 @@ public class RegisterRequestValidatorTests
     public void Short_Password_Fails_With_Message(string shortPassword)
     {
         // Arrange
-        var registerRequest = new RegisterRequest("user@example.com", shortPassword);
+        var request = new RegisterRequest("user@example.com", shortPassword);
 
         // Act
-        var result = _validator.TestValidate(registerRequest);
+        var result = _validator.TestValidate(request);
 
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
@@ -85,10 +85,10 @@ public class RegisterRequestValidatorTests
     public void Missing_Uppercase_Fails_With_Message()
     {
         // arrange
-        var registerRequest = new RegisterRequest("user@example.com", "supersecret1"); // no uppercase
+        var request = new RegisterRequest("user@example.com", "supersecret1"); // no uppercase
 
         // act
-        var result = _validator.TestValidate(registerRequest);
+        var result = _validator.TestValidate(request);
 
         // assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
@@ -99,10 +99,10 @@ public class RegisterRequestValidatorTests
     public void Missing_Digit_Fails_With_Message()
     {
         // arrange
-        var registerRequest = new RegisterRequest("user@example.com", "SuperSecret"); // no digit
+        var request = new RegisterRequest("user@example.com", "SuperSecret"); // no digit
 
         // act
-        var result = _validator.TestValidate(registerRequest);
+        var result = _validator.TestValidate(request);
 
         // assert
         result.ShouldHaveValidationErrorFor(x => x.Password)
@@ -113,10 +113,10 @@ public class RegisterRequestValidatorTests
     public void Boundary_Length_8_Passes_When_Other_Rules_Met()
     {
         // arrange
-        var registerRequest = new RegisterRequest("user@example.com", "Abcdef1G"); // 8 chars
+        var request = new RegisterRequest("user@example.com", "Abcdef1G"); // 8 chars
 
         // act
-        var result = _validator.TestValidate(registerRequest);
+        var result = _validator.TestValidate(request);
 
         // assert
         result.ShouldNotHaveValidationErrorFor(x => x.Password);
@@ -126,10 +126,10 @@ public class RegisterRequestValidatorTests
     public void Nulls_Fail_Both_Fields()
     {
         // Arrange
-        var registerRequest = new RegisterRequest(null!, null!);
+        var request = new RegisterRequest(null!, null!);
 
         // Act
-        var result = _validator.TestValidate(registerRequest);
+        var result = _validator.TestValidate(request);
 
         // Assert
         result.ShouldHaveValidationErrorFor(x => x.Email);

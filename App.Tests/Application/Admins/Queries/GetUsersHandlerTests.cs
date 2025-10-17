@@ -20,7 +20,7 @@ public sealed class GetUsersHandlerTests
     private static List<User> MakeUsers(int count, Guid? roleId = null)
     {
         var list = new List<User>(capacity: count);
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
             var u = new User($"user{i}@example.com", "hash", roleId ?? RoleIds.User);
             list.Add(u);
@@ -56,18 +56,18 @@ public sealed class GetUsersHandlerTests
     }
 
     [Fact]
-    public async Task Caps_PageSize_At_200_And_Computes_Skip()
+    public async Task Caps_PageSize_At_100_And_Computes_Skip()
     {
-        // Arrange: page=3, requested pageSize=500 -> capped at 200
+        // Arrange: page=3, requested pageSize=500 -> capped at 100
         var query = new GetUsersQuery(Page: 3, PageSize: 500, Email: null);
 
-        // Expect skip = (3 - 1) * 200 = 400; take = 200; email = null
+        // Expect skip = (3 - 1) * 100 = 200; take = 100; email = null
         _reader.Setup(r => r.GetPagedAsync(
-                It.Is<int>(s => s == 400),
-                It.Is<int>(t => t == 200),
+                It.Is<int>(s => s == 200),
+                It.Is<int>(t => t == 100),
                 It.Is<string?>(e => e == null),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MakeUsers(200), 1_234));
+            .ReturnsAsync((MakeUsers(100), 1_234));
 
         // Act
         var res = await _handler.Handle(query, CancellationToken.None);
@@ -76,10 +76,10 @@ public sealed class GetUsersHandlerTests
         res.IsSuccess.Should().BeTrue();
         var payload = res.Value!;
         payload.Page.Should().Be(3);
-        payload.PageSize.Should().Be(200);
-        payload.Users.Count.Should().Be(200);
+        payload.PageSize.Should().Be(100);
+        payload.Users.Count.Should().Be(100);
         payload.TotalCount.Should().Be(1234);
-        payload.TotalPages.Should().Be((int)Math.Ceiling(1234 / 200.0)); // 7
+        payload.TotalPages.Should().Be((int)Math.Ceiling(1234 / 100.0)); // 13
     }
 
     [Fact]
@@ -183,17 +183,23 @@ public sealed class GetUsersHandlerTests
     {
         var query = new GetUsersQuery(Page: 1, PageSize: 25, Email: "  dan  ");
 
+        string? passedEmail = null;
+
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),
                 It.Is<int>(t => t == 25),
-                It.Is<string?>(e => e == "dan"), // trimmed
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
+            .Callback<int, int, string?, CancellationToken>((s, t, e, ct) => passedEmail = e)
             .ReturnsAsync((MakeUsers(1), 1));
 
         var res = await _handler.Handle(query, CancellationToken.None);
 
         res.IsSuccess.Should().BeTrue();
+        passedEmail.Should().Be("dan"); // verify the trimming actually happened
+
         var payload = res.Value!;
+        payload.Users.Should().NotBeNull();
         payload.Users.Count.Should().Be(1);
         payload.TotalCount.Should().Be(1);
     }

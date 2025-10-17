@@ -10,7 +10,7 @@ public class BcryptPasswordHasherTests
     {
         // Arrange
         var hasher = new BcryptPasswordHasher();
-        var password = "My$trongP@ssword1!";
+        const string password = "My$trongP@ssword1!";
 
         // Act
         var hash = hasher.Hash(password);
@@ -30,7 +30,7 @@ public class BcryptPasswordHasherTests
     {
         // Arrange
         var hasher = new BcryptPasswordHasher();
-        var password = "My$trongP@ssword1!";
+        const string password = "My$trongP@ssword1!";
 
         // Act
         var h1 = hasher.Hash(password);
@@ -88,14 +88,14 @@ public class BcryptPasswordHasherTests
     {
         // Arrange
         var hasher = new BcryptPasswordHasher();
-        var pwd = "abc123";
+        const string password = "abc123";
 
         // Create a valid hash, then simulate PHP/Ruby style by swapping to $2y$
-        var aHash = hasher.Hash(pwd);               // e.g., $2a$11$...
+        var aHash = hasher.Hash(password);               // e.g., $2a$11$...
         var yHash = string.Concat("$2y$", aHash.AsSpan(4));    // same salt+digest, different prefix
 
         // Act
-        var ok = hasher.Verify(pwd, yHash);
+        var ok = hasher.Verify(password, yHash);
 
         // Assert
         ok.Should().BeTrue();

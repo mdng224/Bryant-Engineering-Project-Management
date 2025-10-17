@@ -8,21 +8,21 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
 {
     // Readers
     public async Task<bool> ExistsByEmailAsync(string normalizedEmail, CancellationToken ct = default)
-    => await db.Users
-        .AsNoTracking()
-        .AnyAsync(u => u.Email == normalizedEmail, ct);
+        => await db.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.Email == normalizedEmail, ct);
 
     public async Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken ct = default)
-    => await db.Users
-        .AsNoTracking()
-        .Include(u => u.Role)
-        .FirstOrDefaultAsync(u => u.Email == normalizedEmail, ct);
+        => await db.Users
+            .AsNoTracking()
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Email == normalizedEmail, ct);
 
     public async Task<(IReadOnlyList<User> users, int totalCount)> GetPagedAsync(
         int skip, int take, string? email = null, CancellationToken ct = default)
     {
-        const int MaxPageSize = 200;
-        take = Math.Clamp(take, 1, MaxPageSize);
+        const int maxPageSize = 200;
+        take = Math.Clamp(take, 1, maxPageSize);
         skip = Math.Max(0, skip);
 
         var query = db.Users.AsNoTracking();
@@ -33,7 +33,7 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
             var term = email.Trim();
 
             // Optional: escape user-provided wildcards so search is literal
-            term = term.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+            term = term.Replace("\\", @"\\").Replace("%", "\\%").Replace("_", "\\_");
 
             var pattern = $"%{term}%";
             query = query.Where(u => EF.Functions.ILike(u.Email, pattern));
@@ -59,7 +59,7 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
         return Task.CompletedTask;
     }
 
-    public Task<User?> GetForPatchAsync(Guid id, CancellationToken ct) =>
+    public Task<User?> GetForUpdateAsync(Guid id, CancellationToken ct) =>
         db.Users.FirstOrDefaultAsync(u => u.Id == id, ct); // tracked
 
     public Task SaveChangesAsync(CancellationToken ct) => db.SaveChangesAsync(ct);

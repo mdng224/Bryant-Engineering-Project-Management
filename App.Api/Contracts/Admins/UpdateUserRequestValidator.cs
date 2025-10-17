@@ -3,11 +3,11 @@ using System.Text.RegularExpressions;
 
 namespace App.Api.Contracts.Admins;
 
-public sealed class PatchUserRequestValidator : AbstractValidator<PatchUserRequest>
+public sealed class UpdateUserRequestValidator : AbstractValidator<UpdateUserRequest>
 {
     private static readonly Regex RoleRegex = new("^[A-Za-z0-9 _-]+$", RegexOptions.Compiled);
 
-    public PatchUserRequestValidator()
+    public UpdateUserRequestValidator()
     {
         // Require at least one field
         RuleFor(x => x)

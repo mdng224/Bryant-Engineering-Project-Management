@@ -4,15 +4,15 @@ using FluentValidation.TestHelper;
 
 namespace App.Tests.Api.Contracts.Admins;
 
-public class PatchUserRequestValidatorTests
+public class UpdateUserRequestValidatorTests
 {
-    private readonly PatchUserRequestValidator _validator = new();
+    private readonly UpdateUserRequestValidator _validator = new();
 
     [Fact]
     public void Requires_At_Least_One_Field()
     {
         // Arrange
-        var model = new PatchUserRequest(RoleName: null, IsActive: null);
+        var model = new UpdateUserRequest(RoleName: null, IsActive: null);
 
         // Act
         var result = _validator.TestValidate(model);
@@ -28,7 +28,7 @@ public class PatchUserRequestValidatorTests
     public void Accepts_Only_IsActive_Change()
     {
         // Arrange
-        var model = new PatchUserRequest(RoleName: null, IsActive: true);
+        var model = new UpdateUserRequest(RoleName: null, IsActive: true);
 
         // Act
         var result = _validator.TestValidate(model);
@@ -41,7 +41,7 @@ public class PatchUserRequestValidatorTests
     public void Rejects_Whitespace_RoleName()
     {
         // Arrange
-        var model = new PatchUserRequest(RoleName: "   ", IsActive: null);
+        var model = new UpdateUserRequest(RoleName: "   ", IsActive: null);
 
         // Act
         var result = _validator.TestValidate(model);
@@ -55,7 +55,7 @@ public class PatchUserRequestValidatorTests
     public void Rejects_RoleName_Too_Long()
     {
         // Arrange
-        var model = new PatchUserRequest(RoleName: new string('A', 65), IsActive: null);
+        var model = new UpdateUserRequest(RoleName: new string('A', 65), IsActive: null);
 
         // Act
         var result = _validator.TestValidate(model);
@@ -73,7 +73,7 @@ public class PatchUserRequestValidatorTests
     public void Rejects_RoleName_With_Invalid_Characters(string bad)
     {
         // Arrange
-        var model = new PatchUserRequest(RoleName: bad, IsActive: null);
+        var model = new UpdateUserRequest(RoleName: bad, IsActive: null);
 
         // Act
         var result = _validator.TestValidate(model);
@@ -92,7 +92,7 @@ public class PatchUserRequestValidatorTests
     public void Accepts_RoleName_With_Allowed_Characters(string ok)
     {
         // Arrange
-        var model = new PatchUserRequest(RoleName: ok, IsActive: null);
+        var model = new UpdateUserRequest(RoleName: ok, IsActive: null);
 
         // Act
         var result = _validator.TestValidate(model);

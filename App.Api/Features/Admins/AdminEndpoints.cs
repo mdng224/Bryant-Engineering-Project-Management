@@ -2,7 +2,7 @@
 using App.Api.Filters;
 using App.Api.Mappers.Admins;
 using App.Application.Abstractions;
-using App.Application.Admins.Commands.PatchUser;
+using App.Application.Admins.Commands.UpdateUser;
 using App.Application.Admins.Queries;
 using App.Application.Common;
 using static Microsoft.AspNetCore.Http.Results;
@@ -24,9 +24,9 @@ public static class AdminEndpoints
               .Produces(StatusCodes.Status403Forbidden);
 
         // PUT /admins/users/{id}
-        admins.MapPatch("/users/{userId:guid}", PatchUser)
-              .AddEndpointFilter<Validate<PatchUserRequest>>()
-              .WithSummary("Patch a user's role and/or active status")
+        admins.MapPatch("/users/{userId:guid}", UpdateUser)
+              .AddEndpointFilter<Validate<UpdateUserRequest>>()
+              .WithSummary("Update a user's role and/or active status")
               .Produces(StatusCodes.Status204NoContent)
               .Produces(StatusCodes.Status404NotFound)
               .ProducesValidationProblem(StatusCodes.Status400BadRequest)
@@ -49,10 +49,10 @@ public static class AdminEndpoints
         return Ok(response);
     }
 
-    private static async Task<IResult> PatchUser(
+    private static async Task<IResult> UpdateUser(
         Guid userId,
-        PatchUserRequest request,
-        ICommandHandler<PatchUserCommand, Result<PatchUserResult>> handler,
+        UpdateUserRequest request,
+        ICommandHandler<UpdateUserCommand, Result<UpdateUserResult>> handler,
         CancellationToken ct)
     {
         var command = request.ToCommand(userId);
@@ -63,10 +63,10 @@ public static class AdminEndpoints
 
         return result.Value switch
         {
-            PatchUserResult.Ok                 => NoContent(),
-            PatchUserResult.UserNotFound       => NotFound(new { Message = "User not found." }),
-            PatchUserResult.RoleNotFound       => NotFound(new { message = "Role not found." }),
-            PatchUserResult.NoChangesSpecified => ValidationProblem(
+            UpdateUserResult.Ok                 => NoContent(),
+            UpdateUserResult.UserNotFound       => NotFound(new { Message = "User not found." }),
+            UpdateUserResult.RoleNotFound       => NotFound(new { message = "Role not found." }),
+            UpdateUserResult.NoChangesSpecified => ValidationProblem(
                 new Dictionary<string, string[]> { ["body"] = ["Provide roleName and/or isActive."] }),
 
             _ => Problem("Unknown error.")

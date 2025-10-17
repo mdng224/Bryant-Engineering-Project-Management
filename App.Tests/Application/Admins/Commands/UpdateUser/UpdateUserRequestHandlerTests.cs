@@ -1,35 +1,35 @@
 ﻿using App.Application.Abstractions;
-using App.Application.Admins.Commands.PatchUser;
+using App.Application.Admins.Commands.UpdateUser;
 using App.Domain.Security;
 using App.Domain.Users;
 using FluentAssertions;
 using Moq;
 
-namespace App.Tests.Application.Admins.Commands.PatchUser;
+namespace App.Tests.Application.Admins.Commands.UpdateUser;
 
-public class PatchUserHandlerTests
+public class UpdateUserHandlerTests
 {
     private readonly Mock<IUserWriter> _writer = new();
-    private readonly PatchUserHandler _handler;
+    private readonly UpdateUserHandler _handler;
 
-    public PatchUserHandlerTests()
+    public UpdateUserHandlerTests()
     {
-        _handler = new PatchUserHandler(_writer.Object);
+        _handler = new UpdateUserHandler(_writer.Object);
     }
 
     [Fact]
     public async Task Returns_NoChangesSpecified_When_Nothing_Provided()
     {
         // Arrange
-        var cmd = new PatchUserCommand(Guid.NewGuid(), null, null);
+        var cmd = new UpdateUserCommand(Guid.NewGuid(), null, null);
 
         // Act
-        var res = await _handler.Handle(cmd, default);
+        var res = await _handler.Handle(cmd, CancellationToken.None);
 
         // Assert
         res.IsSuccess.Should().BeTrue();
-        res.Value.Should().Be(PatchUserResult.NoChangesSpecified);
-        _writer.Verify(w => w.GetForPatchAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        res.Value.Should().Be(UpdateUserResult.NoChangesSpecified);
+        _writer.Verify(w => w.GetForUpdateAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -38,13 +38,13 @@ public class PatchUserHandlerTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        _writer.Setup(w => w.GetForPatchAsync(userId, It.IsAny<CancellationToken>()))
+        _writer.Setup(w => w.GetForUpdateAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((User?)null);
 
-        var cmd = new PatchUserCommand(userId, RoleNames.User, true);
+        var cmd = new UpdateUserCommand(userId, RoleNames.User, true);
 
         // Act
-        var res = await _handler.Handle(cmd, default);
+        var res = await _handler.Handle(cmd, CancellationToken.None);
 
         // Assert
         res.IsSuccess.Should().BeFalse();
@@ -58,13 +58,13 @@ public class PatchUserHandlerTests
     {
         // Arrange
         var user = NewUser(RoleIds.User);
-        _writer.Setup(w => w.GetForPatchAsync(user.Id, It.IsAny<CancellationToken>()))
+        _writer.Setup(w => w.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        var cmd = new PatchUserCommand(user.Id, "NotARole", null);
+        var cmd = new UpdateUserCommand(user.Id, "NotARole", null);
 
         // Act
-        var res = await _handler.Handle(cmd, default);
+        var res = await _handler.Handle(cmd, CancellationToken.None);
 
         // Assert
         res.IsSuccess.Should().BeFalse();
@@ -74,61 +74,61 @@ public class PatchUserHandlerTests
     }
 
     [Fact]
-    public async Task Patches_Role_Only()
+    public async Task Updates_Role_Only()
     {
         // Arrange
         var user = NewUser(RoleIds.Manager);
-        _writer.Setup(w => w.GetForPatchAsync(user.Id, It.IsAny<CancellationToken>()))
+        _writer.Setup(w => w.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        var cmd = new PatchUserCommand(user.Id, RoleNames.User, null);
+        var cmd = new UpdateUserCommand(user.Id, RoleNames.User, null);
 
         // Act
-        var res = await _handler.Handle(cmd, default);
+        var res = await _handler.Handle(cmd, CancellationToken.None);
 
         // Assert
         res.IsSuccess.Should().BeTrue();
-        res.Value.Should().Be(PatchUserResult.Ok);
+        res.Value.Should().Be(UpdateUserResult.Ok);
         user.RoleId.Should().Be(RoleIds.User);
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task Patches_Status_Only()
+    public async Task Updates_Status_Only()
     {
         // Arrange
         var user = NewUser(RoleIds.User);
-        _writer.Setup(w => w.GetForPatchAsync(user.Id, It.IsAny<CancellationToken>()))
+        _writer.Setup(w => w.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        var cmd = new PatchUserCommand(user.Id, null, true);
+        var cmd = new UpdateUserCommand(user.Id, null, true);
 
         // Act
-        var res = await _handler.Handle(cmd, default);
+        var res = await _handler.Handle(cmd, CancellationToken.None);
 
         // Assert
         res.IsSuccess.Should().BeTrue();
-        res.Value.Should().Be(PatchUserResult.Ok);
+        res.Value.Should().Be(UpdateUserResult.Ok);
         user.IsActive.Should().BeTrue();
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task Patches_Both_Role_And_Status()
+    public async Task Updates_Both_Role_And_Status()
     {
         // Arrange
         var user = NewUser(RoleIds.User);
-        _writer.Setup(w => w.GetForPatchAsync(user.Id, It.IsAny<CancellationToken>()))
+        _writer.Setup(w => w.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        var cmd = new PatchUserCommand(user.Id, RoleNames.Administrator, false);
+        var cmd = new UpdateUserCommand(user.Id, RoleNames.Administrator, false);
 
         // Act
-        var res = await _handler.Handle(cmd, default);
+        var res = await _handler.Handle(cmd, CancellationToken.None);
 
         // Assert
         res.IsSuccess.Should().BeTrue();
-        res.Value.Should().Be(PatchUserResult.Ok);
+        res.Value.Should().Be(UpdateUserResult.Ok);
         user.RoleId.Should().Be(RoleIds.Administrator);
         user.IsActive.Should().BeFalse();
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -139,17 +139,17 @@ public class PatchUserHandlerTests
     {
         // Arrange
         var user = NewUser(RoleIds.Manager);
-        _writer.Setup(w => w.GetForPatchAsync(user.Id, It.IsAny<CancellationToken>()))
+        _writer.Setup(w => w.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        var cmd = new PatchUserCommand(user.Id, $"  {RoleNames.User}  ", null);
+        var cmd = new UpdateUserCommand(user.Id, $"  {RoleNames.User}  ", null);
 
         // Act
-        var res = await _handler.Handle(cmd, default);
+        var res = await _handler.Handle(cmd, CancellationToken.None);
 
         // Assert
         res.IsSuccess.Should().BeTrue();
-        res.Value.Should().Be(PatchUserResult.Ok);
+        res.Value.Should().Be(UpdateUserResult.Ok);
         user.RoleId.Should().Be(RoleIds.User);
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -159,13 +159,13 @@ public class PatchUserHandlerTests
     {
         // Arrange
         var user = NewUser(RoleIds.Manager);
-        _writer.Setup(w => w.GetForPatchAsync(user.Id, It.IsAny<CancellationToken>()))
+        _writer.Setup(w => w.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        var cmd = new PatchUserCommand(user.Id, "   ", true);
+        var cmd = new UpdateUserCommand(user.Id, "   ", true);
 
         // Act
-        var res = await _handler.Handle(cmd, default);
+        var res = await _handler.Handle(cmd, CancellationToken.None);
 
         // Assert
         res.IsSuccess.Should().BeFalse();
