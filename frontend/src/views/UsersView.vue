@@ -134,7 +134,6 @@
   <EditUserDialog
     :open="editUserDialogIsOpen"
     :user="userBeingEdited"
-    :roles="['User', 'Manager', 'Administrator']"
     @close="editUserDialogIsOpen = false"
     @saved="fetchUsers"
   />

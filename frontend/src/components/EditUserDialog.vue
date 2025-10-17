@@ -21,13 +21,10 @@
           <select
             v-model="form.roleName"
             :disabled="saving"
-            class="w-full appearance-none rounded-md border border-slate-700 bg-slate-900/70 px-3 py-2 pr-10 text-sm text-slate-100 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60"
+            class="w-full rounded-md border border-slate-700 bg-slate-900/70 px-3 py-2 pr-10 text-sm text-slate-100 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60"
           >
             <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
           </select>
-          <ChevronDown
-            class="pointer-events-none absolute right-7 top-[48%] h-[18px] w-[18px] -translate-y-[45%] text-slate-400"
-          />
         </div>
 
         <!-- STATUS -->
@@ -45,7 +42,7 @@
         </div>
       </div>
 
-      <footer class="mt-6 flex justify-end gap-2">
+      <footer class="mt-6 flex justify-end gap-2 pb-4">
         <button class="rounded-md border border-slate-700 px-3 py-1.5" @click="$emit('close')">
           Cancel
         </button>
@@ -57,20 +54,31 @@
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
       </footer>
+
+      <!-- Error -->
+      <p
+        v-if="errorMessage"
+        class="flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
+        role="alert"
+        aria-live="assertive"
+        tabindex="-1"
+      >
+        <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+        <span>{{ errorMessage }}</span>
+      </p>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
   import { updateUser } from '@/api/admin/users';
-  import type { UserResponse } from '@/types';
-  import { ChevronDown } from 'lucide-vue-next';
+  import type { UpdateUserRequest, UserResponse } from '@/types';
+  import { AlertTriangle } from 'lucide-vue-next';
   import { computed, ref, watch } from 'vue';
 
   const props = defineProps<{
     open: boolean;
     user: UserResponse | null;
-    roles?: string[];
   }>();
 
   const emit = defineEmits<{
@@ -78,9 +86,9 @@
     (e: 'saved', user: UserResponse): void;
   }>();
 
-  const roles = computed(() => props.roles ?? ['User', 'Manager', 'Administrator']);
-
+  const errorMessage = ref<string | null>(null);
   const form = ref({ roleName: '', isActive: false });
+  const roles = ['Administrator', 'Manager', 'User'];
   const saving = ref(false);
 
   watch(
@@ -92,6 +100,13 @@
     { immediate: true },
   );
 
+  watch(
+    () => props.open,
+    isOpen => {
+      if (isOpen) errorMessage.value = null; // reset error each time dialog opens
+    },
+  );
+
   const isNoop = computed(
     () =>
       !props.user ||
@@ -99,23 +114,27 @@
   );
 
   async function save() {
-    if (!props.user || isNoop.value) {
-      emit('close');
-      return;
-    }
-    saving.value = true;
-    try {
-      const payload: any = {};
-      if (form.value.roleName !== props.user.roleName) payload.roleName = form.value.roleName;
-      if (form.value.isActive !== props.user.isActive) payload.isActive = form.value.isActive;
+    if (!props.user || isNoop.value || saving.value) return;
 
-      const updated = await updateUser(props.user.id, payload);
-      // Expect backend to return updated user with updatedAtUtc set
-      emit('saved', { ...props.user, ...updated });
+    saving.value = true;
+    errorMessage.value = null;
+
+    try {
+      const request: Partial<UpdateUserRequest> = {};
+      if (form.value.roleName !== props.user.roleName) request.roleName = form.value.roleName;
+      if (form.value.isActive !== props.user.isActive) request.isActive = form.value.isActive;
+
+      const response: UserResponse = await updateUser(props.user.id, request);
+      emit('saved', { ...props.user, ...response });
       emit('close');
-    } catch (e) {
-      // TODO: toast the error if you have a toaster
-      console.error(e);
+    } catch (e: any) {
+      const status = e?.response?.status;
+      const serverMsg = e?.response?.data?.message ?? e?.response?.data?.error;
+      errorMessage.value =
+        status === 403
+          ? (serverMsg ?? 'You are not allowed to perform this action.')
+          : (serverMsg ?? e?.message ?? 'Failed to update user.');
+      // keep dialog open; no emits
     } finally {
       saving.value = false;
     }

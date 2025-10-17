@@ -58,18 +58,33 @@ public static class AdminEndpoints
         var command = request.ToCommand(userId);
         var result = await handler.Handle(command, ct);
 
-        if (!result.IsSuccess)
-            return Problem(result.Error!.Value.Message ?? "Unexpected error.");
-
-        return result.Value switch
+        return !result.IsSuccess ? ToHttpError(result.Error!.Value) : ToHttpSuccess(result.Value);
+    }
+    
+    private static IResult ToHttpError(Error error)
+    {
+        return error.Code switch
         {
-            UpdateUserResult.Ok                 => NoContent(),
-            UpdateUserResult.UserNotFound       => NotFound(new { Message = "User not found." }),
-            UpdateUserResult.RoleNotFound       => NotFound(new { message = "Role not found." }),
-            UpdateUserResult.NoChangesSpecified => ValidationProblem(
-                new Dictionary<string, string[]> { ["body"] = ["Provide roleName and/or isActive."] }),
-
-            _ => Problem("Unknown error.")
+            "not_found"  => Results.NotFound(new { message = error.Message }),
+            "forbidden"  => Results.Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
+            "conflict"   => Results.Conflict(new { message = error.Message }),
+            "validation" => Results.ValidationProblem(
+                new Dictionary<string, string[]> { ["body"] = [error.Message ?? "Validation failed."] }),
+            _            => Results.Problem(error.Message ?? "Unexpected error.")
         };
     }
+
+    private static IResult ToHttpSuccess(UpdateUserResult value)
+    {
+        return value switch
+        {
+            UpdateUserResult.Ok                 => Results.NoContent(),
+            UpdateUserResult.UserNotFound       => Results.NotFound(new { message = "User not found." }),
+            UpdateUserResult.RoleNotFound       => Results.NotFound(new { message = "Role not found." }),
+            UpdateUserResult.NoChangesSpecified => Results.ValidationProblem(
+                new Dictionary<string, string[]> { ["body"] = ["Provide roleName and/or isActive."] }),
+            _ => Results.Problem("Unknown result.")
+        };
+    }
+
 }
