@@ -4,6 +4,7 @@ namespace App.Application.Abstractions;
 
 public interface IUserReader
 {
+    Task<int> CountActiveAdminsAsync(CancellationToken ct = default);
     Task<bool> ExistsByEmailAsync(string normalizedEmail, CancellationToken ct = default);
     Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken ct = default);
     Task<(IReadOnlyList<User> users, int totalCount)> GetPagedAsync(
