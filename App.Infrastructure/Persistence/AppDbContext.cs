@@ -1,6 +1,6 @@
 ﻿using App.Domain.Common;
 using App.Domain.Users;
-using App.Infrastructure.Data.Configurations;
+using App.Infrastructure.Persistence.Configurations;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Infrastructure.Persistence;

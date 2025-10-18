@@ -2,56 +2,43 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace App.Infrastructure.Data.Configurations;
+namespace App.Infrastructure.Persistence.Configurations;
 
 public sealed class UserConfig : IEntityTypeConfiguration<User>
 {
-    public void Configure(EntityTypeBuilder<User> entity)
+    public void Configure(EntityTypeBuilder<User> b)
     {
-        entity.ToTable("users");
+        // --- Table -----------------------------------------------------------------
+        b.ToTable("users");
 
         // --- Keys ------------------------------------------------------------
-        entity.Property(u => u.Id).ValueGeneratedNever();   // IDs are supplied (Guid v7)
+        b.HasKey(u => u.Id);
 
-        // --- Email -----------------------------------------------------------
-        entity.Property(u => u.Email)
+        // --- Properties -----------------------------------------------------
+        b.Property(u => u.Id).ValueGeneratedNever(); // IDs are supplied (Guid v7)
+        b.Property(u => u.Email).IsRequired().HasMaxLength(128);
+        b.Property(u => u.PasswordHash).IsRequired().HasMaxLength(255);
+        b.Property(u => u.IsActive)
             .IsRequired()
-            .HasMaxLength(128);                             // Almost all modern providers reject anything longer than 128 chars.
-        entity.HasIndex(u => u.Email)                       //  (case sensitivity handled by the app layer)
-              .HasDatabaseName("ux_users_email")
-              .IsUnique()
-              .HasFilter("\"DeletedAtUtc\" IS NULL");
-
-        // --- Password -------------------------------------------------------
-        entity.Property(u => u.PasswordHash)
-              .IsRequired()
-              .HasMaxLength(60);                            // BCrypt hashes are 60 characters.
-
+            .HasDefaultValue(false); // Users are inactive by default until explicitly activated.
+        b.Property(u => u.CreatedAtUtc)
+            .IsRequired()
+            .HasColumnType("timestamptz")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        b.Property(u => u.UpdatedAtUtc)
+            .IsRequired()
+            .HasColumnType("timestamptz");
+        b.Property(u => u.DeletedAtUtc).HasColumnType("timestamptz");
+        
         // --- Relationships --------------------------------------------------
-        entity.HasOne(u => u.Role)
-              .WithMany(r => r.Users)
-              .HasForeignKey(u => u.RoleId)
-              .OnDelete(DeleteBehavior.Restrict)
-              .IsRequired();
-
-        entity.HasIndex(u => u.RoleId).HasDatabaseName("ix_users_role_id");
-
-        // --- IsActive -------------------------------------------------------
-        entity.Property(u => u.IsActive)
-            .IsRequired()
-            .HasDefaultValue(false);                        // Users are inactive by default until explicitly activated.
-
-        // --- Auditing -------------------------------------------------------
-        entity.Property(u => u.CreatedAtUtc)
-              .IsRequired()
-              .HasColumnType("timestamptz")
-              .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-        entity.Property(u => u.UpdatedAtUtc)
-              .IsRequired()
-              .HasColumnType("timestamptz")
-              .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-        entity.Property(u => u.DeletedAtUtc).HasColumnType("timestamptz");
+        b.HasOne(u => u.Role)
+            .WithMany(r => r.Users)
+            .HasForeignKey(u => u.RoleId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
+        
+        // --- Indexes / Uniqueness ------------------------------------------
+        b.HasIndex(u => u.RoleId).HasDatabaseName("ix_users_role_id");
+        b.HasIndex(u => u.Email).HasDatabaseName("ux_users_email").IsUnique().HasFilter("\"DeletedAtUtc\" IS NULL");
     }
 }

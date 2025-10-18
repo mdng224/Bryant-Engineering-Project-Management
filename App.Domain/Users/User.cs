@@ -1,4 +1,5 @@
 ﻿using App.Domain.Common;
+using App.Domain.Employees;
 
 namespace App.Domain.Users;
 
@@ -12,7 +13,7 @@ public class User : IAuditableEntity
     public Guid Id { get; private set; }
 
     // --- Core Fields ----------------------------------------------------------
-
+    public Employee? Employee { get; private set; } = null!; // 1:1 back-nav
     public string Email { get; private set; } = null!;  // Normalized (trimmed) on creation.
     public string PasswordHash { get; private set; } = null!;  // Secure password hash (BCrypt). Never stored in plain text.
     public Role Role { get; private set; } = null!;
@@ -36,11 +37,11 @@ public class User : IAuditableEntity
 
     public User(string email, string passwordHash, Guid roleId)
     {
-        Id = Guid.CreateVersion7();            // ordered, time-based GUID (requires .NET 8+)
+        Id = Guid.CreateVersion7();
 
         Email = Guard.AgainstNullOrWhiteSpace(email, nameof(email)).ToNormalizedEmail();
         PasswordHash = Guard.AgainstNullOrWhiteSpace(passwordHash, nameof(passwordHash));
-        RoleId = roleId;
+        RoleId = Guard.AgainstDefault(roleId, nameof(roleId));
 
         var now = DateTimeOffset.UtcNow;
         CreatedAtUtc = now;
@@ -48,27 +49,36 @@ public class User : IAuditableEntity
     }
 
     // --- Mutators  -------------------------------------------------------------
+    public void Activate()
+    {
+        EnsureNotDeleted();
+        if (IsActive) return;
+        IsActive = true;
+        Touch();
+    }
 
-    public void Activate() => IsActive = true;
-    public void Deactivate() => IsActive = false;
+    public void Deactivate()
+    {
+        EnsureNotDeleted();
+        if (!IsActive) return;
+        IsActive = false;
+        Touch();
+    }
+    
     public void SetRole(Guid newRoleId)
     {
         EnsureNotDeleted();
-
-        Guard.AgainstDefault(newRoleId, nameof(newRoleId));
-        if (newRoleId == RoleId) return; // no-op
-
-        RoleId = newRoleId;
+        var valid = Guard.AgainstDefault(newRoleId, nameof(newRoleId));
+        if (valid == RoleId) return;
+        RoleId = valid;
         Touch();
     }
 
     public void SetPasswordHash(string passwordHash)
     {
         EnsureNotDeleted();
-
         var hash = Guard.AgainstNullOrWhiteSpace(passwordHash, nameof(passwordHash));
-        if (hash == PasswordHash) return; // no-operation
-
+        if (hash == PasswordHash) return;
         PasswordHash = hash;
         Touch();
     }

@@ -16,7 +16,7 @@ public sealed class Role
     private Role() { }
     public Role(Guid id, string name)
     {
-        Id = id;
+        Id = Guard.AgainstDefault(id, nameof(id));
         Name = Guard.AgainstNullOrWhiteSpace(name, nameof(name)).ToNormalizedName();
     }
 }
