@@ -34,6 +34,17 @@ public sealed class Employee : IAuditableEntity
     public string? LicenseNotes { get; private set; }               // e.g., "PLS"
     public string? Notes { get; private set; }
     
+    /// <summary>
+    /// Recommended role to apply to the new User created for this employee.
+    /// Nullable: you can be preapproved without changing default role, or recommend without preapproval.
+    /// </summary>
+    public Guid? RecommendedRoleId { get; private set; }
+
+    /// <summary>
+    /// If true, after email verification a registering user with matching CompanyEmail can be activated immediately.
+    /// </summary>
+    public bool IsPreapproved { get; private set; }
+    
     /* TODO: figure out rates later with Andy */
     
     // --- Auditing ------------------------------------------------------------
@@ -125,6 +136,23 @@ public sealed class Employee : IAuditableEntity
         UserId = null;
         Touch();
     }
+    
+    public void RecommendRole(Guid? roleId)
+    {
+        EnsureNotDeleted();
+        if (roleId is { } r) Guard.AgainstDefault(r, nameof(roleId));
+        RecommendedRoleId = roleId;
+        Touch();
+    }
+
+    public void SetPreapproved(bool isPreapproved)
+    {
+        EnsureNotDeleted();
+        if (isPreapproved && string.IsNullOrWhiteSpace(CompanyEmail))
+            throw new InvalidOperationException("Cannot preapprove an employee without a company email.");
+        IsPreapproved = isPreapproved;
+        Touch();
+    }
 
     public void SetEmployment(EmploymentType? type, SalaryType? pay)
     {
@@ -150,7 +178,16 @@ public sealed class Employee : IAuditableEntity
     public void SetCompanyEmail(string? email)
     {
         EnsureNotDeleted();
-        CompanyEmail = string.IsNullOrWhiteSpace(email) ? null : email.ToNormalizedEmail();
+
+        var normalized = string.IsNullOrWhiteSpace(email) ? null : email.ToNormalizedEmail();
+        CompanyEmail = normalized;
+
+        // If removing email, preapproval must be dropped for safety.
+        if (normalized is null && IsPreapproved)
+        {
+            IsPreapproved = false;
+        }
+
         Touch();
     }
 

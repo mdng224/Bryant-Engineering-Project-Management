@@ -81,6 +81,8 @@ namespace App.Infrastructure.Data.Migrations
                     work_location = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     license_notes = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     notes = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    recommended_role_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    is_preapproved = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     deleted_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true)
@@ -88,6 +90,7 @@ namespace App.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_employees", x => x.id);
+                    table.CheckConstraint("ck_employee_preapproved_requires_email", "\"is_preapproved\" = FALSE OR \"company_email\" IS NOT NULL");
                     table.CheckConstraint("ck_employees_dates_order", "end_date IS NULL OR hire_date IS NULL OR hire_date <= end_date");
                     table.CheckConstraint("ck_employees_employment_type_valid", "employee_type IS NULL OR employee_type IN ('FullTime','PartTime')");
                     table.CheckConstraint("ck_employees_first_not_empty", "length(trim(first_name)) > 0");

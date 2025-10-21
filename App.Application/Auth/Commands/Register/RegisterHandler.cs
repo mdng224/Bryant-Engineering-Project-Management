@@ -23,6 +23,7 @@ public sealed class RegisterHandler(
         var passwordHash = passwordHasher.Hash(command.Password);
         var user = new User(normalizedEmail, passwordHash, RoleIds.User); // IsActive defaults (false) in domain
 
+        
         await userWriter.AddAsync(user, ct);
         await userWriter.SaveChangesAsync(ct);
 

@@ -65,6 +65,12 @@ namespace App.Infrastructure.Data.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("hire_date");
 
+                    b.Property<bool>("IsPreapproved")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_preapproved");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -85,6 +91,10 @@ namespace App.Infrastructure.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("preferred_name");
+
+                    b.Property<Guid?>("RecommendedRoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recommended_role_id");
 
                     b.Property<string>("SalaryType")
                         .HasColumnType("text")
@@ -121,6 +131,8 @@ namespace App.Infrastructure.Data.Migrations
 
                     b.ToTable("employees", null, t =>
                         {
+                            t.HasCheckConstraint("ck_employee_preapproved_requires_email", "\"is_preapproved\" = FALSE OR \"company_email\" IS NOT NULL");
+
                             t.HasCheckConstraint("ck_employees_dates_order", "end_date IS NULL OR hire_date IS NULL OR hire_date <= end_date");
 
                             t.HasCheckConstraint("ck_employees_employment_type_valid", "employee_type IS NULL OR employee_type IN ('FullTime','PartTime')");

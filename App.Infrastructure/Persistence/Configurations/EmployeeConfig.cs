@@ -28,6 +28,10 @@ public sealed class EmployeeConfig : IEntityTypeConfiguration<Employee>
             // non-empty names (after trimming)
             t.HasCheckConstraint("ck_employees_first_not_empty", "length(trim(first_name)) > 0");
             t.HasCheckConstraint("ck_employees_last_not_empty",  "length(trim(last_name))  > 0");
+            
+            // New: preapproval requires company email
+            t.HasCheckConstraint("ck_employee_preapproved_requires_email",
+                "\"is_preapproved\" = FALSE OR \"company_email\" IS NOT NULL");
         });
         
         b.HasKey(e => e.Id);
@@ -49,26 +53,14 @@ public sealed class EmployeeConfig : IEntityTypeConfiguration<Employee>
             .HasColumnName("last_name")
             .IsRequired()
             .HasMaxLength(100);
-        
-        b.Property(e => e.PreferredName)
-            .HasColumnName("preferred_name")
-            .HasMaxLength(100);
-        
-        b.Property(e => e.CompanyEmail)
-            .HasColumnName("company_email")
-            .HasMaxLength(128);
-        
-        b.Property(e => e.WorkLocation)
-            .HasColumnName("work_location")
-            .HasMaxLength(200);
-        
-        b.Property(e => e.LicenseNotes)
-            .HasColumnName("license_notes")
-            .HasMaxLength(200);
-        
-        b.Property(e => e.Notes)
-            .HasColumnName("notes")
-            .HasMaxLength(500);
+
+        b.Property(e => e.PreferredName).HasColumnName("preferred_name").HasMaxLength(100);
+        b.Property(e => e.CompanyEmail).HasColumnName("company_email").HasMaxLength(128);
+        b.Property(e => e.WorkLocation).HasColumnName("work_location").HasMaxLength(200);
+        b.Property(e => e.LicenseNotes).HasColumnName("license_notes").HasMaxLength(200);
+        b.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(500);
+        b.Property(e => e.RecommendedRoleId).HasColumnName("recommended_role_id");
+        b.Property(e => e.IsPreapproved).HasColumnName("is_preapproved").HasDefaultValue(false);
         
         b.Property(e => e.EmploymentType)
             .HasColumnName("employee_type")

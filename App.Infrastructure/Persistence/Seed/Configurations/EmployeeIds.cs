@@ -1,6 +1,6 @@
 ﻿namespace App.Infrastructure.Persistence.Seed.Configurations;
 
-internal static class EmployeeIds
+public static class EmployeeIds
 {
     public static readonly Guid JasonBaker       = Guid.Parse("11111111-1111-1111-1111-111111111111");
     public static readonly Guid DougBrown        = Guid.Parse("22222222-2222-2222-2222-222222222222");
