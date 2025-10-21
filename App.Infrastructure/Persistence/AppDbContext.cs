@@ -8,6 +8,8 @@ namespace App.Infrastructure.Persistence;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    
     // --- Security -------------------------------------------------
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<User> Users => Set<User>();
@@ -20,12 +22,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Reference order matters
+        modelBuilder.ApplyConfiguration(new OutboxMessageConfig());     // 0
         modelBuilder.ApplyConfiguration(new RoleConfig());             // 1
         modelBuilder.ApplyConfiguration(new UserConfig());             // 2
         modelBuilder.ApplyConfiguration(new PositionConfig());         // 3
         modelBuilder.ApplyConfiguration(new EmployeeConfig());         // 4
         modelBuilder.ApplyConfiguration(new EmployeePositionConfig()); // 5
-        // modelBuilder.ApplyConfiguration(new ClientConfig());        // 6
+        // modelBuilder.ApplyConfiguration(new ClientConfig());        // 
     }
 
     // --- Model configuration -----------------------------------------------

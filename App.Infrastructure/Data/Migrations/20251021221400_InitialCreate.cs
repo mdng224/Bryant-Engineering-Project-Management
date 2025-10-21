@@ -14,6 +14,22 @@ namespace App.Infrastructure.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "outbox_messages",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    type = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    payload = table.Column<string>(type: "text", nullable: false),
+                    RetryCount = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    occurred_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    processed_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_outbox_messages", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "positions",
                 columns: table => new
                 {
@@ -196,6 +212,11 @@ namespace App.Infrastructure.Data.Migrations
                 filter: "user_id IS NOT NULL AND deleted_at_utc IS NULL");
 
             migrationBuilder.CreateIndex(
+                name: "ix_outbox_messages_processed_at_utc",
+                table: "outbox_messages",
+                column: "processed_at_utc");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_positions_code",
                 table: "positions",
                 column: "code",
@@ -231,6 +252,9 @@ namespace App.Infrastructure.Data.Migrations
         {
             migrationBuilder.DropTable(
                 name: "employee_positions");
+
+            migrationBuilder.DropTable(
+                name: "outbox_messages");
 
             migrationBuilder.DropTable(
                 name: "employees");

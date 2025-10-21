@@ -28,6 +28,7 @@ public static class DependencyInjection
         // --- Repositories / Data access ---
         services.AddScoped<IUserReader, UserRepository>();
         services.AddScoped<IUserWriter, UserRepository>();
+        services.AddScoped<IOutboxWriter, OutboxRepository>();
 
         // --- Auth helpers (hashing + token creation) ---
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();

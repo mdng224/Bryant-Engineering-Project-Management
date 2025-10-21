@@ -1,8 +1,8 @@
-﻿
-using App.Application.Abstractions;
+﻿using App.Application.Abstractions;
 using App.Application.Auth.Commands.Register;
 using App.Domain.Security;
 using App.Domain.Users;
+using App.Domain.Users.Events;
 using FluentAssertions;
 using Moq;
 
@@ -12,12 +12,13 @@ public sealed class RegisterHandlerTests
 {
     private readonly Mock<IUserReader> _reader = new();
     private readonly Mock<IUserWriter> _writer = new();
+    private readonly Mock<IOutboxWriter> _outbox = new();
     private readonly Mock<IPasswordHasher> _hasher = new();
     private readonly RegisterHandler _handler;
 
     public RegisterHandlerTests()
     {
-        _handler = new RegisterHandler(_reader.Object, _writer.Object, _hasher.Object);
+        _handler = new RegisterHandler(_reader.Object, _writer.Object,  _outbox.Object, _hasher.Object);
     }
 
     [Fact]
@@ -25,24 +26,27 @@ public sealed class RegisterHandlerTests
     {
         // Arrange
         const string rawEmail = "User@Example.com  ";
-        var cmd = new RegisterCommand(rawEmail, "pw");
         _reader.Setup(r => r.ExistsByEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
                .ReturnsAsync(true);
 
+        var command = new RegisterCommand(rawEmail, "pw");
+
         // Act
-        var res = await _handler.Handle(cmd, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        res.IsSuccess.Should().BeFalse();
-        res.Error!.Value.Code.Should().Be("conflict");
-        res.Error.Value.Message.Should().Be("Email already registered.");
+        result.IsSuccess.Should().BeFalse();
+        result.Error!.Value.Code.Should().Be("conflict");
+        result.Error.Value.Message.Should().Be("Email already registered.");
+
         _hasher.Verify(h => h.Hash(It.IsAny<string>()), Times.Never);
         _writer.Verify(w => w.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _outbox.Verify(o => o.AddAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task Trims_And_Lowercases_Email_Hashes_Password_Persists_User_And_Returns_Id()
+    public async Task Trims_And_Lowercases_Email_Hashes_Password_Persists_User_Writes_Outbox_And_Returns_Id()
     {
         // Arrange
         const string rawEmail = "  USER@Example.COM ";
@@ -55,36 +59,50 @@ public sealed class RegisterHandlerTests
         _hasher.Setup(h => h.Hash(password)).Returns(hash);
 
         User? capturedUser = null;
+        object? publishedEvent = null;
+
         _writer.Setup(w => w.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
                .Callback<User, CancellationToken>((u, _) => capturedUser = u)
                .Returns(Task.CompletedTask);
+
         _writer.Setup(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()))
                .Returns(Task.CompletedTask);
 
-        var cmd = new RegisterCommand(rawEmail, password);
+        _outbox.Setup(o => o.AddAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
+               .Callback<object, CancellationToken>((e, _) => publishedEvent = e)
+               .Returns(Task.CompletedTask);
+
+        var command = new RegisterCommand(rawEmail, password);
 
         // Act
-        var res = await _handler.Handle(cmd, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        res.IsSuccess.Should().BeTrue();
-        res.Value.Should().NotBeNull();
-        res.Value.UserId.Should().NotBe(Guid.Empty);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.UserId.Should().NotBe(Guid.Empty);
 
         _hasher.Verify(h => h.Hash(password), Times.Once);
         _writer.Verify(w => w.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Once);
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _outbox.Verify(o => o.AddAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Once);
 
         capturedUser.Should().NotBeNull();
         capturedUser!.Email.Should().Be(normalizedEmail);
         capturedUser.PasswordHash.Should().Be(hash);
         capturedUser.RoleId.Should().Be(RoleIds.User);
-        // If your domain exposes IsActive default:
-        // capturedUser.IsActive.Should().BeFalse();
+
+        // Assert the published outbox event
+        publishedEvent.Should().BeOfType<UserRegistered>();
+        var userRegistered = (UserRegistered)publishedEvent!;
+        userRegistered.UserId.Should().Be(capturedUser.Id);
+        userRegistered.Email.Should().Be(capturedUser.Email);
+        userRegistered.Status.Should().Be(capturedUser.Status);
     }
 
+
     [Fact]
-    public async Task Uses_Exact_Email_Normalization_As_Lookup_Key()
+    public async Task Uses_Exact_Email_Normalization_As_Lookup_Key_And_Writes_Outbox()
     {
         // Arrange
         const string rawEmail = "\tMiXeD@Example.Com\n";
@@ -103,13 +121,14 @@ public sealed class RegisterHandlerTests
         _writer.Setup(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()))
                .Returns(Task.CompletedTask);
 
-        var cmd = new RegisterCommand(rawEmail, password);
+        var command = new RegisterCommand(rawEmail, password);
 
         // Act
-        var res = await _handler.Handle(cmd, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        res.IsSuccess.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         _reader.Verify(r => r.ExistsByEmailAsync(normalizedEmail, It.IsAny<CancellationToken>()), Times.Once);
+        _outbox.Verify(o => o.AddAsync(It.Is<object>(e => e is UserRegistered), It.IsAny<CancellationToken>()), Times.Once);
     }
 }
