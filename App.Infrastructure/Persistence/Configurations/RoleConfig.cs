@@ -1,5 +1,6 @@
 ﻿using App.Domain.Security;
 using App.Domain.Users;
+using App.Infrastructure.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -15,16 +16,21 @@ public sealed class RoleConfig : IEntityTypeConfiguration<Role>
         // --- Key -------------------------------------------------------
         b.HasKey(r => r.Id);
         
-        // --- Properties -----------------------------------------------------
-        b.Property(r => r.Id).ValueGeneratedNever();   // IDs are seeded deterministically, so EF should not try to generate them                     
-        b.Property(r => r.Name).IsRequired().HasMaxLength(100);
-        b.HasIndex(r => r.Name).IsUnique().HasDatabaseName("ux_roles_name");
-
-        // --- Seed Data ------------------------------------------------------
-        b.HasData(
-            new { Id = RoleIds.Administrator, Name = RoleNames.Administrator },
-            new { Id = RoleIds.Manager,       Name = RoleNames.Manager },
-            new { Id = RoleIds.User,          Name = RoleNames.User }
-        );
+        // --- Properties ------------------------------------------------
+        b.Property(r => r.Id)
+            .HasColumnName("id")
+            .ValueGeneratedNever(); // deterministic seed IDs 
+        
+        b.Property(r => r.Name)
+            .HasColumnName("name")
+            .IsRequired()
+            .HasMaxLength(100);
+        
+        b.HasIndex(r => r.Name)
+            .IsUnique()
+            .HasDatabaseName("ux_roles_name");
+        
+        // --- Design-time seed ------------------------------------------
+        b.HasData(RoleSeedFactory.All);
     }
 }

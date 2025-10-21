@@ -23,6 +23,16 @@ public sealed class Position
         RequiresLicense = requiresLicense;
     }
     
+    // --- Seeding helper ----------------------------------------------------
+    public static Position CreateSeed(Guid id, string name, string? code = null, bool requiresLicense = false)
+    {
+        var position = new Position(name, code, requiresLicense)
+        {
+            Id = id
+        };
+        return position;
+    }
+    
     // --- Mutators ------------------------------------------------------
     
     public void Rename(string name)

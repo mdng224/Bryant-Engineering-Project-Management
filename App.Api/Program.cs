@@ -12,7 +12,6 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
-app.MigrateDatabase<AppDbContext>();
+await app.MigrateDatabaseAsync<AppDbContext>();
 app.UseApi();
-
-app.Run();
+await app.RunAsync();

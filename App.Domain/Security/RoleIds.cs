@@ -4,9 +4,9 @@ namespace App.Domain.Security;
 
 public static class RoleIds
 {
-    public static readonly Guid Administrator = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-    public static readonly Guid Manager = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-    public static readonly Guid User = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+    public static readonly Guid Administrator = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    public static readonly Guid Manager       = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    public static readonly Guid User          = Guid.Parse("33333333-3333-3333-3333-333333333333");
 
     private static readonly ImmutableDictionary<string, Guid> NameToId =
     ImmutableDictionary.CreateRange(

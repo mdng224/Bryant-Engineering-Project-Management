@@ -4,8 +4,7 @@ namespace App.Domain.Employees;
 
 public sealed class EmployeePosition
 {
-    // --- Keys / FKs ---------------------------------------------------------
-    public Guid Id { get; private set; }
+    // --- Composite Key / FKs -----------------------------------------------
     public Guid EmployeeId { get; private set; }
     public Employee Employee { get; private set; } = null!;
     public Guid PositionId { get; private set; }
@@ -15,7 +14,6 @@ public sealed class EmployeePosition
     private EmployeePosition() { }
     public EmployeePosition(Guid employeeId, Guid positionId)
     {
-        Id = Guid.CreateVersion7();
         EmployeeId = Guard.AgainstDefault(employeeId, nameof(employeeId));
         PositionId = Guard.AgainstDefault(positionId, nameof(positionId));
     }

@@ -1,5 +1,7 @@
 ﻿using App.Api.Features.Auth;
 using App.Api.Features.Admins;
+using App.Infrastructure.Persistence;
+using App.Infrastructure.Persistence.Seed;
 using App.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -47,11 +49,30 @@ public static class WebApplicationExtensions
     }
 
     // Ensure database is created/migrated
-    public static WebApplication MigrateDatabase<TContext>(this WebApplication app) where TContext : DbContext
+    public static async Task<WebApplication> MigrateDatabaseAsync<TContext>(this WebApplication app)
+        where TContext : DbContext
     {
-        using var scope = app.Services.CreateScope();
+        await using var scope = app.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
-        db.Database.Migrate();
+
+        try
+        {
+            await db.Database.MigrateAsync();
+
+            if (db is AppDbContext appDb)
+            {
+                // Only dynamic/env data here. Roles/Positions via HasData+migrations.
+                await DbSeeder.SeedAsync(appDb);
+            }
+        }
+        catch (Exception ex)
+        {
+            // surface startup issues early; you can swap for ILogger if you prefer
+            var logger = app.Logger;
+            logger.LogError(ex, "Database migration/seed failed");
+            throw; // fail fast on schema/seed errors
+        }
+
         return app;
     }
 }

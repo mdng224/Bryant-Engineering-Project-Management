@@ -15,20 +15,42 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
         b.HasKey(u => u.Id);
 
         // --- Properties -----------------------------------------------------
-        b.Property(u => u.Id).ValueGeneratedNever(); // IDs are supplied (Guid v7)
-        b.Property(u => u.Email).IsRequired().HasMaxLength(128);
-        b.Property(u => u.PasswordHash).IsRequired().HasMaxLength(255);
+        b.Property(u => u.Id)
+            .HasColumnName("id")
+            .ValueGeneratedNever(); // IDs are supplied (Guid v7)
+        
+        b.Property(u => u.Email)
+            .HasColumnName("email")
+            .IsRequired()
+            .HasMaxLength(128);
+        
+        b.Property(u => u.PasswordHash)
+            .HasColumnName("password_hash")
+            .IsRequired()
+            .HasMaxLength(255);
+        
         b.Property(u => u.IsActive)
+            .HasColumnName("is_active")
             .IsRequired()
             .HasDefaultValue(false); // Users are inactive by default until explicitly activated.
+        
+        b.Property(u => u.RoleId)
+            .HasColumnName("role_id");
+        
         b.Property(u => u.CreatedAtUtc)
+            .HasColumnName("created_at_utc")
             .IsRequired()
             .HasColumnType("timestamptz")
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        
         b.Property(u => u.UpdatedAtUtc)
+            .HasColumnName("updated_at_utc")
             .IsRequired()
             .HasColumnType("timestamptz");
-        b.Property(u => u.DeletedAtUtc).HasColumnType("timestamptz");
+        
+        b.Property(u => u.DeletedAtUtc)
+            .HasColumnName("deleted_at_utc")
+            .HasColumnType("timestamptz");
         
         // --- Relationships --------------------------------------------------
         b.HasOne(u => u.Role)
@@ -38,7 +60,12 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
             .IsRequired();
         
         // --- Indexes / Uniqueness ------------------------------------------
-        b.HasIndex(u => u.RoleId).HasDatabaseName("ix_users_role_id");
-        b.HasIndex(u => u.Email).HasDatabaseName("ux_users_email").IsUnique().HasFilter("\"DeletedAtUtc\" IS NULL");
+        b.HasIndex(u => u.RoleId)
+            .HasDatabaseName("ix_users_role_id");
+
+        b.HasIndex(u => u.Email)
+            .IsUnique()
+            .HasDatabaseName("ux_users_email")
+            .HasFilter("deleted_at_utc IS NULL");
     }
 }

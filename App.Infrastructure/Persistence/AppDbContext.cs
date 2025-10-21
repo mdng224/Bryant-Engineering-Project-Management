@@ -1,4 +1,5 @@
 ﻿using App.Domain.Common;
+using App.Domain.Employees;
 using App.Domain.Users;
 using App.Infrastructure.Persistence.Configurations;
 using Microsoft.EntityFrameworkCore;
@@ -7,54 +8,64 @@ namespace App.Infrastructure.Persistence;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    // --- Security -------------------------------------------------
+    public DbSet<Role> Roles => Set<Role>();
     public DbSet<User> Users => Set<User>();
 
+    // --- Employees / HR -------------------------------------------
+    public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<Position> Positions => Set<Position>();
+    public DbSet<EmployeePosition> EmployeePositions => Set<EmployeePosition>();
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new UserConfig());
-        modelBuilder.ApplyConfiguration(new RoleConfig());
-        modelBuilder.ApplyConfiguration(new EmployeeConfig());
-        modelBuilder.ApplyConfiguration(new ClientConfig());
+        // Reference order matters
+        modelBuilder.ApplyConfiguration(new RoleConfig());             // 1
+        modelBuilder.ApplyConfiguration(new UserConfig());             // 2
+        modelBuilder.ApplyConfiguration(new PositionConfig());         // 3
+        modelBuilder.ApplyConfiguration(new EmployeeConfig());         // 4
+        modelBuilder.ApplyConfiguration(new EmployeePositionConfig()); // 5
+        // modelBuilder.ApplyConfiguration(new ClientConfig());        // 6
     }
 
-    /* Even though individual entities (e.g., User, Client) set timestamps and expose
-     intentful methods like Touch() and SoftDelete(), this override is kept as a
-     defensive, last-line-of-defense layer so invariants still hold when:
-     Changes are applied directly to tracked entities (e.g., from a mapper/DTO) without calling domain methods.*/
+    // --- Model configuration -----------------------------------------------
     public override Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         var now = DateTimeOffset.UtcNow;
 
         foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
         {
-            if (entry.State == EntityState.Deleted)
+            switch (entry.State)
             {
-                // Global soft-delete
-                entry.State = EntityState.Modified;
-                entry.Property(nameof(IAuditableEntity.DeletedAtUtc)).CurrentValue = now;
-                entry.Property(nameof(IAuditableEntity.UpdatedAtUtc)).CurrentValue = now;
-                continue;
-            }
+                case EntityState.Added:
+                    entry.Property(nameof(IAuditableEntity.CreatedAtUtc)).CurrentValue = now;
+                    entry.Property(nameof(IAuditableEntity.UpdatedAtUtc)).CurrentValue = now;
+                    break;
 
-            if (entry.State == EntityState.Added)
-            {
-                // Set once on create
-                entry.Property(nameof(IAuditableEntity.CreatedAtUtc)).CurrentValue = now;
-                entry.Property(nameof(IAuditableEntity.UpdatedAtUtc)).CurrentValue = now;
-            }
-            else if (entry.State == EntityState.Modified)
-            {
-                entry.Property(nameof(IAuditableEntity.CreatedAtUtc)).IsModified = false;
-                entry.Property(nameof(IAuditableEntity.UpdatedAtUtc)).CurrentValue = now;
+                case EntityState.Modified:
+                    // Prevent overwriting CreatedAtUtc on updates
+                    entry.Property(nameof(IAuditableEntity.CreatedAtUtc)).IsModified = false;
+                    entry.Property(nameof(IAuditableEntity.UpdatedAtUtc)).CurrentValue = now;
+                    break;
+
+                case EntityState.Deleted:
+                    // Soft delete: mark as modified and set DeletedAtUtc
+                    entry.State = EntityState.Modified;
+                    entry.Property(nameof(IAuditableEntity.DeletedAtUtc)).CurrentValue = now;
+                    entry.Property(nameof(IAuditableEntity.UpdatedAtUtc)).CurrentValue = now;
+                    break;
+
+                case EntityState.Detached:
+                case EntityState.Unchanged:
+                default:
+                    break;  // no-op
             }
         }
 
-        foreach (var e in ChangeTracker.Entries<User>())
-        {
-            if (e.State == EntityState.Modified && e.Property(u => u.Email).IsModified)
-                throw new InvalidOperationException("Email is immutable after creation.");
-        }
-
-        return base.SaveChangesAsync(ct);
+        // Enforce immutable email invariant
+        return ChangeTracker.Entries<User>()
+            .Any(ee => ee.State == EntityState.Modified && ee.Property(u => u.Email) .IsModified)
+            ? throw new InvalidOperationException("Email is immutable after creation.")
+            : base.SaveChangesAsync(ct);
     }
 }
