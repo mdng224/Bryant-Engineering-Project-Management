@@ -39,5 +39,13 @@ internal static class AdminMappers
         => new(userId, request.RoleName, request.IsActive);
     
     private static UserResponse ToResponse(this UserDto dto) =>
-        new(dto.Id, dto.Email, dto.RoleName, dto.IsActive, dto.CreatedAtUtc, dto.UpdatedAtUtc, dto.DeletedAtUtc);
+        new(
+            Id: dto.Id,
+            Email: dto.Email,
+            RoleName: dto.RoleName,
+            Status: dto.Status,
+            CreatedAtUtc: dto.CreatedAtUtc,
+            UpdatedAtUtc: dto.UpdatedAtUtc,
+            DeletedAtUtc: dto.DeletedAtUtc
+        );
 }

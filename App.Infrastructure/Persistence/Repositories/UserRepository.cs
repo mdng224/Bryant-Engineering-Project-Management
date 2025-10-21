@@ -10,7 +10,10 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
     // --- Readers --------------------------------------------------------
     public async Task<int> CountActiveAdminsAsync(CancellationToken ct = default) =>
         await db.Users
-            .Where(u => u.IsActive && u.RoleId == RoleIds.Administrator)
+            .AsNoTracking()
+            .Where(u => u.DeletedAtUtc == null
+                        && u.Status == UserStatus.Active
+                        && u.RoleId == RoleIds.Administrator)
             .CountAsync(ct);
     
     public async Task<bool> ExistsByEmailAsync(string normalizedEmail, CancellationToken ct = default) =>
@@ -19,8 +22,7 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
     public async Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken ct = default) =>
         await db.Users
             .AsNoTracking()
-            .Include(u => u.Role)
-            .FirstOrDefaultAsync(u => u.Email == normalizedEmail, ct);
+            .FirstOrDefaultAsync(u => u.DeletedAtUtc == null && u.Email == normalizedEmail, ct);
 
     public async Task<(IReadOnlyList<User> users, int totalCount)> GetPagedAsync(
         int skip,

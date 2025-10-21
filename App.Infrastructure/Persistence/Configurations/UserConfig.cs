@@ -14,28 +14,22 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
         // --- Keys ------------------------------------------------------------
         b.HasKey(u => u.Id);
 
-        // --- Properties -----------------------------------------------------
-        b.Property(u => u.Id)
-            .HasColumnName("id")
-            .ValueGeneratedNever(); // IDs are supplied (Guid v7)
+        // --- Columns -----------------------------------------------------
+        b.Property(u => u.Id).HasColumnName("id").ValueGeneratedNever();
+        b.Property(u => u.Email).HasColumnName("email").IsRequired().HasMaxLength(128);
+        b.Property(u => u.PasswordHash).HasColumnName("password_hash").IsRequired().HasMaxLength(255);
+        b.Property(u => u.RoleId).HasColumnName("role_id").IsRequired();
         
-        b.Property(u => u.Email)
-            .HasColumnName("email")
-            .IsRequired()
-            .HasMaxLength(128);
+        b.Property(u => u.Status)
+            .HasColumnName("status")
+            .HasConversion<string>()
+            .HasColumnType("text")
+            .HasDefaultValueSql("'PendingEmail'")
+            .IsRequired();
         
-        b.Property(u => u.PasswordHash)
-            .HasColumnName("password_hash")
-            .IsRequired()
-            .HasMaxLength(255);
-        
-        b.Property(u => u.IsActive)
-            .HasColumnName("is_active")
-            .IsRequired()
-            .HasDefaultValue(false); // Users are inactive by default until explicitly activated.
-        
-        b.Property(u => u.RoleId)
-            .HasColumnName("role_id");
+        b.Property<DateTimeOffset?>("EmailVerifiedAt")
+            .HasColumnName("email_verified_at")
+            .HasColumnType("timestamptz");
         
         b.Property(u => u.CreatedAtUtc)
             .HasColumnName("created_at_utc")
@@ -60,6 +54,8 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
             .IsRequired();
         
         // --- Indexes / Uniqueness ------------------------------------------
+        b.HasIndex(u => u.RoleId).HasDatabaseName("ix_users_role_id");
+        
         b.HasIndex(u => u.RoleId)
             .HasDatabaseName("ix_users_role_id");
 

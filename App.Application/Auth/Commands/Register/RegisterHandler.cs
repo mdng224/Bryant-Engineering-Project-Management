@@ -20,6 +20,9 @@ public sealed class RegisterHandler(
         if (await userReader.ExistsByEmailAsync(normalizedEmail, ct))
             return Fail<RegisterResult>("conflict", "Email already registered.");
 
+        
+        // TODO: Revisit this after i get emails working
+        
         var passwordHash = passwordHasher.Hash(command.Password);
         var user = new User(normalizedEmail, passwordHash, RoleIds.User); // IsActive defaults (false) in domain
 

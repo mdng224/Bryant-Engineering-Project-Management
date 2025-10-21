@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251021163159_InitialCreate")]
+    [Migration("20251021213545_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -122,6 +122,8 @@ namespace App.Infrastructure.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_employees_company_email")
                         .HasFilter("company_email IS NOT NULL AND deleted_at_utc IS NULL");
+
+                    b.HasIndex("RecommendedRoleId");
 
                     b.HasIndex("UserId")
                         .IsUnique()
@@ -353,11 +355,9 @@ namespace App.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("email");
 
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_active");
+                    b.Property<DateTimeOffset?>("EmailVerifiedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("email_verified_at");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -368,6 +368,13 @@ namespace App.Infrastructure.Data.Migrations
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uuid")
                         .HasColumnName("role_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasColumnName("status")
+                        .HasDefaultValueSql("'PendingEmail'");
 
                     b.Property<DateTimeOffset>("UpdatedAtUtc")
                         .HasColumnType("timestamptz")
@@ -388,6 +395,11 @@ namespace App.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("App.Domain.Employees.Employee", b =>
                 {
+                    b.HasOne("App.Domain.Users.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RecommendedRoleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("App.Domain.Users.User", "User")
                         .WithOne("Employee")
                         .HasForeignKey("App.Domain.Employees.Employee", "UserId")

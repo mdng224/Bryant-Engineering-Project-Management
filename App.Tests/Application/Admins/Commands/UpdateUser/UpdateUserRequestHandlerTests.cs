@@ -4,6 +4,7 @@ using App.Domain.Security;
 using App.Domain.Users;
 using FluentAssertions;
 using Moq;
+using System.Reflection;
 
 namespace App.Tests.Application.Admins.Commands.UpdateUser;
 
@@ -99,8 +100,9 @@ public class UpdateUserHandlerTests
     {
         // Arrange
         var user = NewUser(RoleIds.User);
+        MarkVerifiedForTests(user); // <-- ensure the domain precondition is met
         _writer.Setup(w => w.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
-               .ReturnsAsync(user);
+            .ReturnsAsync(user);
 
         var command = new UpdateUserCommand(user.Id, null, true);
 
@@ -110,9 +112,10 @@ public class UpdateUserHandlerTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(UpdateUserResult.Ok);
-        user.IsActive.Should().BeTrue();
+        user.Status.Should().Be(UserStatus.Active);
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+
 
     [Fact]
     public async Task Updates_Both_Role_And_Status()
@@ -131,7 +134,7 @@ public class UpdateUserHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(UpdateUserResult.Ok);
         user.RoleId.Should().Be(RoleIds.Administrator);
-        user.IsActive.Should().BeFalse();
+        user.Status.Should().Be(UserStatus.Disabled);
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -180,7 +183,7 @@ public class UpdateUserHandlerTests
     {
         // Arrange: active admin, only one admin in system
         var admin = NewUser(RoleIds.Administrator);
-        admin.Activate();
+        ActivateForTests(admin);
 
         _writer.Setup(w => w.GetForUpdateAsync(admin.Id, It.IsAny<CancellationToken>()))
                .ReturnsAsync(admin);
@@ -204,7 +207,7 @@ public class UpdateUserHandlerTests
     {
         // Arrange: active admin, only one admin in system
         var admin = NewUser(RoleIds.Administrator);
-        admin.Activate();
+        ActivateForTests(admin);
 
         _writer.Setup(w => w.GetForUpdateAsync(admin.Id, It.IsAny<CancellationToken>()))
                .ReturnsAsync(admin);
@@ -219,7 +222,7 @@ public class UpdateUserHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Error!.Value.Code.Should().Be("forbidden");
-        admin.IsActive.Should().BeTrue(); // unchanged
+        admin.Status.Should().Be(UserStatus.Active); // unchanged
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -228,7 +231,7 @@ public class UpdateUserHandlerTests
     {
         // Arrange: active admin, >1 admins in system
         var admin = NewUser(RoleIds.Administrator);
-        admin.Activate();
+        ActivateForTests(admin);
 
         _writer.Setup(w => w.GetForUpdateAsync(admin.Id, It.IsAny<CancellationToken>()))
                .ReturnsAsync(admin);
@@ -252,7 +255,7 @@ public class UpdateUserHandlerTests
     {
         // Arrange: active admin, >1 admins in system
         var admin = NewUser(RoleIds.Administrator);
-        admin.Activate();
+        ActivateForTests(admin);
 
         _writer.Setup(w => w.GetForUpdateAsync(admin.Id, It.IsAny<CancellationToken>()))
                .ReturnsAsync(admin);
@@ -267,11 +270,54 @@ public class UpdateUserHandlerTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(UpdateUserResult.Ok);
-        admin.IsActive.Should().BeFalse();
+        admin.Status.Should().Be(UserStatus.Disabled);
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // -------- helpers --------
     private static User NewUser(Guid roleId) =>
         new(email: "user@example.com", passwordHash: "hash", roleId: roleId);
+
+    /// <summary>
+    /// Makes a user Active in tests. If the domain enforces "verified before activate",
+    /// this will call MarkEmailVerified(now) if present before calling Activate().
+    /// </summary>
+    private static void ActivateForTests(User user)
+    {
+        // Try to call MarkEmailVerified(DateTimeOffset) if it exists
+        var markVerified = typeof(User).GetMethod("MarkEmailVerified",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null,
+            types: [typeof(DateTimeOffset)],
+            modifiers: null);
+
+        markVerified?.Invoke(user, [DateTimeOffset.UtcNow]);
+
+        user.Activate();
+    }
+    
+    private static void MarkVerifiedForTests(User user)
+    {
+        // If you implemented MarkEmailVerified(DateTimeOffset), use it:
+        var m = typeof(User).GetMethod(
+            "MarkEmailVerified",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+            binder: null,
+            types: [typeof(DateTimeOffset)],
+            modifiers: null);
+
+        if (m != null)
+        {
+            m.Invoke(user, [DateTimeOffset.UtcNow]);
+        }
+        else
+        {
+            // Fallback: if you exposed EmailVerifiedAt as a property setter or internal,
+            // set it here via reflection (only as a test backdoor).
+            var p = typeof(User).GetProperty("EmailVerifiedAt",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+            p?.SetValue(user, DateTimeOffset.UtcNow);
+        }
+    }
+
 }

@@ -37,7 +37,7 @@ public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWr
     {
         if (cmd.IsActive is not { } active) return;
         if (active) user.Activate();
-        else        user.Deactivate();
+        else        user.Disable();
     }
     
     private static void ApplyRoleChange(Domain.Users.User user, Intent intent)
@@ -85,7 +85,7 @@ public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWr
     }
     
     private static bool IsCurrentlyActiveAdmin(Domain.Users.User user) =>
-        user.IsActive && user.RoleId == RoleIds.Administrator;
+        user.Status == Domain.Users.UserStatus.Active && user.RoleId == RoleIds.Administrator;
     
     private static bool IsNoOp(UpdateUserCommand cmd) =>
         string.IsNullOrWhiteSpace(cmd.RoleName) && !cmd.IsActive.HasValue;

@@ -47,7 +47,8 @@ namespace App.Infrastructure.Data.Migrations
                     email = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     password_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     role_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    email_verified_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    status = table.Column<string>(type: "text", nullable: false, defaultValueSql: "'PendingEmail'"),
                     created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     deleted_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true)
@@ -96,6 +97,12 @@ namespace App.Infrastructure.Data.Migrations
                     table.CheckConstraint("ck_employees_first_not_empty", "length(trim(first_name)) > 0");
                     table.CheckConstraint("ck_employees_last_not_empty", "length(trim(last_name))  > 0");
                     table.CheckConstraint("ck_employees_salary_type_valid", "salary_type IS NULL OR salary_type IN ('Salary','Hourly')");
+                    table.ForeignKey(
+                        name: "FK_employees_roles_recommended_role_id",
+                        column: x => x.recommended_role_id,
+                        principalTable: "roles",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_employees_users_user_id",
                         column: x => x.user_id,
@@ -168,6 +175,11 @@ namespace App.Infrastructure.Data.Migrations
                 table: "employees",
                 columns: new[] { "last_name", "first_name" },
                 filter: "deleted_at_utc IS NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_employees_recommended_role_id",
+                table: "employees",
+                column: "recommended_role_id");
 
             migrationBuilder.CreateIndex(
                 name: "ux_employees_company_email",

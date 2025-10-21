@@ -1,4 +1,5 @@
 ﻿using App.Domain.Employees;
+using App.Domain.Users;
 using App.Infrastructure.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -9,7 +10,7 @@ public sealed class EmployeeConfig : IEntityTypeConfiguration<Employee>
 {
     public void Configure(EntityTypeBuilder<Employee> b)
     {
-        // --- Table & Key ----------------------------------------------------
+        // --- Table & constraints -------------------------------------------
         b.ToTable("employees", t =>
         {
             t.HasCheckConstraint(
@@ -34,26 +35,16 @@ public sealed class EmployeeConfig : IEntityTypeConfiguration<Employee>
                 "\"is_preapproved\" = FALSE OR \"company_email\" IS NOT NULL");
         });
         
+        // --- Key ------------------------------------------------------------
         b.HasKey(e => e.Id);
-
-        // --- Properties -----------------------------------------------------
         b.Property(e => e.Id)
             .HasColumnName("id")
             .ValueGeneratedNever(); // Guid v7 set in domain
         
-        b.Property(e => e.UserId)
-            .HasColumnName("user_id"); // FK column
-        
-        b.Property(e => e.FirstName)
-            .HasColumnName("first_name")
-            .IsRequired()
-            .HasMaxLength(100);
-        
-        b.Property(e => e.LastName)
-            .HasColumnName("last_name")
-            .IsRequired()
-            .HasMaxLength(100);
-
+        // --- Columns --------------------------------------------------------
+        b.Property(e => e.UserId).HasColumnName("user_id");
+        b.Property(e => e.FirstName).HasColumnName("first_name").IsRequired().HasMaxLength(100);
+        b.Property(e => e.LastName).HasColumnName("last_name").IsRequired().HasMaxLength(100);
         b.Property(e => e.PreferredName).HasColumnName("preferred_name").HasMaxLength(100);
         b.Property(e => e.CompanyEmail).HasColumnName("company_email").HasMaxLength(128);
         b.Property(e => e.WorkLocation).HasColumnName("work_location").HasMaxLength(200);
@@ -104,6 +95,11 @@ public sealed class EmployeeConfig : IEntityTypeConfiguration<Employee>
             .HasForeignKey<Employee>(e => e.UserId)
             .OnDelete(DeleteBehavior.SetNull)
             .IsRequired(false);
+        
+        b.HasOne<Role>()
+            .WithMany()
+            .HasForeignKey(e => e.RecommendedRoleId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         // --- Indexes / Uniqueness ------------------------------------------
         b.HasIndex(e => e.UserId)

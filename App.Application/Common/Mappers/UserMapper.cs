@@ -11,7 +11,7 @@ public static class UserMapper
             Id: user.Id,
             Email: user.Email,
             RoleName: user.RoleId.ToName(),
-            IsActive: user.IsActive,
+            Status: user.Status.ToString(),
             CreatedAtUtc: user.CreatedAtUtc,
             UpdatedAtUtc: user.UpdatedAtUtc,
             DeletedAtUtc: user.DeletedAtUtc

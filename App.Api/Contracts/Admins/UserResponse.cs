@@ -4,7 +4,7 @@ public sealed record UserResponse(
     Guid Id,
     string Email,
     string RoleName,
-    bool IsActive,
+    string Status,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc,
     DateTimeOffset? DeletedAtUtc

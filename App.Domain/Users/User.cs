@@ -18,7 +18,8 @@ public class User : IAuditableEntity
     public string PasswordHash { get; private set; } = null!;  // Secure password hash (BCrypt). Never stored in plain text.
     public Role Role { get; private set; } = null!;
     public Guid RoleId { get; private set; }
-    public bool IsActive { get; private set; }
+    public DateTimeOffset? EmailVerifiedAt { get; private set; }
+    public UserStatus Status { get; private set; } = UserStatus.PendingEmail;
 
     // TODO: Point to a client when that domain is ready.
     // TODO: Point to an employee when that domain is ready.
@@ -52,16 +53,43 @@ public class User : IAuditableEntity
     public void Activate()
     {
         EnsureNotDeleted();
-        if (IsActive) return;
-        IsActive = true;
+        if (Status is UserStatus.Denied or UserStatus.Disabled)
+            throw new InvalidOperationException("Cannot activate a denied or disabled user.");
+        if (EmailVerifiedAt is null)
+            throw new InvalidOperationException("Cannot activate before email verification.");
+        Status = UserStatus.Active;
         Touch();
     }
 
-    public void Deactivate()
+    public void Disable()
     {
         EnsureNotDeleted();
-        if (!IsActive) return;
-        IsActive = false;
+        Status = UserStatus.Disabled;
+        Touch();
+    }
+
+    public void MarkPendingApproval()
+    {
+        EnsureNotDeleted();
+        if (EmailVerifiedAt is null)
+            throw new InvalidOperationException("Cannot mark pending approval before email verification.");
+        Status = UserStatus.PendingApproval;
+        Touch();
+    }
+    
+    public void Deny()
+    {
+        EnsureNotDeleted();
+        if (Status != UserStatus.PendingApproval)
+            throw new InvalidOperationException("Can only deny from PendingApproval.");
+        Status = UserStatus.Denied;
+        Touch();
+    }
+    
+    public void MarkEmailVerified(DateTimeOffset nowUtc)
+    {
+        EnsureNotDeleted();
+        EmailVerifiedAt = nowUtc;
         Touch();
     }
     
