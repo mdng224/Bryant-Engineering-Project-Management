@@ -1,5 +1,7 @@
 ﻿using App.Application.Abstractions;
 using App.Infrastructure.Auth;
+using App.Infrastructure.Background;
+using App.Infrastructure.Email;
 using App.Infrastructure.Persistence;
 using App.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -13,16 +15,22 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
-        // --- DbContext ---
+        // --- Connection / DataSource ---
         var connectionString =
             config.GetConnectionString("appdb")
             ?? config["Aspire:Npgsql:ConnectionString"]
             ?? throw new InvalidOperationException(
                 "No connection string found. Set ConnectionStrings:appdb or Aspire:Npgsql:ConnectionString.");
 
+        // Build ONE shared pool/data source and reuse it everywhere
+        var dataSource = new NpgsqlDataSourceBuilder(connectionString).Build();
+        services.AddSingleton(dataSource);
+
+        // --- DbContext (single registration) ---
         services.AddDbContextPool<AppDbContext>(o =>
         {
-            o.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure());
+            o.UseNpgsql(dataSource, npgsql => npgsql.EnableRetryOnFailure());
+            // Optional: o.UseSnakeCaseNamingConvention();
         });
 
         // --- Repositories / Data access ---
@@ -34,12 +42,11 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
 
-        // ⛔️ Do NOT register Authentication/Authorization here.
-        // Those belong in the API layer (AddApi) so you avoid double-registration
-        // and keep Infra provider-agnostic.
+        // --- Email ---
+        services.AddScoped<IEmailSender, ConsoleEmailSender>();
 
-        // (optional) Npgsql data source for health checks if you use it elsewhere
-        services.AddSingleton(_ => new NpgsqlDataSourceBuilder(connectionString).Build());
+        // --- Background worker (runs automatically when host runs) ---
+        services.AddHostedService<OutboxProcessorWorker>();
 
         return services;
     }
