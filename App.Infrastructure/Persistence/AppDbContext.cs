@@ -1,4 +1,5 @@
-﻿using App.Domain.Common;
+﻿using App.Domain.Auth;
+using App.Domain.Common;
 using App.Domain.Employees;
 using App.Domain.Users;
 using App.Infrastructure.Persistence.Configurations;
@@ -8,7 +9,9 @@ namespace App.Infrastructure.Persistence;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    // --- Events  -------------------------------------------------
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<EmailVerification> EmailVerifications => Set<EmailVerification>();
     
     // --- Security -------------------------------------------------
     public DbSet<Role> Roles => Set<Role>();
@@ -28,6 +31,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration(new PositionConfig());         // 3
         modelBuilder.ApplyConfiguration(new EmployeeConfig());         // 4
         modelBuilder.ApplyConfiguration(new EmployeePositionConfig()); // 5
+        modelBuilder.ApplyConfiguration(new EmailVerificationConfig()); // 6
         // modelBuilder.ApplyConfiguration(new ClientConfig());        // 
     }
 

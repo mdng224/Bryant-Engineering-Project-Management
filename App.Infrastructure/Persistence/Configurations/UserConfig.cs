@@ -24,7 +24,6 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
             .HasColumnName("status")
             .HasConversion<string>()
             .HasColumnType("text")
-            .HasDefaultValueSql("'PendingEmail'")
             .IsRequired();
         
         b.Property<DateTimeOffset?>("EmailVerifiedAt")

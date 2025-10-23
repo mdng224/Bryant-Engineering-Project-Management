@@ -27,7 +27,7 @@ public class User : IAuditableEntity
     // --- Auditing ------------------------------------------------------------
 
     /// <inheritdoc/>
-    public DateTimeOffset CreatedAtUtc { get; private set; }
+    public DateTimeOffset CreatedAtUtc { get; }
     /// <inheritdoc/>
     public DateTimeOffset UpdatedAtUtc { get; private set; }
     /// <inheritdoc/>
@@ -43,7 +43,7 @@ public class User : IAuditableEntity
         Email = Guard.AgainstNullOrWhiteSpace(email, nameof(email)).ToNormalizedEmail();
         PasswordHash = Guard.AgainstNullOrWhiteSpace(passwordHash, nameof(passwordHash));
         RoleId = Guard.AgainstDefault(roleId, nameof(roleId));
-
+        Status = UserStatus.PendingEmail;
         var now = DateTimeOffset.UtcNow;
         CreatedAtUtc = now;
         UpdatedAtUtc = now;
@@ -86,10 +86,10 @@ public class User : IAuditableEntity
         Touch();
     }
     
-    public void MarkEmailVerified(DateTimeOffset nowUtc)
+    public void MarkEmailVerified()
     {
         EnsureNotDeleted();
-        EmailVerifiedAt = nowUtc;
+        EmailVerifiedAt = DateTimeOffset.UtcNow;
         Touch();
     }
     

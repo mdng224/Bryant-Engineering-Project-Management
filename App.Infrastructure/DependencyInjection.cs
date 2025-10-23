@@ -36,16 +36,21 @@ public static class DependencyInjection
         // --- Repositories / Data access ---
         services.AddScoped<IUserReader, UserRepository>();
         services.AddScoped<IUserWriter, UserRepository>();
+        services.AddScoped<IEmployeeReader, EmployeeRepository>();
         services.AddScoped<IOutboxWriter, OutboxRepository>();
 
         // --- Auth helpers (hashing + token creation) ---
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
 
-        // --- Email ---
-        services.AddScoped<IEmailSender, ConsoleEmailSender>();
+        // --- Email (SMTP + verification) -------------------------------------------
+        services.AddOptions<EmailSettings>().Bind(config.GetSection("EmailSettings")).ValidateOnStart();
+        services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
+        services.AddScoped<IEmailVerificationReader, EmailVerificationRepository>();
+        services.AddScoped<IEmailVerificationWriter, EmailVerificationRepository>();
 
-        // --- Background worker (runs automatically when host runs) ---
+        // --- Background worker ---
         services.AddHostedService<OutboxProcessorWorker>();
 
         return services;

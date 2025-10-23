@@ -48,7 +48,7 @@ public sealed class Employee : IAuditableEntity
     /* TODO: figure out rates later with Andy */
     
     // --- Auditing ------------------------------------------------------------
-    public DateTimeOffset CreatedAtUtc { get; private set; }
+    public DateTimeOffset CreatedAtUtc { get; }
     public DateTimeOffset UpdatedAtUtc { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
 

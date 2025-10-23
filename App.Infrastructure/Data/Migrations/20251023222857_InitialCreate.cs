@@ -14,6 +14,22 @@ namespace App.Infrastructure.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "email_verifications",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    token_hash = table.Column<string>(type: "text", nullable: false),
+                    expires_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    used = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_email_verifications", x => x.id);
+                    table.CheckConstraint("ck_email_verifications_expiry_future", "\"expires_at_utc\" > NOW() - INTERVAL '7 days'");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "outbox_messages",
                 columns: table => new
                 {
@@ -64,7 +80,7 @@ namespace App.Infrastructure.Data.Migrations
                     password_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     role_id = table.Column<Guid>(type: "uuid", nullable: false),
                     email_verified_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
-                    status = table.Column<string>(type: "text", nullable: false, defaultValueSql: "'PendingEmail'"),
+                    status = table.Column<string>(type: "text", nullable: false),
                     created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     deleted_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true)
@@ -182,6 +198,22 @@ namespace App.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "ix_email_verifications_expires_at",
+                table: "email_verifications",
+                column: "expires_at_utc");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_email_verifications_user_id",
+                table: "email_verifications",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ux_email_verifications_token_hash",
+                table: "email_verifications",
+                column: "token_hash",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ix_employee_positions_position_id",
                 table: "employee_positions",
                 column: "position_id");
@@ -250,6 +282,9 @@ namespace App.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "email_verifications");
+
             migrationBuilder.DropTable(
                 name: "employee_positions");
 

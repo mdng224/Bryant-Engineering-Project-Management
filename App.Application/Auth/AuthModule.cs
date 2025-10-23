@@ -1,6 +1,7 @@
 ﻿// App.Application/Auth/AuthModule.cs
 using App.Application.Abstractions;
 using App.Application.Auth.Commands.Register;
+using App.Application.Auth.Commands.VerifyEmail;
 using App.Application.Auth.Queries.Login;
 using App.Application.Common;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +17,8 @@ public static class AuthModule
 
         // Commands
         services.AddScoped<ICommandHandler<RegisterCommand, Result<RegisterResult>>, RegisterHandler>();
-
+        services.AddScoped<ICommandHandler<VerifyEmailCommand, Result<VerifyEmailResult>>, VerifyEmailHandler>();
+        
         return services;
     }
 }

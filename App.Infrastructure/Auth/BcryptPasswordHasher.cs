@@ -7,11 +7,9 @@ public class BcryptPasswordHasher : IPasswordHasher
 {
     public string Hash(string password)
     {
-        if (string.IsNullOrEmpty(password))
-            throw new ArgumentException("Password cannot be null or empty.", nameof(password));
-
-        // keep same work factor your existing rows use (11 in your DB)
-        return BCryptNet.HashPassword(password, workFactor: 11);
+        return string.IsNullOrEmpty(password)
+            ? throw new ArgumentException("Password cannot be null or empty.", nameof(password))
+            : BCryptNet.HashPassword(password, workFactor: 11); // keep same work factor your existing rows use (11 in your DB)
     }
 
     public bool Verify(string password, string hash)

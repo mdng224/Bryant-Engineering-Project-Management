@@ -22,6 +22,49 @@ namespace App.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("App.Domain.Auth.EmailVerification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at_utc");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("token_hash");
+
+                    b.Property<bool>("Used")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("used");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAtUtc")
+                        .HasDatabaseName("ix_email_verifications_expires_at");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ux_email_verifications_token_hash");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_email_verifications_user_id");
+
+                    b.ToTable("email_verifications", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_email_verifications_expiry_future", "\"expires_at_utc\" > NOW() - INTERVAL '7 days'");
+                        });
+                });
+
             modelBuilder.Entity("App.Domain.Common.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -406,10 +449,8 @@ namespace App.Infrastructure.Data.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("text")
-                        .HasColumnName("status")
-                        .HasDefaultValueSql("'PendingEmail'");
+                        .HasColumnName("status");
 
                     b.Property<DateTimeOffset>("UpdatedAtUtc")
                         .HasColumnType("timestamptz")

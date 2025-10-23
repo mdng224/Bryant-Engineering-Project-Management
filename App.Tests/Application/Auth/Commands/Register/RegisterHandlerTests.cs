@@ -6,7 +6,7 @@ using App.Domain.Users.Events;
 using FluentAssertions;
 using Moq;
 
-namespace App.Tests.Application.Auth.Commands;
+namespace App.Tests.Application.Auth.Commands.Register;
 
 public sealed class RegisterHandlerTests
 {

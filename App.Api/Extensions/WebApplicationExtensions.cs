@@ -44,7 +44,8 @@ public static class WebApplicationExtensions
         app.MapDefaultEndpoints();
         app.MapAdminEndpoints();
         app.MapAuthEndpoints();
-
+        app.MapVerificationEndpoints();
+        
         return app;
     }
 

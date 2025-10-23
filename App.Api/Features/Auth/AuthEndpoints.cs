@@ -21,7 +21,7 @@ public static class AuthEndpoints
             .WithOpenApi();
 
         // ---- POST /auth/login
-        group.MapPost("/login", Login)
+        group.MapPost("/login", HandleLoginAsync)
             .AllowAnonymous()
             .AddEndpointFilter<Validate<LoginRequest>>()
             .Accepts<LoginRequest>("application/json")
@@ -33,7 +33,7 @@ public static class AuthEndpoints
             .Produces(StatusCodes.Status401Unauthorized);
 
         // ---- POST /auth/register
-        group.MapPost("/register", Register)
+        group.MapPost("/register", HandleRegisterAsync)
             .AllowAnonymous()
             .AddEndpointFilter<Validate<RegisterRequest>>()
             .Accepts<RegisterRequest>("application/json")
@@ -45,14 +45,14 @@ public static class AuthEndpoints
             .Produces(StatusCodes.Status409Conflict);
 
         // ---- GET /auth/me (requires Bearer token)
-        group.MapGet("/me", GetMe)
+        group.MapGet("/me", HandleGetMeAsync)
             .WithSummary("Get current user")
             .WithDescription("Returns subject and email extracted from the JWT.")
             .Produces<MeResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized);
     }
 
-    private static async Task<IResult> Login(
+    private static async Task<IResult> HandleLoginAsync(
         LoginRequest request,
         IQueryHandler<LoginQuery, Result<LoginResult>> handler,
         CancellationToken ct)
@@ -63,12 +63,13 @@ public static class AuthEndpoints
         return result.ToHttpResult(loginResult => Ok(loginResult.ToResponse()));
     }
 
-    private static async Task<IResult> Register(
-        RegisterRequest registerRequest,
-         ICommandHandler<RegisterCommand, Result<RegisterResult>> handler,
+    // TODO: Maybe get rid of request here
+    private static async Task<IResult> HandleRegisterAsync(
+        RegisterRequest request,
+        ICommandHandler<RegisterCommand, Result<RegisterResult>> handler,
         CancellationToken ct)
     {
-        var command = registerRequest.ToCommand();
+        var command = request.ToCommand();
         var result = await handler.Handle(command, ct);
 
         return result.ToHttpResult(registerResult =>
@@ -86,8 +87,6 @@ public static class AuthEndpoints
     /// Requires a valid Bearer token.
     /// Returns 200 with <see cref="MeResponse"/> on success or 401 if unauthorized.
     /// </remarks>
-    private static IResult GetMe(ClaimsPrincipal user) =>
-        user.Identity?.IsAuthenticated is true
-            ? Ok(user.ToResponse())
-            : Unauthorized();
+    private static IResult HandleGetMeAsync(ClaimsPrincipal user) =>
+        user.Identity?.IsAuthenticated is true ? Ok(user.ToResponse()) : Unauthorized();
 }

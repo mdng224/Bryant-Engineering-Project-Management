@@ -2,5 +2,5 @@
 
 public interface IEmailSender
 {
-    Task SendWelcomeEmailAsync(string toEmail, CancellationToken ct = default);
+    Task SendAsync(string to, string subject, string htmlBody, CancellationToken ct = default);
 }

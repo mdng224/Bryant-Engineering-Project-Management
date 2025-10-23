@@ -65,12 +65,12 @@ public static class AdminEndpoints
     {
         return error.Code switch
         {
-            "not_found"  => Results.NotFound(new { message = error.Message }),
-            "forbidden"  => Results.Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
-            "conflict"   => Results.Conflict(new { message = error.Message }),
-            "validation" => Results.ValidationProblem(
+            "not_found"  => NotFound(new { message = error.Message }),
+            "forbidden"  => Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
+            "conflict"   => Conflict(new { message = error.Message }),
+            "validation" => ValidationProblem(
                 new Dictionary<string, string[]> { ["body"] = [error.Message ?? "Validation failed."] }),
-            _            => Results.Problem(error.Message ?? "Unexpected error.")
+            _            => Problem(error.Message ?? "Unexpected error.")
         };
     }
 
@@ -78,12 +78,12 @@ public static class AdminEndpoints
     {
         return value switch
         {
-            UpdateUserResult.Ok                 => Results.NoContent(),
-            UpdateUserResult.UserNotFound       => Results.NotFound(new { message = "User not found." }),
-            UpdateUserResult.RoleNotFound       => Results.NotFound(new { message = "Role not found." }),
-            UpdateUserResult.NoChangesSpecified => Results.ValidationProblem(
+            UpdateUserResult.Ok                 => NoContent(),
+            UpdateUserResult.UserNotFound       => NotFound(new { message = "User not found." }),
+            UpdateUserResult.RoleNotFound       => NotFound(new { message = "Role not found." }),
+            UpdateUserResult.NoChangesSpecified => ValidationProblem(
                 new Dictionary<string, string[]> { ["body"] = ["Provide roleName and/or isActive."] }),
-            _ => Results.Problem("Unknown result.")
+            _ => Problem("Unknown result.")
         };
     }
 

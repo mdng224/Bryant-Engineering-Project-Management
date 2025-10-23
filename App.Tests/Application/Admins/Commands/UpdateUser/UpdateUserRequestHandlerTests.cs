@@ -100,7 +100,7 @@ public class UpdateUserHandlerTests
     {
         // Arrange
         var user = NewUser(RoleIds.User);
-        MarkVerifiedForTests(user); // <-- ensure the domain precondition is met
+        EnsureVerified(user);
         _writer.Setup(w => w.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
@@ -278,46 +278,63 @@ public class UpdateUserHandlerTests
     private static User NewUser(Guid roleId) =>
         new(email: "user@example.com", passwordHash: "hash", roleId: roleId);
 
-    /// <summary>
-    /// Makes a user Active in tests. If the domain enforces "verified before activate",
-    /// this will call MarkEmailVerified(now) if present before calling Activate().
-    /// </summary>
     private static void ActivateForTests(User user)
     {
-        // Try to call MarkEmailVerified(DateTimeOffset) if it exists
-        var markVerified = typeof(User).GetMethod("MarkEmailVerified",
+        EnsureVerified(user);
+        user.Activate();
+    }
+    
+    // Marks the user as email-verified using any available API.
+    // Tries multiple method names/signatures. If none exist, it sets properties via reflection.
+    private static void EnsureVerified(User user)
+    {
+        var t = typeof(User);
+
+        // 1) Try MarkEmailVerified(DateTimeOffset)
+        var m = t.GetMethod("MarkEmailVerified",
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             binder: null,
             types: [typeof(DateTimeOffset)],
             modifiers: null);
+        if (m != null) { m.Invoke(user, [DateTimeOffset.UtcNow]); return; }
 
-        markVerified?.Invoke(user, [DateTimeOffset.UtcNow]);
+        // 2) Try MarkEmailVerified()
+        m = t.GetMethod("MarkEmailVerified",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null,
+            types: Type.EmptyTypes,
+            modifiers: null);
+        if (m != null) { m.Invoke(user, []); return; }
 
-        user.Activate();
-    }
-    
-    private static void MarkVerifiedForTests(User user)
-    {
-        // If you implemented MarkEmailVerified(DateTimeOffset), use it:
-        var m = typeof(User).GetMethod(
-            "MarkEmailVerified",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+        // 3) Try VerifyEmail(DateTimeOffset)
+        m = t.GetMethod("VerifyEmail",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             binder: null,
             types: [typeof(DateTimeOffset)],
             modifiers: null);
+        if (m != null) { m.Invoke(user, [DateTimeOffset.UtcNow]); return; }
 
-        if (m != null)
-        {
-            m.Invoke(user, [DateTimeOffset.UtcNow]);
-        }
-        else
-        {
-            // Fallback: if you exposed EmailVerifiedAt as a property setter or internal,
-            // set it here via reflection (only as a test backdoor).
-            var p = typeof(User).GetProperty("EmailVerifiedAt",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-            p?.SetValue(user, DateTimeOffset.UtcNow);
-        }
+        // 4) Try VerifyEmail()
+        m = t.GetMethod("VerifyEmail",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null,
+            types: Type.EmptyTypes,
+            modifiers: null);
+        if (m != null) { m.Invoke(user, []); return; }
+
+        // 5) Fallback: set EmailVerifiedAt (if present)
+        var pVerifiedAt = t.GetProperty("EmailVerifiedAt",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (pVerifiedAt?.CanWrite == true)
+            pVerifiedAt.SetValue(user, DateTimeOffset.UtcNow);
+
+        // 6) Fallback: set Status = EmailVerified (private setter OK via reflection)
+        var pStatus = t.GetProperty("Status",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (pStatus?.CanWrite != true)
+            throw new InvalidOperationException(
+                "Test cannot mark user as email-verified. Expose MarkEmailVerified()/VerifyEmail() or a settable EmailVerifiedAt/Status for testing.");
+        // assuming the enum is App.Domain.Users.UserStatus
+        pStatus.SetValue(user, UserStatus.PendingEmail);
     }
-
 }
