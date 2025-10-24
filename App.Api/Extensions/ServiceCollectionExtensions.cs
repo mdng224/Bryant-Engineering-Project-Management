@@ -1,5 +1,5 @@
 ﻿// App.Infrastructure/Auth/JwtTokenService.cs
-using App.Api.Contracts.Admins;
+
 using App.Api.Contracts.Auth;
 using App.Application;
 using App.Domain.Security;
@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using App.Api.Contracts.Users;
 
 namespace App.Api.Extensions;
 

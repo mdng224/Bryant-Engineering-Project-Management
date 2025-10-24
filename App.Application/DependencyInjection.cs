@@ -1,5 +1,7 @@
-﻿using App.Application.Admins;
-using App.Application.Auth;
+﻿using App.Application.Auth;
+using App.Application.Employees;
+using App.Application.Positions;
+using App.Application.Users;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace App.Application;
@@ -10,7 +12,9 @@ public static class DependencyInjection
     {
         // Modules
         services.AddAuthApplication();
-        services.AddAdminsApplication();
+        services.AddEmployeesApplication();
+        services.AddPositionsApplication();
+        services.AddUsersApplication();
 
         return services;
     }

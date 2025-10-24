@@ -34,10 +34,10 @@ public static class VerificationEndpoints
         [FromServices] IConfiguration cfg,
         CancellationToken ct)
     {
-        var command =  new VerifyEmailCommand(token);
-        var result = await handler.Handle(command, ct);
-        var status = result.Value!.Outcome.ToName();
-        var message = result.Value!.Outcome.ToMessage();
+        var command       =  new VerifyEmailCommand(token);
+        var result        = await handler.Handle(command, ct);
+        var status   = result.Value!.Outcome.ToName();
+        var message       = result.Value!.Outcome.ToMessage();
         var statusCode = result.Error?.Code is { } code ? code.ToStatusCode() : 500;
 
         if (result.IsSuccess)

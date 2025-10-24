@@ -67,9 +67,10 @@ public sealed class VerifyEmailHandler(
             return;
 
         var employee = await employeeReader.GetByCompanyEmailAsync(user.Email.ToNormalizedEmail(), ct);
-        if (employee is not null)
-            user.Activate();
-        else
+
+        if (employee is null)
             user.MarkPendingApproval();
+        else
+            user.Activate();
     }
 }

@@ -21,7 +21,7 @@ public static class AuthEndpoints
             .WithOpenApi();
 
         // ---- POST /auth/login
-        group.MapPost("/login", HandleLoginAsync)
+        group.MapPost("/login", Login.Handle)
             .AllowAnonymous()
             .AddEndpointFilter<Validate<LoginRequest>>()
             .Accepts<LoginRequest>("application/json")
@@ -33,7 +33,7 @@ public static class AuthEndpoints
             .Produces(StatusCodes.Status401Unauthorized);
 
         // ---- POST /auth/register
-        group.MapPost("/register", HandleRegisterAsync)
+        group.MapPost("/register", Register.Handle)
             .AllowAnonymous()
             .AddEndpointFilter<Validate<RegisterRequest>>()
             .Accepts<RegisterRequest>("application/json")
@@ -45,48 +45,13 @@ public static class AuthEndpoints
             .Produces(StatusCodes.Status409Conflict);
 
         // ---- GET /auth/me (requires Bearer token)
-        group.MapGet("/me", HandleGetMeAsync)
+        group.MapGet("/me", GetMe.Handle)
             .WithSummary("Get current user")
             .WithDescription("Returns subject and email extracted from the JWT.")
             .Produces<MeResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized);
     }
+    
 
-    private static async Task<IResult> HandleLoginAsync(
-        LoginRequest request,
-        IQueryHandler<LoginQuery, Result<LoginResult>> handler,
-        CancellationToken ct)
-    {
-        var query = request.ToQuery();
-        var result = await handler.Handle(query, ct);
 
-        return result.ToHttpResult(loginResult => Ok(loginResult.ToResponse()));
-    }
-
-    // TODO: Maybe get rid of request here
-    private static async Task<IResult> HandleRegisterAsync(
-        RegisterRequest request,
-        ICommandHandler<RegisterCommand, Result<RegisterResult>> handler,
-        CancellationToken ct)
-    {
-        var command = request.ToCommand();
-        var result = await handler.Handle(command, ct);
-
-        return result.ToHttpResult(registerResult =>
-        {
-            var registerResponse = registerResult.ToResponse();
-            return Created($"/auth/users/{registerResponse.UserId}", registerResponse);
-        });
-    }
-
-    /// <summary>
-    /// GET /auth/me – returns the authenticated user's ID and email
-    /// from the JWT without a database lookup.
-    /// </summary>
-    /// <remarks>
-    /// Requires a valid Bearer token.
-    /// Returns 200 with <see cref="MeResponse"/> on success or 401 if unauthorized.
-    /// </remarks>
-    private static IResult HandleGetMeAsync(ClaimsPrincipal user) =>
-        user.Identity?.IsAuthenticated is true ? Ok(user.ToResponse()) : Unauthorized();
 }

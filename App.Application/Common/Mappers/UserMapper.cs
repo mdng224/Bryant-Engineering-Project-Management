@@ -6,7 +6,7 @@ namespace App.Application.Common.Mappers;
 
 public static class UserMapper
 {
-    public static UserDto ToDto(this User user) =>
+    private static UserDto ToDto(this User user) =>
         new(
             Id: user.Id,
             Email: user.Email,
