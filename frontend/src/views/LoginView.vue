@@ -70,9 +70,9 @@
               type="button"
               :aria-pressed="showPassword"
               :disabled="loading"
-              @click="showPassword = !showPassword"
               class="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-indigo-300 hover:text-indigo-200 disabled:opacity-50"
               :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              @click="showPassword = !showPassword"
             >
               <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" aria-hidden="true" />
             </button>
@@ -115,16 +115,15 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, nextTick, onMounted, ref } from 'vue';
-  import { useRoute, useRouter } from 'vue-router';
-
-  import { isAxiosError } from 'axios';
-  import { AlertTriangle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
-
-  import { login } from '@/api/auth';
+  import type { LoginRequest } from '@/api/auth';
+  import { services } from '@/api/auth/';
+  import type { ApiErrorResponse } from '@/api/error';
   import { useAuth } from '@/composables/useAuth';
   import { useAuthFields } from '@/composables/useAuthFields';
-  import type { ApiErrorResponse, LoginRequest } from '@/types/';
+  import { isAxiosError } from 'axios';
+  import { AlertTriangle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
+  import { computed, nextTick, onMounted, ref } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
 
   const route = useRoute();
   const router = useRouter();
@@ -157,7 +156,7 @@
         email: normalizedEmail.value, // locale-insensitive for emails
         password: password.value,
       };
-      await login(LoginRequest);
+      await services.login(LoginRequest);
       const authed = await ensureAuthState(true);
 
       if (authed) {

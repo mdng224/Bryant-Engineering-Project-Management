@@ -4,7 +4,9 @@ import type {
   GetUsersResponse,
   UpdateUserRequest,
   UserResponse,
-} from '@/types/admin/api';
+} from '@/api/users/contracts';
+import type { AxiosError } from 'axios';
+import { UsersRoutes } from './routes';
 
 /**
  * Fetches a paginated list of users from the admin API.
@@ -31,13 +33,14 @@ import type {
  * console.log(users.totalCount);
  * ```
  */
-export async function getUsers(params: GetUsersRequest): Promise<GetUsersResponse> {
+async function getUsers(params: GetUsersRequest): Promise<GetUsersResponse> {
   try {
-    const { data } = await api.get<GetUsersResponse>('/admins/users', { params });
+    const { data } = await api.get<GetUsersResponse>(UsersRoutes.list, { params });
 
     return data;
-  } catch (err: any) {
-    if (err?.response?.status === 403) {
+  } catch (err) {
+    const e = err as AxiosError;
+    if (e.response?.status === 403) {
       // surface a nicer error or redirect
       throw new Error('You do not have permission to view users.');
     }
@@ -45,8 +48,8 @@ export async function getUsers(params: GetUsersRequest): Promise<GetUsersRespons
   }
 }
 
-export async function updateUser(id: string, body: UpdateUserRequest): Promise<UserResponse> {
-  const { data } = await api.patch<UserResponse>(`/admins/users/${id}`, body);
-
-  return data;
+async function updateUser(id: string, body: UpdateUserRequest): Promise<void> {
+  await api.patch<UserResponse>(UsersRoutes.byId(id), body);
 }
+
+export const services = { getUsers, updateUser };

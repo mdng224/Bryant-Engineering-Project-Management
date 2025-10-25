@@ -97,8 +97,8 @@
               :aria-pressed="showPassword"
               :aria-label="showPassword ? 'Hide password' : 'Show password'"
               :disabled="loading"
-              @click="showPassword = !showPassword"
               class="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-indigo-300 hover:text-indigo-200 disabled:opacity-50"
+              @click="showPassword = !showPassword"
             >
               <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" aria-hidden="true" />
             </button>
@@ -133,8 +133,8 @@
               :aria-pressed="showPassword2"
               :aria-label="showPassword2 ? 'Hide confirm password' : 'Show confirm password'"
               :disabled="loading"
-              @click="showPassword2 = !showPassword2"
               class="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-indigo-300 hover:text-indigo-200 disabled:opacity-50"
+              @click="showPassword2 = !showPassword2"
             >
               <component :is="showPassword2 ? EyeOff : Eye" class="h-4 w-4" aria-hidden="true" />
             </button>
@@ -186,9 +186,10 @@
 </template>
 
 <script setup lang="ts">
-  import { register } from '@/api/auth';
+  import type { RegisterRequest, RegisterResponse } from '@/api/auth';
+  import { services } from '@/api/auth';
+  import type { ApiErrorResponse } from '@/api/error';
   import { useAuthFields } from '@/composables/useAuthFields';
-  import type { ApiErrorResponse, RegisterRequest, RegisterResponse } from '@/types';
   import { isAxiosError } from 'axios';
   import { AlertTriangle, CheckCircle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
   import { computed, nextTick, onMounted, ref } from 'vue';
@@ -238,7 +239,7 @@
 
     try {
       const payload: RegisterRequest = { email: normalizedEmail.value, password: password.value };
-      const registerResponse: RegisterResponse = await register(payload);
+      const registerResponse: RegisterResponse = await services.register(payload);
       success.value = registerResponse;
     } catch (err: unknown) {
       let msg = 'Registration failed. Please try again.';

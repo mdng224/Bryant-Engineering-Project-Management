@@ -1,4 +1,4 @@
-// src/types/auth/api.ts
+// src/api/auth/contracts.ts
 
 export type LoginRequest = {
   email: string;

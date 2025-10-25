@@ -31,9 +31,9 @@
         <div class="flex items-center gap-3">
           <label class="text-slate-400">Status</label>
           <input
+            v-model="form.isActive"
             class="h-4 w-4 rounded-sm border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
             type="checkbox"
-            v-model="form.isActive"
             :disabled="saving"
           />
           <span class="text-sm" :class="form.isActive ? 'text-emerald-300' : 'text-slate-300'">
@@ -71,8 +71,9 @@
 </template>
 
 <script setup lang="ts">
-  import { updateUser } from '@/api/admin/users';
-  import type { UpdateUserRequest, UserResponse } from '@/types';
+  import { services } from '@/api/users';
+  import type { UpdateUserRequest, UserResponse } from '@/api/users/contracts';
+  import type { AxiosError } from 'axios';
   import { AlertTriangle } from 'lucide-vue-next';
   import { computed, ref, watch } from 'vue';
 
@@ -124,17 +125,18 @@
       if (form.value.roleName !== props.user.roleName) request.roleName = form.value.roleName;
       if (form.value.isActive !== props.user.isActive) request.isActive = form.value.isActive;
 
-      const response: UserResponse = await updateUser(props.user.id, request);
-      emit('saved', { ...props.user, ...response });
+      await services.updateUser(props.user.id, request);
+      //emit('saved', { ...props.user, ...response });
       emit('close');
-    } catch (e: any) {
-      const status = e?.response?.status;
-      const serverMsg = e?.response?.data?.message ?? e?.response?.data?.error;
+    } catch (error) {
+      const err = error as AxiosError<{ message?: string; error?: string }>;
+      const status = err.response?.status;
+      const serverMsg = err.response?.data?.message ?? err.response?.data?.error;
+
       errorMessage.value =
         status === 403
           ? (serverMsg ?? 'You are not allowed to perform this action.')
-          : (serverMsg ?? e?.message ?? 'Failed to update user.');
-      // keep dialog open; no emits
+          : (serverMsg ?? err.message ?? 'Failed to update user.');
     } finally {
       saving.value = false;
     }

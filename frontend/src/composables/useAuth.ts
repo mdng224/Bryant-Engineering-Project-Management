@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { me } from '@/api/auth';
+import { services } from '@/api/auth';
 
 /* -------------------------------------------------------------------------- */
 /*                                State / Cache                               */
@@ -16,7 +16,7 @@ import { me } from '@/api/auth';
 const isAuthed = ref<boolean | null>(null);
 
 /**
- * Tracks any in-progress `me()` request to prevent duplicate API calls.
+ * Tracks any in-progress `services.me()` request to prevent duplicate API calls.
  */
 let inFlight: Promise<void> | null = null;
 
@@ -63,7 +63,8 @@ export const ensureAuthState = async (force = false): Promise<boolean> => {
 
   // Avoid parallel /me calls
   if (!inFlight) {
-    inFlight = me()
+    inFlight = services
+      .me()
       .then(() => {
         isAuthed.value = true;
       })

@@ -24,17 +24,20 @@
       </thead>
 
       <tbody class="divide-y divide-slate-800">
-        <tr v-if="loading" v-for="i in 10" :key="i">
-          <td class="px-4 py-3"><div :class="loadingTd" /></td>
-          <td class="px-4 py-3"><div :class="loadingTd" /></td>
-          <td class="px-4 py-3"><div :class="loadingTd" /></td>
-          <td class="px-4 py-3"><div :class="loadingTd" /></td>
-          <td class="px-4 py-3"><div :class="loadingTd" /></td>
-          <td class="px-4 py-3"><div :class="loadingTd" /></td>
-        </tr>
+        <template v-if="loading">
+          <tr v-for="i in 10" :key="i">
+            <td class="px-4 py-3"><div :class="loadingTd" /></td>
+            <td class="px-4 py-3"><div :class="loadingTd" /></td>
+            <td class="px-4 py-3"><div :class="loadingTd" /></td>
+            <td class="px-4 py-3"><div :class="loadingTd" /></td>
+            <td class="px-4 py-3"><div :class="loadingTd" /></td>
+            <td class="px-4 py-3"><div :class="loadingTd" /></td>
+          </tr>
+        </template>
+
         <tr
-          v-else
           v-for="row in table.getRowModel().rows"
+          v-else
           :key="row.id"
           class="odd:bg-slate-900/40 even:bg-slate-700/30 hover:bg-slate-800/40 ..."
         >
@@ -68,8 +71,8 @@
             <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'actions'">
               <button
                 class="rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500"
-                @click="onEdit(row.original as UserResponse)"
                 aria-label="Edit user"
+                @click="onEdit(row.original as UserResponse)"
               >
                 <Pencil class="h-4 w-4" />
               </button>
@@ -114,16 +117,16 @@
         <button
           class="flex items-center justify-center rounded-md border border-slate-700 p-2 disabled:opacity-50"
           :disabled="!table.getCanPreviousPage()"
-          @click="table.previousPage()"
           aria-label="Previous page"
+          @click="table.previousPage()"
         >
           <ChevronLeft class="h-4 w-4" />
         </button>
         <button
           class="flex items-center justify-center rounded-md border border-slate-700 p-2 disabled:opacity-50"
           :disabled="!table.getCanNextPage()"
-          @click="table.nextPage()"
           aria-label="Next page"
+          @click="table.nextPage()"
         >
           <ChevronRight class="h-4 w-4" />
         </button>
@@ -140,11 +143,10 @@
 </template>
 
 <script setup lang="ts">
-  // TODO: 1) search email
-  // 2) sort by column
-  import { getUsers } from '@/api/admin/users';
+  import type { GetUsersRequest, GetUsersResponse, UserResponse } from '@/api/users';
+  import { services } from '@/api/users';
+
   import EditUserDialog from '@/components/EditUserDialog.vue';
-  import type { GetUsersRequest, GetUsersResponse, UserResponse } from '@/types';
   import {
     createColumnHelper,
     getCoreRowModel,
@@ -244,7 +246,7 @@
       const pageSize = pagination.pageSize;
 
       const params: GetUsersRequest = { page, pageSize };
-      const response: GetUsersResponse = await getUsers(params);
+      const response: GetUsersResponse = await services.getUsers(params);
 
       // Ignore stale responses
       if (seq !== reqSeq) return;
@@ -287,7 +289,7 @@
       const page = 1;
       const pageSize = pagination.pageSize;
       const request: GetUsersRequest = { page, pageSize, email };
-      const response: GetUsersResponse = await getUsers(request);
+      const response: GetUsersResponse = await services.getUsers(request);
 
       if (seq !== reqSeq) return; // ignore stale results
 

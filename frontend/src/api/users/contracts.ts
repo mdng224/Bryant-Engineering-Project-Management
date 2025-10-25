@@ -1,4 +1,4 @@
-// src/types/admin/api.ts
+// src/types/users/contracts.ts
 
 export type GetUsersRequest = {
   page: number;
@@ -19,6 +19,7 @@ export type UpdateUserRequest = {
   isActive?: boolean;
 };
 
+// Each row in the table
 export type UserResponse = {
   id: string;
   email: string;

@@ -1,6 +1,7 @@
 // src/api/index.ts
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import axios, { AxiosHeaders } from 'axios';
+import { AuthStorage } from './auth/services';
 
 /**
  * Axios client preconfigured for your backend API.
@@ -23,17 +24,13 @@ const apiClient: AxiosInstance = axios.create({
  * Attaches Authorization header if a JWT token is stored.
  */
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) return config;
+  const token = AuthStorage.getToken();
 
-  // Normalize headers to AxiosHeaders so we can use .set safely
-  if (!config.headers) {
-    config.headers = new AxiosHeaders();
-  } else if (!(config.headers instanceof AxiosHeaders)) {
-    config.headers = new AxiosHeaders(config.headers); // Wrap plain object / RawAxiosRequestHeaders
+  if (token) {
+    config.headers = new AxiosHeaders(config.headers);
+    config.headers.set('Authorization', `Bearer ${token}`);
   }
 
-  config.headers.set('Authorization', `Bearer ${token}`);
   return config;
 });
 
@@ -46,12 +43,10 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
  */
 apiClient.interceptors.response.use(
   response => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('authExp');
-    }
-    return Promise.reject(error);
+  (err: AxiosError) => {
+    if (err.response?.status === 401) AuthStorage.clear();
+
+    return Promise.reject(err);
   },
 );
 
