@@ -29,11 +29,11 @@ import { UsersRoutes } from './routes';
  *
  * Example:
  * ```ts
- * const users = await getUsers({ page: 1, pageSize: 25 });
+ * const users = await get({ page: 1, pageSize: 25 });
  * console.log(users.totalCount);
  * ```
  */
-async function getUsers(params: GetUsersRequest): Promise<GetUsersResponse> {
+async function get(params: GetUsersRequest): Promise<GetUsersResponse> {
   try {
     const { data } = await api.get<GetUsersResponse>(UsersRoutes.list, { params });
 
@@ -48,8 +48,8 @@ async function getUsers(params: GetUsersRequest): Promise<GetUsersResponse> {
   }
 }
 
-async function updateUser(id: string, body: UpdateUserRequest): Promise<void> {
+async function update(id: string, body: UpdateUserRequest): Promise<void> {
   await api.patch<UserResponse>(UsersRoutes.byId(id), body);
 }
 
-export const services = { getUsers, updateUser };
+export const userService = { get, update };

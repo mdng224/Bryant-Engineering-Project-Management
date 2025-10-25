@@ -187,7 +187,7 @@
 
 <script setup lang="ts">
   import type { RegisterRequest, RegisterResponse } from '@/api/auth';
-  import { services } from '@/api/auth';
+  import { authServices } from '@/api/auth';
   import type { ApiErrorResponse } from '@/api/error';
   import { useAuthFields } from '@/composables/useAuthFields';
   import { isAxiosError } from 'axios';
@@ -239,7 +239,7 @@
 
     try {
       const payload: RegisterRequest = { email: normalizedEmail.value, password: password.value };
-      const registerResponse: RegisterResponse = await services.register(payload);
+      const registerResponse: RegisterResponse = await authServices.register(payload);
       success.value = registerResponse;
     } catch (err: unknown) {
       let msg = 'Registration failed. Please try again.';

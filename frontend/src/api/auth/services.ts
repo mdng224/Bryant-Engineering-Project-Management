@@ -86,4 +86,4 @@ async function register(request: RegisterRequest): Promise<RegisterResponse> {
   return data;
 }
 
-export const services = { login, me, register };
+export const authServices = { login, me, register };

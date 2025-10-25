@@ -116,7 +116,7 @@
 
 <script setup lang="ts">
   import type { LoginRequest } from '@/api/auth';
-  import { services } from '@/api/auth/';
+  import { authServices } from '@/api/auth/';
   import type { ApiErrorResponse } from '@/api/error';
   import { useAuth } from '@/composables/useAuth';
   import { useAuthFields } from '@/composables/useAuthFields';
@@ -156,7 +156,7 @@
         email: normalizedEmail.value, // locale-insensitive for emails
         password: password.value,
       };
-      await services.login(LoginRequest);
+      await authServices.login(LoginRequest);
       const authed = await ensureAuthState(true);
 
       if (authed) {

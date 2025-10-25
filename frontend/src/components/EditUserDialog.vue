@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-  import { services } from '@/api/users';
+  import { userService } from '@/api/users';
   import type { UpdateUserRequest, UserResponse } from '@/api/users/contracts';
   import type { AxiosError } from 'axios';
   import { AlertTriangle } from 'lucide-vue-next';
@@ -125,7 +125,7 @@
       if (form.value.roleName !== props.user.roleName) request.roleName = form.value.roleName;
       if (form.value.isActive !== props.user.isActive) request.isActive = form.value.isActive;
 
-      await services.updateUser(props.user.id, request);
+      await userService.update(props.user.id, request);
       //emit('saved', { ...props.user, ...response });
       emit('close');
     } catch (error) {

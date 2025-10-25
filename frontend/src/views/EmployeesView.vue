@@ -131,7 +131,7 @@
     GetEmployeesResponse,
   } from '@/api/employees/contracts';
   //import EditEmployeeDialog from '@/components/EditEmployeeDialog.vue';
-  import { services } from '@/api/employees';
+  import { employeeServices } from '@/api/employees';
   import {
     createColumnHelper,
     getCoreRowModel,
@@ -234,7 +234,7 @@
       const pageSize = pagination.pageSize;
 
       const params: GetEmployeesRequest = { page, pageSize };
-      const response: GetEmployeesResponse = await services.getEmployees(params);
+      const response: GetEmployeesResponse = await employeeServices.get(params);
 
       // Ignore stale responses
       if (seq !== reqSeq) return;
