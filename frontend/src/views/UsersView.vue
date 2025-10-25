@@ -144,7 +144,7 @@
 
 <script setup lang="ts">
   import type { GetUsersRequest, GetUsersResponse, UserResponse } from '@/api/users';
-  import { services } from '@/api/users';
+  import { userService } from '@/api/users';
 
   import EditUserDialog from '@/components/EditUserDialog.vue';
   import {
@@ -246,7 +246,7 @@
       const pageSize = pagination.pageSize;
 
       const params: GetUsersRequest = { page, pageSize };
-      const response: GetUsersResponse = await services.getUsers(params);
+      const response: GetUsersResponse = await userService.get(params);
 
       // Ignore stale responses
       if (seq !== reqSeq) return;
@@ -289,7 +289,7 @@
       const page = 1;
       const pageSize = pagination.pageSize;
       const request: GetUsersRequest = { page, pageSize, email };
-      const response: GetUsersResponse = await services.getUsers(request);
+      const response: GetUsersResponse = await userService.get(request);
 
       if (seq !== reqSeq) return; // ignore stale results
 

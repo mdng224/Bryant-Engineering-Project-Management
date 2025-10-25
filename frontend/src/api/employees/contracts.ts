@@ -1,5 +1,15 @@
 // src/api/employees/contracts.ts
 
+type EmployeeBase = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  preferredName?: string | null;
+  employmentType?: string | null;
+  hireDate: string | null;
+  department: string | null;
+};
+
 export type GetEmployeesRequest = {
   page: number;
   pageSize: number;
@@ -17,16 +27,6 @@ export type GetEmployeesResponse = {
 export type EmployeeListItem = {
   summary: EmployeeSummaryResponse;
   details: EmployeeResponse;
-};
-
-type EmployeeBase = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  preferredName?: string | null;
-  employmentType?: string | null;
-  hireDate: string | null;
-  department: string | null;
 };
 
 // This is for the non detail view in the table for an employee
