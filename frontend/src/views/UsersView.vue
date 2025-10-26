@@ -1,10 +1,6 @@
 <template>
   <div class="pb-4">
-    <input
-      v-model="emailSearchTerm"
-      placeholder="Search email…"
-      class="h-9 min-w-[260px] rounded-md border border-slate-700 bg-slate-900/70 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 sm:w-1/2 lg:w-1/3"
-    />
+    <TableSearch v-model="emailSearch" placeholder="Search email…" @commit="commitEmailNow" />
   </div>
 
   <div class="overflow-x-auto rounded-xl border border-slate-700 bg-slate-900/70 shadow">
@@ -24,16 +20,7 @@
       </thead>
 
       <tbody class="divide-y divide-slate-800">
-        <template v-if="loading">
-          <tr v-for="i in 10" :key="i">
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-          </tr>
-        </template>
+        <SkeletonRows v-if="loading" :rows="10" :cols="table.getAllLeafColumns().length" />
 
         <tr
           v-for="row in table.getRowModel().rows"
@@ -52,13 +39,12 @@
 
             <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'status'">
               <span
-                v-if="cell.getValue() as boolean"
-                class="rounded-full bg-emerald-700 px-2 py-0.5 text-sm text-emerald-200"
+                :class="[
+                  'rounded-full px-2 py-0.5 text-sm font-medium',
+                  getStatusClass(cell.getValue() as string),
+                ]"
               >
-                Active
-              </span>
-              <span v-else class="rounded-full bg-slate-800/60 px-2 py-0.5 text-sm text-slate-400">
-                Inactive
+                {{ cell.getValue() as string }}
               </span>
             </template>
 
@@ -96,80 +82,48 @@
     </table>
   </div>
 
-  <!-- Pagination / info -->
-  <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-300">
-    <div class="flex items-center gap-3">
-      <span>Total: {{ totalCount }}</span>
-      <span>Page {{ pagination.pageIndex + 1 }} / {{ totalPages }}</span>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <label>Rows:</label>
-      <select
-        class="rounded-md border border-slate-700 bg-slate-900 px-2 py-1"
-        :value="pagination.pageSize"
-        @change="handlePageSizeChange(($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="s in [10, 25, 50]" :key="s" :value="s">{{ s }}</option>
-      </select>
-
-      <div class="flex items-center gap-2">
-        <button
-          class="flex items-center justify-center rounded-md border border-slate-700 p-2 disabled:opacity-50"
-          :disabled="!table.getCanPreviousPage()"
-          aria-label="Previous page"
-          @click="table.previousPage()"
-        >
-          <ChevronLeft class="h-4 w-4" />
-        </button>
-        <button
-          class="flex items-center justify-center rounded-md border border-slate-700 p-2 disabled:opacity-50"
-          :disabled="!table.getCanNextPage()"
-          aria-label="Next page"
-          @click="table.nextPage()"
-        >
-          <ChevronRight class="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  </div>
+  <TableFooter :table :totalCount :totalPages :pagination :setPageSize />
 
   <EditUserDialog
     :open="editUserDialogIsOpen"
     :user="userBeingEdited"
     @close="editUserDialogIsOpen = false"
-    @saved="fetchUsers"
+    @saved="refetch"
   />
 </template>
 
 <script setup lang="ts">
-  import type { GetUsersRequest, GetUsersResponse, UserResponse } from '@/api/users';
   import { userService } from '@/api/users';
+  import SkeletonRows from '@/components/SkeletonRows.vue';
+  import type { GetUsersRequest, GetUsersResponse, UserResponse } from '../api/users';
 
   import EditUserDialog from '@/components/EditUserDialog.vue';
-  import {
-    createColumnHelper,
-    getCoreRowModel,
-    useVueTable,
-    type ColumnDef,
-    type ColumnHelper,
-  } from '@tanstack/vue-table';
-  import { ChevronLeft, ChevronRight, Pencil } from 'lucide-vue-next';
-  import { onBeforeUnmount, reactive, ref, watch, watchEffect } from 'vue';
+  import TableFooter from '@/components/TableFooter.vue';
+  import TableSearch from '@/components/TableSearch.vue';
+  import { useDataTable } from '@/composables/useDataTable';
+  import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
+  import { Pencil } from 'lucide-vue-next';
+  import { onBeforeUnmount, ref, watch } from 'vue';
+  import { useDebouncedRef } from '../composables/useDebouncedRef';
 
   type ColMeta = { kind: 'text' } | { kind: 'status' } | { kind: 'datetime' } | { kind: 'actions' };
 
   const editUserDialogIsOpen = ref(false);
-  const emailSearchTerm = ref('');
-  const debouncedEmail = ref(''); // used by fetch
-  const loading = ref(false);
-  let reqSeq = 0;
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  const totalCount = ref(0);
-  const totalPages = ref(0);
-  const users = ref<UserResponse[]>([]);
-  const loadingTd = 'h-3 w-40 animate-pulse rounded bg-slate-700/50';
   const userBeingEdited = ref<UserResponse | null>(null);
+
+  /* ------------------------------ Status ------------------------------- */
+  type Status = 'PendingEmail' | 'PendingApproval' | 'Active' | 'Denied' | 'Disabled';
+
+  const statusClasses: Record<Status, string> = {
+    Active: 'bg-emerald-700 text-emerald-100',
+    PendingEmail: 'bg-amber-600/90 text-amber-100',
+    PendingApproval: 'bg-blue-600/80 text-blue-100',
+    Denied: 'bg-rose-700 text-rose-100',
+    Disabled: 'bg-slate-700 text-slate-300',
+  } satisfies Record<Status, string>;
+
+  const getStatusClass = (status: string): string =>
+    statusClasses[status as Status] ?? 'bg-slate-800/60 text-slate-400';
 
   // formatting helpers
   const fmt = new Intl.DateTimeFormat(undefined, {
@@ -191,7 +145,7 @@
       header: 'Role Name',
       meta: { kind: 'text' as const },
     }),
-    col.accessor('isActive', {
+    col.accessor('status', {
       header: 'Status',
       meta: { kind: 'status' as const },
     }),
@@ -215,88 +169,58 @@
     },
   ];
 
-  // TanStack state (server mode)
-  const pagination = reactive({ pageIndex: 0, pageSize: 25 });
+  /* ---------------------------- Search ---------------------------- */
+  const {
+    input: emailSearch, // bind to v-model
+    debounced: email, // use in fetch
+    setNow: commitEmailNow, // optional: commit immediately on Enter
+    cancel: cancelEmailDebounce, // optional
+  } = useDebouncedRef('', 500);
 
-  const table = useVueTable<UserResponse>({
-    get data() {
-      return users.value;
-    },
-    columns,
-    get pageCount() {
-      return totalPages.value;
-    },
-    state: { pagination },
-    manualPagination: true,
-    onPaginationChange: updater => {
-      if (typeof updater === 'function') Object.assign(pagination, updater(pagination));
-      else Object.assign(pagination, updater);
-    },
-    getCoreRowModel: getCoreRowModel(),
-    initialState: { pagination },
-    getRowId: row => String(row.id),
-  });
-
-  /* ---------------------------- Debounce email ---------------------------- */
-  watch(emailSearchTerm, val => {
-    if (debounceTimer) clearTimeout(debounceTimer);
-
-    debounceTimer = setTimeout(() => {
-      debouncedEmail.value = val.trim();
-      pagination.pageIndex = 0;
-    }, 500);
-  });
-
-  onBeforeUnmount(() => {
-    if (debounceTimer) clearTimeout(debounceTimer);
-  });
+  onBeforeUnmount(cancelEmailDebounce);
 
   /* ------------------------------ Fetching ------------------------------- */
-  const fetchUsers = async (): Promise<void> => {
-    loading.value = true;
-    const seq = ++reqSeq; // capture this call's sequence
+  type UserQuery = { email?: string };
 
-    try {
-      const page = pagination.pageIndex + 1; // backend is 1-based
-      const pageSize = pagination.pageSize;
+  const fetchUsers = async ({
+    page,
+    pageSize,
+    query,
+  }: {
+    page: number;
+    pageSize: number;
+    query?: UserQuery;
+  }) => {
+    const params: GetUsersRequest = { page, pageSize, email: query?.email || undefined };
+    const response: GetUsersResponse = await userService.get(params);
 
-      const params: GetUsersRequest = { page, pageSize, email: debouncedEmail.value || undefined };
-      const response: GetUsersResponse = await userService.get(params);
-
-      // Ignore stale responses
-      if (seq !== reqSeq) return;
-
-      // TODO: Maybe map this to a user model
-      // assign from response
-      users.value = response.users;
-      totalCount.value = response.totalCount;
-      totalPages.value = response.totalPages;
-
-      // sync pagination if server adjusted it (cap/normalize)
-      pagination.pageIndex = Math.max(0, (response.page ?? page) - 1);
-      pagination.pageSize = response.pageSize ?? pageSize;
-    } catch (err) {
-      console.error('Failed to fetch users', err);
-      // optional safety resets:
-      users.value = [];
-      totalCount.value = 0;
-      totalPages.value = 0;
-    } finally {
-      loading.value = false;
-    }
+    return {
+      items: response.users,
+      totalCount: response.totalCount,
+      totalPages: response.totalPages,
+      page: response.page,
+      pageSize: response.pageSize,
+    };
   };
 
-  // Refetch on pagination or filter change
-  watchEffect(fetchUsers);
+  const {
+    table,
+    rows: users,
+    loading,
+    totalCount,
+    totalPages,
+    pagination,
+    setQuery,
+    setPageSize,
+    fetchNow: refetch,
+  } = useDataTable<UserResponse, UserQuery>(columns, fetchUsers, { email: undefined });
+
+  // keep page at 1 when search changes
+  watch(email, () => setQuery({ email: email.value || undefined }));
 
   /* ------------------------------ Handlers ------------------------------- */
   const handleEditUser = (user: UserResponse): void => {
     userBeingEdited.value = user;
     editUserDialogIsOpen.value = true;
-  };
-
-  const handlePageSizeChange = (val: string): void => {
-    pagination.pageSize = Number(val);
-    pagination.pageIndex = 0;
   };
 </script>

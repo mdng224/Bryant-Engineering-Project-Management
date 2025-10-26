@@ -1,10 +1,6 @@
 <template>
   <div class="pb-4">
-    <input
-      v-model="nameSearchTerm"
-      placeholder="Search by name..."
-      class="h-9 min-w-[260px] rounded-md border border-slate-700 bg-slate-900/70 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 sm:w-1/2 lg:w-1/3"
-    />
+    <TableSearch v-model="nameSearch" placeholder="Search email…" @commit="commitNameNow" />
   </div>
 
   <div class="overflow-x-auto rounded-xl border border-slate-700 bg-slate-900/70 shadow">
@@ -24,16 +20,7 @@
       </thead>
 
       <tbody class="divide-y divide-slate-800">
-        <template v-if="loading">
-          <tr v-for="i in 10" :key="i">
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-            <td class="px-4 py-3"><div :class="loadingTd" /></td>
-          </tr>
-        </template>
+        <SkeletonRows v-if="loading" :rows="10" :cols="table.getAllLeafColumns().length" />
 
         <tr
           v-for="row in table.getRowModel().rows"
@@ -50,15 +37,14 @@
               <span class="text-md text-slate-100">{{ cell.getValue() as string }}</span>
             </template>
 
-            <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'status'">
+            <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'department'">
               <span
-                v-if="cell.getValue() as boolean"
-                class="rounded-full bg-emerald-700 px-2 py-0.5 text-sm text-emerald-200"
+                :class="[
+                  'rounded-full px-2 py-0.5 text-sm font-medium',
+                  getDepartmentClass(cell.getValue() as string),
+                ]"
               >
-                Active
-              </span>
-              <span v-else class="rounded-full bg-slate-800/60 px-2 py-0.5 text-sm text-slate-400">
-                Inactive
+                {{ cell.getValue() as string }}
               </span>
             </template>
 
@@ -85,43 +71,7 @@
     </table>
   </div>
 
-  <!-- Pagination / info -->
-  <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-300">
-    <div class="flex items-center gap-3">
-      <span>Total: {{ totalCount }}</span>
-      <span>Page {{ pagination.pageIndex + 1 }} / {{ totalPages }}</span>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <label>Rows:</label>
-      <select
-        class="rounded-md border border-slate-700 bg-slate-900 px-2 py-1"
-        :value="pagination.pageSize"
-        @change="handlePageSizeChange(($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="s in [10, 25, 50]" :key="s" :value="s">{{ s }}</option>
-      </select>
-
-      <div class="flex items-center gap-2">
-        <button
-          class="flex items-center justify-center rounded-md border border-slate-700 p-2 disabled:opacity-50"
-          :disabled="!table.getCanPreviousPage()"
-          aria-label="Previous page"
-          @click="table.previousPage()"
-        >
-          <ChevronLeft class="h-4 w-4" />
-        </button>
-        <button
-          class="flex items-center justify-center rounded-md border border-slate-700 p-2 disabled:opacity-50"
-          :disabled="!table.getCanNextPage()"
-          aria-label="Next page"
-          @click="table.nextPage()"
-        >
-          <ChevronRight class="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  </div>
+  <TableFooter :table :totalCount :totalPages :pagination :setPageSize />
 </template>
 
 <script setup lang="ts">
@@ -131,24 +81,19 @@
     GetEmployeesRequest,
     GetEmployeesResponse,
   } from '@/api/employees/contracts';
-  import {
-    createColumnHelper,
-    getCoreRowModel,
-    useVueTable,
-    type ColumnDef,
-    type ColumnHelper,
-  } from '@tanstack/vue-table';
-  import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
-  import { reactive, ref, watchEffect } from 'vue';
-  type ColMeta = { kind: 'text' } | { kind: 'status' } | { kind: 'datetime' } | { kind: 'actions' };
+  import SkeletonRows from '@/components/SkeletonRows.vue';
+  import TableFooter from '@/components/TableFooter.vue';
+  import TableSearch from '@/components/TableSearch.vue';
 
-  const nameSearchTerm = ref('');
-  const loading = ref(false);
-  let reqSeq = 0;
-  const totalCount = ref(0);
-  const totalPages = ref(0);
-  const employees = ref<EmployeeSummaryResponse[]>([]);
-  const loadingTd = 'h-3 w-40 animate-pulse rounded bg-slate-700/50';
+  import { useDataTable } from '@/composables/useDataTable';
+  import { useDebouncedRef } from '@/composables/useDebouncedRef';
+  import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
+  import { onBeforeUnmount, watch } from 'vue';
+  type ColMeta =
+    | { kind: 'text' }
+    | { kind: 'department' }
+    | { kind: 'datetime' }
+    | { kind: 'actions' };
 
   // formatting helpers
   const fmt = new Intl.DateTimeFormat(undefined, {
@@ -176,7 +121,7 @@
     }),
     col.accessor('department', {
       header: 'Department',
-      meta: { kind: 'text' as const },
+      meta: { kind: 'department' as const },
     }),
     col.accessor('employmentType', {
       header: 'Employment Type',
@@ -198,67 +143,64 @@
     },
   ];
 
-  // TanStack state (server mode)
-  const pagination = reactive({ pageIndex: 0, pageSize: 25 });
+  /* ------------------------------ Department ------------------------------- */
+  type DepartmentType = 'Engineering' | 'Drafting' | 'Surveying' | 'OfficeAdmin';
 
-  const table = useVueTable<EmployeeSummaryResponse>({
-    get data() {
-      return employees.value;
-    },
-    columns,
-    get pageCount() {
-      return totalPages.value;
-    },
-    state: { pagination },
-    manualPagination: true,
-    onPaginationChange: updater => {
-      if (typeof updater === 'function') Object.assign(pagination, updater(pagination));
-      else Object.assign(pagination, updater);
-    },
-    getCoreRowModel: getCoreRowModel(),
-    initialState: { pagination },
-    getRowId: row => String(row.id),
-  });
+  const departmentClasses: Record<DepartmentType, string> = {
+    Engineering: 'bg-sky-700 text-sky-100',
+    Drafting: 'bg-fuchsia-700 text-fuchsia-100',
+    Surveying: 'bg-amber-700 text-amber-100',
+    OfficeAdmin: 'bg-slate-700 text-slate-200',
+  };
+
+  const getDepartmentClass = (dept: string): string =>
+    departmentClasses[dept as DepartmentType] ?? 'bg-slate-800/60 text-slate-300';
+
+  /* ---------------------------- Search ---------------------------- */
+  const {
+    input: nameSearch, // bind to v-model
+    debounced: name, // use in fetch
+    setNow: commitNameNow, // optional: commit immediately on Enter
+    cancel: cancelNameDebounce, // optional
+  } = useDebouncedRef('', 500);
+
+  onBeforeUnmount(cancelNameDebounce);
 
   /* ------------------------------ Fetching ------------------------------- */
-  const fetchEmployees = async (): Promise<void> => {
-    loading.value = true;
-    const seq = ++reqSeq; // capture this call's sequence
+  type EmpQuery = { name?: string };
+  const fetchEmployees = async ({
+    page,
+    pageSize,
+    query,
+  }: {
+    page: number;
+    pageSize: number;
+    query?: EmpQuery;
+  }) => {
+    const params: GetEmployeesRequest = { page, pageSize, name: query?.name || undefined };
+    const response: GetEmployeesResponse = await employeeService.get(params);
 
-    try {
-      const page = pagination.pageIndex + 1; // backend is 1-based
-      const pageSize = pagination.pageSize;
-
-      const params: GetEmployeesRequest = { page, pageSize };
-      const response: GetEmployeesResponse = await employeeService.get(params);
-
-      // Ignore stale responses
-      if (seq !== reqSeq) return;
-
-      employees.value = response.employees.map(e => e.summary);
-      totalCount.value = response.totalCount;
-      totalPages.value = response.totalPages;
-
-      // sync pagination if server adjusted it (cap/normalize)
-      pagination.pageIndex = Math.max(0, (response.page ?? page) - 1);
-      pagination.pageSize = response.pageSize ?? pageSize;
-    } catch (err) {
-      console.error('Failed to fetch users', err);
-      // optional safety resets:
-      employees.value = [];
-      totalCount.value = 0;
-      totalPages.value = 0;
-    } finally {
-      loading.value = false;
-    }
+    return {
+      items: response.employees.map(e => e.summary),
+      totalCount: response.totalCount,
+      totalPages: response.totalPages,
+      page: response.page,
+      pageSize: response.pageSize,
+    };
   };
 
-  watchEffect(fetchEmployees);
+  const {
+    table,
+    rows: employees,
+    loading,
+    totalCount,
+    totalPages,
+    pagination,
+    setQuery,
+    setPageSize,
+  } = useDataTable<EmployeeSummaryResponse, EmpQuery>(columns, fetchEmployees, { name: undefined });
+
+  watch(name, () => setQuery({ name: name.value || undefined }));
 
   /* ------------------------------ Handlers ------------------------------- */
-
-  const handlePageSizeChange = (val: string): void => {
-    pagination.pageSize = Number(val);
-    pagination.pageIndex = 0;
-  };
 </script>

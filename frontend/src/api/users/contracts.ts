@@ -24,7 +24,7 @@ export type UserResponse = {
   id: string;
   email: string;
   roleName: string;
-  isActive: boolean;
+  status: boolean;
   createdAtUtc: string;
   updatedAtUtc: string;
   deletedAtUtc: string | null;
