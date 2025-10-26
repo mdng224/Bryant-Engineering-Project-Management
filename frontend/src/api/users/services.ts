@@ -33,7 +33,7 @@ import { UsersRoutes } from './routes';
  * console.log(users.totalCount);
  * ```
  */
-async function get(params: GetUsersRequest): Promise<GetUsersResponse> {
+const get = async (params: GetUsersRequest): Promise<GetUsersResponse> => {
   try {
     const { data } = await api.get<GetUsersResponse>(UsersRoutes.list, { params });
 
@@ -46,10 +46,10 @@ async function get(params: GetUsersRequest): Promise<GetUsersResponse> {
     }
     throw err;
   }
-}
+};
 
-async function update(id: string, body: UpdateUserRequest): Promise<void> {
+const update = async (id: string, body: UpdateUserRequest): Promise<void> => {
   await api.patch<UserResponse>(UsersRoutes.byId(id), body);
-}
+};
 
 export const userService = { get, update };

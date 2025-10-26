@@ -14,6 +14,7 @@ import { AuthRoutes } from './routes';
 /* ----------------------- Auth Storage ----------------------- */
 const TOKEN_KEY = 'authToken';
 const EXP_KEY = 'authExp'; // ISO string (UTC)
+const EXP_LEEWAY_MS = 60_000; // 60s clock skew
 
 export const AuthStorage = {
   set(data: LoginResponse): void {
@@ -32,8 +33,11 @@ export const AuthStorage = {
     return localStorage.getItem(EXP_KEY);
   },
   isExpired(now = Date.now()): boolean {
-    const iso = AuthStorage.getExp();
-    return !iso || Number.isNaN(Date.parse(iso)) || Date.parse(iso) <= now;
+    const iso = this.getExp();
+    if (!iso) return true;
+    const ts = new Date(iso).getTime();
+    if (Number.isNaN(ts)) return true;
+    return ts <= now + EXP_LEEWAY_MS;
   },
 };
 
@@ -46,11 +50,11 @@ export const AuthStorage = {
  * @description Exchanges email/password for a JWT token and stores it in localStorage.
  * @returns The login response containing the token and expiration timestamp.
  */
-export async function login(request: LoginRequest): Promise<LoginResponse> {
+const login = async (request: LoginRequest): Promise<LoginResponse> => {
   const { data } = await apiClient.post<LoginResponse>(AuthRoutes.login, request);
   AuthStorage.set(data);
   return data;
-}
+};
 
 /**
  * Retrieves the currently authenticated user.
@@ -59,7 +63,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
  * @description Uses the stored JWT (via request interceptor) to fetch user identity.
  * @returns The decoded JWT claims (subject, email, etc.).
  */
-export async function me(): Promise<MeResponse> {
+const me = async (): Promise<MeResponse> => {
   try {
     const { data } = await apiClient.get<MeResponse>(AuthRoutes.me);
     return data;
@@ -68,7 +72,7 @@ export async function me(): Promise<MeResponse> {
     if (e.response?.status === 401) AuthStorage.clear();
     throw err;
   }
-}
+};
 
 /**
  * Registers a new user account (pending admin approval).
@@ -78,12 +82,12 @@ export async function me(): Promise<MeResponse> {
  * The backend marks the user as inactive (IsActive = false) until approved.
  * @returns The register response containing userId, status ("pending"), and message.
  */
-async function register(request: RegisterRequest): Promise<RegisterResponse> {
+const register = async (request: RegisterRequest): Promise<RegisterResponse> => {
   const { data } = await apiClient.post<RegisterResponse>(AuthRoutes.register, request);
 
   // Ensure no prior auth session remains after registration
   AuthStorage.clear();
   return data;
-}
+};
 
 export const authService = { login, me, register };

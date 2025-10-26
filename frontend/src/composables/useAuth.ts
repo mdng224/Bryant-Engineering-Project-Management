@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { authService } from '@/api/auth';
+import { authService, AuthStorage } from '@/api/auth';
 
 /* -------------------------------------------------------------------------- */
 /*                                State / Cache                               */
@@ -23,10 +23,7 @@ let inFlight: Promise<void> | null = null;
 /* -------------------------------------------------------------------------- */
 /*                               Helper Functions                             */
 /* -------------------------------------------------------------------------- */
-function tokenExpired(): boolean {
-  const exp = localStorage.getItem('authExp');
-  return !exp || Date.parse(exp) <= Date.now() + 1000;
-}
+const tokenExpired = (): boolean => AuthStorage.isExpired();
 
 /* -------------------------------------------------------------------------- */
 /*                               Auth Management                              */
@@ -50,10 +47,9 @@ export const ensureAuthState = async (force = false): Promise<boolean> => {
   }
 
   // No token or expired → definitely not authed
-  const token = localStorage.getItem('authToken');
+  const token = AuthStorage.getToken();
   if (!token || tokenExpired()) {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authExp');
+    AuthStorage.clear();
     isAuthed.value = false;
     return false;
   }

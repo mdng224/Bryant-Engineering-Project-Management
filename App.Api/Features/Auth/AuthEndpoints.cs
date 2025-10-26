@@ -28,8 +28,8 @@ public static class AuthEndpoints
             .WithName("Auth_Login")
             .WithSummary("Login to the application")
             .WithDescription("Login with email and password to receive an access token.")
-            .Produces<LoginResponse>(StatusCodes.Status200OK)
-            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .Produces<LoginResponse>()
+            .ProducesValidationProblem()
             .Produces(StatusCodes.Status401Unauthorized);
 
         // ---- POST /auth/register
@@ -41,14 +41,14 @@ public static class AuthEndpoints
             .WithSummary("Register a new user")
             .WithDescription("Create a new user account with email and password.")
             .Produces<RegisterResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesValidationProblem()
             .Produces(StatusCodes.Status409Conflict);
 
         // ---- GET /auth/me (requires Bearer token)
         group.MapGet("/me", GetMe.Handle)
             .WithSummary("Get current user")
             .WithDescription("Returns subject and email extracted from the JWT.")
-            .Produces<MeResponse>(StatusCodes.Status200OK)
+            .Produces<MeResponse>()
             .Produces(StatusCodes.Status401Unauthorized);
     }
 }

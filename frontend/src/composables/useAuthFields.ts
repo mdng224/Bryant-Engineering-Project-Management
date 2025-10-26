@@ -35,11 +35,11 @@ import { computed, ref } from 'vue';
  * } = useAuthFields({ minPassword: 8, maxPassword: 72, maxEmail: 254 })
  * ```
  */
-export function useAuthFields(options?: {
+export const useAuthFields = (options?: {
   minPassword?: number;
   maxPassword?: number;
   maxEmail?: number;
-}) {
+}) => {
   const minPassword = options?.minPassword ?? 8;
   const maxPassword = options?.maxPassword ?? 72;
   const maxEmail = options?.maxEmail ?? 254;
@@ -67,4 +67,4 @@ export function useAuthFields(options?: {
     maxPassword,
     maxEmail,
   };
-}
+};

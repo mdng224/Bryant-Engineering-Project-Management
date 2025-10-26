@@ -1,6 +1,6 @@
 // src/router/index.ts
-import { createRouter, createWebHistory } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
+import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 
 const router = createRouter({
@@ -44,9 +44,8 @@ const router = createRouter({
 });
 
 /** Allow only same-origin, absolute app paths (mitigates open redirect). */
-function isSafePath(path: unknown): path is string {
-  return typeof path === 'string' && path.startsWith('/');
-}
+const isSafePath = (path: unknown): path is string =>
+  typeof path === 'string' && path.startsWith('/');
 
 router.beforeEach(async to => {
   const { ensureAuthState } = useAuth();

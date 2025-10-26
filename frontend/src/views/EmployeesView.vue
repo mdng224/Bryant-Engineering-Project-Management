@@ -97,7 +97,7 @@
       <select
         class="rounded-md border border-slate-700 bg-slate-900 px-2 py-1"
         :value="pagination.pageSize"
-        @change="setPageSize(($event.target as HTMLSelectElement).value)"
+        @change="handlePageSizeChange(($event.target as HTMLSelectElement).value)"
       >
         <option v-for="s in [10, 25, 50]" :key="s" :value="s">{{ s }}</option>
       </select>
@@ -125,13 +125,12 @@
 </template>
 
 <script setup lang="ts">
+  import { employeeService } from '@/api/employees';
   import type {
     EmployeeSummaryResponse,
     GetEmployeesRequest,
     GetEmployeesResponse,
   } from '@/api/employees/contracts';
-  //import EditEmployeeDialog from '@/components/EditEmployeeDialog.vue';
-  import { employeeService } from '@/api/employees';
   import {
     createColumnHelper,
     getCoreRowModel,
@@ -143,16 +142,13 @@
   import { reactive, ref, watchEffect } from 'vue';
   type ColMeta = { kind: 'text' } | { kind: 'status' } | { kind: 'datetime' } | { kind: 'actions' };
 
-  //const editEmployeeDialogIsOpen = ref(false);
   const nameSearchTerm = ref('');
   const loading = ref(false);
   let reqSeq = 0;
-  //const searchTimeout: ReturnType<typeof setTimeout> | null = null;
   const totalCount = ref(0);
   const totalPages = ref(0);
   const employees = ref<EmployeeSummaryResponse[]>([]);
   const loadingTd = 'h-3 w-40 animate-pulse rounded bg-slate-700/50';
-  //const employeeBeingEdited = ref<GetEmployeesResponse | null>(null);
 
   // formatting helpers
   const fmt = new Intl.DateTimeFormat(undefined, {
@@ -224,8 +220,8 @@
     getRowId: row => String(row.id),
   });
 
-  // --------------------- FUNCTIONS --------------------------------
-  async function fetchEmployees(): Promise<void> {
+  /* ------------------------------ Fetching ------------------------------- */
+  const fetchEmployees = async (): Promise<void> => {
     loading.value = true;
     const seq = ++reqSeq; // capture this call's sequence
 
@@ -255,50 +251,13 @@
     } finally {
       loading.value = false;
     }
-  }
+  };
 
   watchEffect(fetchEmployees);
 
-  /*
-  watch(nameSearchTerm, val => {
-    if (searchTimeout) clearTimeout(searchTimeout);
+  /* ------------------------------ Handlers ------------------------------- */
 
-    searchTimeout = setTimeout(() => {
-      search(val.trim());
-    }, 500);
-  });
-  /*
-  const search = async (name: string): Promise<void> => {
-    loading.value = true;
-    const seq = ++reqSeq;
-
-    try {
-      const page = 1;
-      const pageSize = pagination.pageSize;
-      const request: GetEmployeesRequest = { page, pageSize, name };
-      const response: GetEmployeesResponse = await getEmployees(request);
-
-      if (seq !== reqSeq) return; // ignore stale results
-
-      employees.value = response.employees;
-      totalCount.value = response.totalCount;
-      totalPages.value = response.totalPages;
-    } catch (err) {
-      console.error('Search failed', err);
-      employees.value = [];
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  
-  const onEdit = (employee: EmployeeResponse): void => {
-    employeeBeingEdited.value = employee;
-    editEmployeeDialogIsOpen.value = true;
-  };
-  */
-
-  const setPageSize = (val: string): void => {
+  const handlePageSizeChange = (val: string): void => {
     pagination.pageSize = Number(val);
     pagination.pageIndex = 0;
   };

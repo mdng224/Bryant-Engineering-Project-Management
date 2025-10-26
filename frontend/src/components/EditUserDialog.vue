@@ -114,7 +114,7 @@
       (form.value.roleName === props.user.roleName && form.value.isActive === props.user.isActive),
   );
 
-  async function save() {
+  const save = async (): Promise<void> => {
     if (!props.user || isNoop.value || saving.value) return;
 
     saving.value = true;
@@ -140,5 +140,5 @@
     } finally {
       saving.value = false;
     }
-  }
+  };
 </script>

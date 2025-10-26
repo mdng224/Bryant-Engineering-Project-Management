@@ -72,7 +72,7 @@
               <button
                 class="rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500"
                 aria-label="Edit user"
-                @click="onEdit(row.original as UserResponse)"
+                @click="handleEditUser(row.original as UserResponse)"
               >
                 <Pencil class="h-4 w-4" />
               </button>
@@ -108,7 +108,7 @@
       <select
         class="rounded-md border border-slate-700 bg-slate-900 px-2 py-1"
         :value="pagination.pageSize"
-        @change="setPageSize(($event.target as HTMLSelectElement).value)"
+        @change="handlePageSizeChange(($event.target as HTMLSelectElement).value)"
       >
         <option v-for="s in [10, 25, 50]" :key="s" :value="s">{{ s }}</option>
       </select>
@@ -155,15 +155,16 @@
     type ColumnHelper,
   } from '@tanstack/vue-table';
   import { ChevronLeft, ChevronRight, Pencil } from 'lucide-vue-next';
-  import { reactive, ref, watch, watchEffect } from 'vue';
+  import { onBeforeUnmount, reactive, ref, watch, watchEffect } from 'vue';
 
   type ColMeta = { kind: 'text' } | { kind: 'status' } | { kind: 'datetime' } | { kind: 'actions' };
 
   const editUserDialogIsOpen = ref(false);
   const emailSearchTerm = ref('');
+  const debouncedEmail = ref(''); // used by fetch
   const loading = ref(false);
   let reqSeq = 0;
-  let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   const totalCount = ref(0);
   const totalPages = ref(0);
   const users = ref<UserResponse[]>([]);
@@ -236,8 +237,22 @@
     getRowId: row => String(row.id),
   });
 
-  // --------------------- FUNCTIONS --------------------------------
-  async function fetchUsers(): Promise<void> {
+  /* ---------------------------- Debounce email ---------------------------- */
+  watch(emailSearchTerm, val => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    debounceTimer = setTimeout(() => {
+      debouncedEmail.value = val.trim();
+      pagination.pageIndex = 0;
+    }, 500);
+  });
+
+  onBeforeUnmount(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+  });
+
+  /* ------------------------------ Fetching ------------------------------- */
+  const fetchUsers = async (): Promise<void> => {
     loading.value = true;
     const seq = ++reqSeq; // capture this call's sequence
 
@@ -245,7 +260,7 @@
       const page = pagination.pageIndex + 1; // backend is 1-based
       const pageSize = pagination.pageSize;
 
-      const params: GetUsersRequest = { page, pageSize };
+      const params: GetUsersRequest = { page, pageSize, email: debouncedEmail.value || undefined };
       const response: GetUsersResponse = await userService.get(params);
 
       // Ignore stale responses
@@ -269,47 +284,18 @@
     } finally {
       loading.value = false;
     }
-  }
-
-  watchEffect(fetchUsers);
-
-  watch(emailSearchTerm, val => {
-    if (searchTimeout) clearTimeout(searchTimeout);
-
-    searchTimeout = setTimeout(() => {
-      search(val.trim());
-    }, 500);
-  });
-
-  const search = async (email: string): Promise<void> => {
-    loading.value = true;
-    const seq = ++reqSeq;
-
-    try {
-      const page = 1;
-      const pageSize = pagination.pageSize;
-      const request: GetUsersRequest = { page, pageSize, email };
-      const response: GetUsersResponse = await userService.get(request);
-
-      if (seq !== reqSeq) return; // ignore stale results
-
-      users.value = response.users;
-      totalCount.value = response.totalCount;
-      totalPages.value = response.totalPages;
-    } catch (err) {
-      console.error('Search failed', err);
-      users.value = [];
-    } finally {
-      loading.value = false;
-    }
   };
 
-  const onEdit = (user: UserResponse): void => {
+  // Refetch on pagination or filter change
+  watchEffect(fetchUsers);
+
+  /* ------------------------------ Handlers ------------------------------- */
+  const handleEditUser = (user: UserResponse): void => {
     userBeingEdited.value = user;
     editUserDialogIsOpen.value = true;
   };
 
-  const setPageSize = (val: string): void => {
+  const handlePageSizeChange = (val: string): void => {
     pagination.pageSize = Number(val);
     pagination.pageIndex = 0;
   };
