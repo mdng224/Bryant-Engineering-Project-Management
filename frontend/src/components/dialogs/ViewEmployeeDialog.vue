@@ -22,22 +22,22 @@
           </div>
 
           <!-- Details -->
-          <div v-if="employee" class="space-y-6 text-sm">
+          <div v-if="selectedEmployee" class="space-y-6 text-sm">
             <!-- Header -->
             <div>
               <h3 class="text-base font-semibold">
-                {{ employee.lastName }}, {{ employee.firstName }}
-                <span v-if="employee.preferredName" class="ml-2 text-slate-400">
-                  ({{ employee.preferredName }})
+                {{ selectedEmployee.lastName }}, {{ selectedEmployee.firstName }}
+                <span v-if="selectedEmployee.preferredName" class="ml-2 text-slate-400">
+                  ({{ selectedEmployee.preferredName }})
                 </span>
               </h3>
               <p class="text-xs text-slate-400">
                 Employee ID:
-                <span class="font-mono">{{ employee.id }}</span>
+                <span class="font-mono">{{ selectedEmployee.id }}</span>
               </p>
               <p class="text-xs text-slate-400">
                 User ID:
-                <span class="font-mono">{{ employee.userId }}</span>
+                <span class="font-mono">{{ selectedEmployee.userId }}</span>
               </p>
             </div>
 
@@ -45,70 +45,70 @@
             <dl class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
               <div>
                 <dt class="text-slate-400">Email</dt>
-                <dd class="text-slate-100">{{ val(employee.companyEmail) }}</dd>
+                <dd class="text-slate-100">{{ val(selectedEmployee.companyEmail) }}</dd>
               </div>
 
               <div>
                 <dt class="text-slate-400">Department</dt>
-                <dd class="text-slate-100">{{ val(employee.department) }}</dd>
+                <dd class="text-slate-100">{{ val(selectedEmployee.department) }}</dd>
               </div>
 
               <div>
                 <dt class="text-slate-400">Employment Type</dt>
-                <dd class="text-slate-100">{{ val(employee.employmentType) }}</dd>
+                <dd class="text-slate-100">{{ val(selectedEmployee.employmentType) }}</dd>
               </div>
 
               <div>
                 <dt class="text-slate-400">Salary Type</dt>
-                <dd class="text-slate-100">{{ val(employee.salaryType) }}</dd>
+                <dd class="text-slate-100">{{ val(selectedEmployee.salaryType) }}</dd>
               </div>
 
               <div>
                 <dt class="text-slate-400">Work Location</dt>
-                <dd class="text-slate-100">{{ val(employee.workLocation) }}</dd>
+                <dd class="text-slate-100">{{ val(selectedEmployee.workLocation) }}</dd>
               </div>
 
               <div>
                 <dt class="text-slate-400">Recommended Role Id</dt>
-                <dd class="font-mono">{{ val(employee.recommendedRoleId) }}</dd>
+                <dd class="font-mono">{{ val(selectedEmployee.recommendedRoleId) }}</dd>
               </div>
 
               <div>
                 <dt class="text-slate-400">Hire Date</dt>
-                <dd class="text-slate-100">{{ fmt(employee.hireDate) }}</dd>
+                <dd class="text-slate-100">{{ fmt(selectedEmployee.hireDate) }}</dd>
               </div>
 
               <div>
                 <dt class="text-slate-400">End Date</dt>
-                <dd class="text-slate-100">{{ fmt(employee.endDate) }}</dd>
+                <dd class="text-slate-100">{{ fmt(selectedEmployee.endDate) }}</dd>
               </div>
 
               <div>
                 <dt class="text-slate-400">Created</dt>
-                <dd class="text-slate-100">{{ fmt(employee.createdAtUtc) }}</dd>
+                <dd class="text-slate-100">{{ fmt(selectedEmployee.createdAtUtc) }}</dd>
               </div>
 
               <div>
                 <dt class="text-slate-400">Updated</dt>
-                <dd class="text-slate-100">{{ fmt(employee.updatedAtUtc) }}</dd>
+                <dd class="text-slate-100">{{ fmt(selectedEmployee.updatedAtUtc) }}</dd>
               </div>
 
               <div>
                 <dt class="text-slate-400">Deleted</dt>
-                <dd class="text-slate-100">{{ fmt(employee.deletedAtUtc) }}</dd>
+                <dd class="text-slate-100">{{ fmt(selectedEmployee.deletedAtUtc) }}</dd>
               </div>
 
               <div class="sm:col-span-2">
                 <dt class="text-slate-400">License Notes</dt>
                 <dd class="whitespace-pre-wrap text-slate-100">
-                  {{ val(employee.licenseNotes) }}
+                  {{ val(selectedEmployee.licenseNotes) }}
                 </dd>
               </div>
 
               <div class="sm:col-span-2">
                 <dt class="text-slate-400">Notes</dt>
                 <dd class="whitespace-pre-wrap text-slate-100">
-                  {{ val(employee.notes) }}
+                  {{ val(selectedEmployee.notes) }}
                 </dd>
               </div>
             </dl>
@@ -123,15 +123,16 @@
   import type { EmployeeResponse } from '@/api/employees/contracts';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { onBeforeUnmount, onMounted, watch } from 'vue';
+
   const props = defineProps<{
     open: boolean;
-    employee: EmployeeResponse | null;
+    selectedEmployee: EmployeeResponse | null;
   }>();
   const emit = defineEmits<{ (e: 'close'): void }>();
   const { formatUtc } = useDateFormat();
   const val = (s: string | null | undefined) => s ?? '—';
   const fmt = (s: string | null | undefined) => (s ? formatUtc(s) : '—');
-  console.log(props);
+
   /* ------------------------------ Escape key ------------------------------- */
   const handleKeydown = (e: KeyboardEvent): void => {
     if (e.key === 'Escape') emit('close');

@@ -22,7 +22,7 @@
 
   <slot v-else-if="kind === 'actions'"></slot>
 
-  <span v-else>{{ val as any }}</span>
+  <span v-else>{{ val as string }}</span>
 </template>
 
 <script setup lang="ts">
@@ -34,7 +34,7 @@
     | { kind: 'text' | 'datetime' | 'boolean' | 'actions' }
     | { kind: 'badge'; classFor?: (value: string) => string };
 
-  const props = defineProps<{ cell: Cell<any, unknown> }>();
+  const props = defineProps<{ cell: Cell<unknown, unknown> }>();
   const rawMeta = props.cell.column.columnDef.meta as ColMeta | undefined;
   const rawVal = props.cell.getValue();
   const asString = computed(() => (rawVal == null ? '' : String(rawVal)));

@@ -3,7 +3,12 @@
     <TableSearch v-model="nameSearch" placeholder="Search by name..." @commit="commitNameNow" />
   </div>
 
-  <DataTable :table :loading :total-count empty-text="No employees found.">
+  <DataTable
+    :table="table as unknown as import('@tanstack/vue-table').Table<unknown>"
+    :loading
+    :total-count
+    empty-text="No employees found."
+  >
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
       <template v-if="(cell.column.columnDef.meta as any)?.kind === 'actions'">
@@ -34,9 +39,15 @@
   <TableFooter :table :totalCount :totalPages :pagination :setPageSize />
 
   <ViewEmployeeDialog
-    :open="viewUserDialogIsOpen"
-    :employee="employeeBeingViewed"
-    @close="viewUserDialogIsOpen = false"
+    :open="viewEmployeeDialogIsOpen"
+    :selected-employee
+    @close="viewEmployeeDialogIsOpen = false"
+  />
+
+  <EditEmployeeDialog
+    :open="editEmployeeDialogIsOpen"
+    :selected-employee
+    @close="editEmployeeDialogIsOpen = false"
   />
 </template>
 
@@ -48,16 +59,18 @@
     GetEmployeesRequest,
     GetEmployeesResponse,
   } from '@/api/employees/contracts';
+  import EditEmployeeDialog from '@/components/dialogs/EditEmployeeDialog.vue';
+  import ViewEmployeeDialog from '@/components/dialogs/ViewEmployeeDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
   import TableSearch from '@/components/TableSearch.vue';
-  import ViewEmployeeDialog from '@/components/ViewEmployeeDialog.vue';
   import { useDataTable } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { Eye, Pencil } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref, watch } from 'vue';
+
   /* ------------------------------- Constants ------------------------------ */
   // Buttons
   const actionButtonClass =
@@ -77,7 +90,7 @@
   /* -------------------------------- Columns ------------------------------- */
   const col: ColumnHelper<EmployeeSummaryResponse> = createColumnHelper<EmployeeSummaryResponse>();
   // Use `any` for TValue because columns mix string | boolean | date, etc.
-  const columns: ColumnDef<EmployeeSummaryResponse, any>[] = [
+  const columns: ColumnDef<EmployeeSummaryResponse, unknown>[] = [
     col.accessor('lastName', { header: 'Last Name', meta: { kind: 'text' as const } }),
     col.accessor('firstName', { header: 'First Name', meta: { kind: 'text' as const } }),
     col.accessor('preferredName', { header: 'Preferred Name', meta: { kind: 'text' as const } }),
@@ -138,21 +151,20 @@
   watch(name, () => setQuery({ name: name.value || undefined }));
 
   /* ------------------------------- Dialogs/UX ----------------------------- */
-  const viewUserDialogIsOpen = ref(false);
-  const employeeBeingViewed = ref<EmployeeResponse | null>(null);
+  const viewEmployeeDialogIsOpen = ref(false);
+  const selectedEmployee = ref<EmployeeResponse | null>(null);
   const editEmployeeDialogIsOpen = ref(false);
-  const employeeBeingEdited = ref<EmployeeResponse | null>(null);
 
   /* -------------------------------- Handlers ------------------------------ */
   const handleViewEmployee = (summary: EmployeeSummaryResponse): void => {
     const detail = employeeDetailsById.value.get(summary.id) ?? null;
-    employeeBeingViewed.value = detail;
-    viewUserDialogIsOpen.value = !!detail;
+    selectedEmployee.value = detail;
+    viewEmployeeDialogIsOpen.value = !!detail;
   };
 
   const handleEditEmployee = (summary: EmployeeSummaryResponse): void => {
     const detail = employeeDetailsById.value.get(summary.id) ?? null;
-    employeeBeingEdited.value = detail;
+    selectedEmployee.value = detail;
     editEmployeeDialogIsOpen.value = !!detail;
   };
 </script>

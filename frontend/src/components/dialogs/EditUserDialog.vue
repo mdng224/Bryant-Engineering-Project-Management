@@ -1,6 +1,6 @@
 <!-- src/components/EditUserDialog.vue -->
 <template>
-  <div v-if="open && user" class="fixed inset-0 z-50 grid place-items-center">
+  <div v-if="open && selectedUser" class="fixed inset-0 z-50 grid place-items-center">
     <!-- backdrop -->
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$emit('close')"></div>
 
@@ -13,7 +13,7 @@
     >
       <header class="mb-3">
         <h3 id="editUserTitle" class="pb-2 text-center text-lg font-semibold">Edit user</h3>
-        <span class="truncate text-slate-400">{{ user?.email }}</span>
+        <span class="truncate text-slate-400">{{ selectedUser?.email }}</span>
       </header>
 
       <div class="grid gap-4">
@@ -96,7 +96,7 @@
 
   const props = defineProps<{
     open: boolean;
-    user: UserResponse | null;
+    selectedUser: UserResponse | null;
   }>();
 
   const emit = defineEmits<{
@@ -130,7 +130,7 @@
 
   // hydrate form from prop
   watch(
-    () => props.user,
+    () => props.selectedUser,
     u => {
       if (!u) return;
       form.value = { roleName: u.roleName, status: u.status };
@@ -154,22 +154,24 @@
 
   const isNoop = computed(
     () =>
-      !props.user ||
-      (form.value.roleName === props.user.roleName && form.value.status === props.user.status),
+      !props.selectedUser ||
+      (form.value.roleName === props.selectedUser.roleName &&
+        form.value.status === props.selectedUser.status),
   );
 
   const save = async (): Promise<void> => {
-    if (!props.user || isNoop.value || saving.value) return;
+    if (!props.selectedUser || isNoop.value || saving.value) return;
 
     saving.value = true;
     errorMessage.value = null;
 
     try {
       const request: Partial<UpdateUserRequest> = {};
-      if (form.value.roleName !== props.user.roleName) request.roleName = form.value.roleName;
-      if (form.value.status !== props.user.status) request.status = form.value.status;
+      if (form.value.roleName !== props.selectedUser.roleName)
+        request.roleName = form.value.roleName;
+      if (form.value.status !== props.selectedUser.status) request.status = form.value.status;
 
-      await userService.update(props.user.id, request);
+      await userService.update(props.selectedUser.id, request);
       emit('close');
     } catch (error) {
       const err = error as AxiosError<{ message?: string; error?: string }>;

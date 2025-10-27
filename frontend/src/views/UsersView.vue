@@ -3,7 +3,12 @@
     <TableSearch v-model="emailSearch" placeholder="Search email…" @commit="commitEmailNow" />
   </div>
 
-  <DataTable :table :loading :total-count empty-text="No users found.">
+  <DataTable
+    :table="table as unknown as import('@tanstack/vue-table').Table<unknown>"
+    :loading
+    :total-count
+    empty-text="No users found."
+  >
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
       <template v-if="(cell.column.columnDef.meta as any)?.kind === 'actions'">
@@ -23,7 +28,7 @@
 
   <EditUserDialog
     :open="editUserDialogIsOpen"
-    :user="userBeingEdited"
+    :selected-user
     @close="editUserDialogIsOpen = false"
     @saved="refetch"
   />
@@ -31,7 +36,7 @@
 
 <script setup lang="ts">
   import { userService } from '@/api/users';
-  import EditUserDialog from '@/components/EditUserDialog.vue';
+  import EditUserDialog from '@/components/dialogs/EditUserDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
@@ -44,7 +49,6 @@
   import { useDebouncedRef } from '../composables/useDebouncedRef';
 
   const editUserDialogIsOpen = ref(false);
-  const userBeingEdited = ref<UserResponse | null>(null);
 
   /* ------------------------------ Status ------------------------------- */
 
@@ -60,7 +64,7 @@
     statusClasses[status as UserStatus] ?? 'bg-slate-800/60 text-slate-400';
 
   const col: ColumnHelper<UserResponse> = createColumnHelper<UserResponse>();
-  const columns: ColumnDef<UserResponse, any>[] = [
+  const columns: ColumnDef<UserResponse, unknown>[] = [
     col.accessor('email', {
       header: 'Email',
       meta: { kind: 'text' as const },
@@ -145,8 +149,10 @@
   watch(email, () => setQuery({ email: email.value || undefined }));
 
   /* ------------------------------ Handlers ------------------------------- */
+  const selectedUser = ref<UserResponse | null>(null);
+
   const handleEditUser = (user: UserResponse): void => {
-    userBeingEdited.value = user;
+    selectedUser.value = user;
     editUserDialogIsOpen.value = true;
   };
 </script>

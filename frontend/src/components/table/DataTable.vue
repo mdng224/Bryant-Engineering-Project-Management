@@ -20,8 +20,8 @@
         <SkeletonRows v-if="loading" :rows="10" :cols="table.getAllLeafColumns().length" />
 
         <tr
-          v-else
           v-for="row in table.getRowModel().rows"
+          v-else
           :key="row.id"
           class="odd:bg-slate-900/40 even:bg-slate-700/30 hover:bg-slate-800/40"
         >
@@ -54,7 +54,7 @@
   import SkeletonRows from './SkeletonRows.vue';
 
   type Props = {
-    table: Table<any>;
+    table: Table<unknown>;
     loading: boolean;
     totalCount: number;
     emptyText?: string;

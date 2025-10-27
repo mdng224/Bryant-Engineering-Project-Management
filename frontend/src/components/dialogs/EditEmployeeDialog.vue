@@ -1,0 +1,363 @@
+<!-- components/EditEmployeeDialog.vue -->
+<template>
+  <Teleport to="body">
+    <div v-if="open" class="fixed inset-0 z-[100]" role="dialog" aria-modal="true">
+      <!-- Overlay -->
+      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="onCancel"></div>
+
+      <!-- Centered panel -->
+      <div class="absolute inset-0 flex items-center justify-center p-4">
+        <form
+          class="w-full max-w-3xl rounded-xl border border-slate-700 bg-slate-900/95 p-6 text-slate-100 shadow-2xl"
+          @submit.prevent="onSubmit"
+          @keydown.esc.prevent="onCancel"
+        >
+          <!-- Header -->
+          <div class="mb-6 flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold">Edit Employee</h2>
+              <p class="mt-1 text-xs text-slate-400">
+                EmployeeId •
+                <span class="font-mono">{{ selectedEmployee?.id }}</span>
+                <span class="mx-2">|</span>
+                UserId •
+                <span class="font-mono">{{ selectedEmployee?.userId }}</span>
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                class="rounded-md px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700/70"
+                @click="onCancel"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="rounded-md bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span v-if="!saving">Save</span>
+                <span v-else>Saving…</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Grid -->
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <!-- Read-only identity -->
+            <div class="rounded-lg border border-slate-700/70 bg-slate-900/70 p-4 sm:col-span-2">
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div>
+                  <label class="text-xs text-slate-400">First Name</label>
+                  <input
+                    class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+                    :value="selectedEmployee?.firstName"
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label class="text-xs text-slate-400">Last Name</label>
+                  <input
+                    class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+                    :value="selectedEmployee?.lastName"
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label class="text-xs text-slate-400">Preferred Name</label>
+                  <input
+                    v-model.trim="model.preferredName"
+                    class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+                    placeholder="—"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Company Email -->
+            <div>
+              <label class="text-xs text-slate-400">Company Email</label>
+              <input
+                v-model.trim="model.companyEmail"
+                type="email"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+                placeholder="name@company.com"
+                autocomplete="email"
+              />
+              <p v-if="emailError" class="mt-1 text-xs text-rose-400">{{ emailError }}</p>
+            </div>
+
+            <!-- Department -->
+            <div>
+              <label class="text-xs text-slate-400">Department</label>
+              <select
+                v-model="model.department"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+              >
+                <option :value="null">—</option>
+                <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
+              </select>
+            </div>
+
+            <!-- Employment Type -->
+            <div>
+              <label class="text-xs text-slate-400">Employment Type</label>
+              <select
+                v-model="model.employmentType"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+              >
+                <option :value="null">—</option>
+                <option v-for="t in employmentTypes" :key="t" :value="t">{{ t }}</option>
+              </select>
+            </div>
+
+            <!-- Salary Type -->
+            <div>
+              <label class="text-xs text-slate-400">Salary Type</label>
+              <select
+                v-model="model.salaryType"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+              >
+                <option :value="null">—</option>
+                <option v-for="t in salaryTypes" :key="t" :value="t">{{ t }}</option>
+              </select>
+            </div>
+
+            <!-- Work Location -->
+            <div>
+              <label class="text-xs text-slate-400">Work Location</label>
+              <select
+                v-model="model.workLocation"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+              >
+                <option :value="null">—</option>
+                <option v-for="w in workLocations" :key="w" :value="w">{{ w }}</option>
+              </select>
+            </div>
+
+            <!-- Recommended Role Id -->
+            <div class="sm:col-span-2">
+              <label class="text-xs text-slate-400">Recommended Role Id</label>
+              <input
+                v-model.trim="model.recommendedRoleId"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 font-mono text-sm"
+                placeholder="GUID (optional)"
+              />
+            </div>
+
+            <!-- Dates -->
+            <div>
+              <label class="text-xs text-slate-400">Hire Date</label>
+              <input
+                v-model="model.hireDate"
+                type="date"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">End Date</label>
+              <input
+                v-model="model.endDate"
+                type="date"
+                class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+              />
+              <p v-if="dateError" class="mt-1 text-xs text-rose-400">{{ dateError }}</p>
+            </div>
+
+            <!-- Notes -->
+            <div class="sm:col-span-2">
+              <label class="text-xs text-slate-400">License Notes</label>
+              <textarea
+                v-model="model.licenseNotes"
+                rows="3"
+                class="mt-1 w-full resize-y rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+                placeholder="—"
+              />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="text-xs text-slate-400">Notes</label>
+              <textarea
+                v-model="model.notes"
+                rows="4"
+                class="mt-1 w-full resize-y rounded-md border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm"
+                placeholder="—"
+              />
+            </div>
+
+            <!-- Timestamps (read-only) -->
+            <div class="grid grid-cols-1 gap-3 text-xs text-slate-400 sm:col-span-2 sm:grid-cols-3">
+              <div>
+                <div class="text-slate-500">Created</div>
+                <div>{{ fmt(selectedEmployee?.createdAtUtc) }}</div>
+              </div>
+              <div>
+                <div class="text-slate-500">Updated</div>
+                <div>{{ fmt(selectedEmployee?.updatedAtUtc) }}</div>
+              </div>
+              <div>
+                <div class="text-slate-500">Deleted</div>
+                <div>{{ fmt(selectedEmployee?.deletedAtUtc) }}</div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </Teleport>
+</template>
+
+<script setup lang="ts">
+  import type { EmployeeResponse } from '@/api/employees/contracts';
+  import { useDateFormat } from '@/composables/UseDateFormat';
+  import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue';
+
+  /******************** Props & Emits ********************/
+  const props = defineProps<{
+    open: boolean;
+    selectedEmployee: EmployeeResponse | null;
+    departments?: string[];
+    employmentTypes?: string[];
+    salaryTypes?: string[];
+    workLocations?: string[];
+  }>();
+
+  const emit = defineEmits<{
+    (e: 'close'): void;
+    (e: 'save', payload: UpdateEmployeeRequest): void;
+  }>();
+
+  /******************** Types ********************/
+  export type UpdateEmployeeRequest = {
+    id: string;
+    preferredName?: string | null;
+    companyEmail?: string | null;
+    department?: string | null;
+    employmentType?: string | null;
+    salaryType?: string | null;
+    workLocation?: string | null;
+    recommendedRoleId?: string | null;
+    hireDate?: string | null; // ISO 8601 date string (UTC or date-only)
+    endDate?: string | null;
+    licenseNotes?: string | null;
+    notes?: string | null;
+  };
+
+  /******************** State ********************/
+  const { formatUtc } = useDateFormat();
+  const fmt = (s?: string | null) => (s ? formatUtc(s) : '—');
+
+  const saving = reactive({ value: false });
+
+  // Local editable model copied from the incoming employee
+  const model = reactive({
+    preferredName: '' as string | null,
+    companyEmail: '' as string | null,
+    department: null as string | null,
+    employmentType: null as string | null,
+    salaryType: null as string | null,
+    workLocation: null as string | null,
+    recommendedRoleId: '' as string | null,
+    hireDate: '' as string | null, // YYYY-MM-DD for <input type="date">
+    endDate: '' as string | null,
+    licenseNotes: '' as string | null,
+    notes: '' as string | null,
+  });
+
+  // Derive select option lists with sane defaults
+  const departments = computed(() => props.departments ?? []);
+  const employmentTypes = computed(
+    () => props.employmentTypes ?? ['Full-Time', 'Part-Time', 'Contract'],
+  );
+  const salaryTypes = computed(() => props.salaryTypes ?? ['Salary', 'Hourly']);
+  const workLocations = computed(() => props.workLocations ?? ['On-site', 'Hybrid', 'Remote']);
+
+  /******************** Validation ********************/
+  const emailError = computed(() => {
+    if (!model.companyEmail) return '';
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(model.companyEmail) ? '' : 'Invalid email format.';
+  });
+
+  const dateError = computed(() => {
+    if (!model.hireDate || !model.endDate) return '';
+    return model.endDate >= model.hireDate ? '' : 'End Date must be on/after Hire Date.';
+  });
+
+  const isValid = computed(() => !emailError.value && !dateError.value);
+
+  /******************** Effects ********************/
+  // Map ISO -> input date value (YYYY-MM-DD)
+  function toDateInputValue(iso?: string | null): string | null {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function fromDateInputValue(val?: string | null): string | null {
+    // Keep as date-only ISO (YYYY-MM-DD) if provided; backend can normalize to UTC
+    return val || null;
+  }
+
+  // When dialog opens or employee changes, seed the local model
+  watch(
+    () => [props.open, props.selectedEmployee],
+    () => {
+      const e = props.selectedEmployee;
+      if (!props.open || !e) return;
+      model.preferredName = e.preferredName ?? '';
+      model.companyEmail = e.companyEmail ?? '';
+      model.department = e.department ?? null;
+      model.employmentType = e.employmentType ?? null;
+      model.salaryType = e.salaryType ?? null;
+      model.workLocation = e.workLocation ?? null;
+      model.recommendedRoleId = (e as EmployeeResponse).recommendedRoleId ?? '';
+      model.hireDate = toDateInputValue(e.hireDate);
+      model.endDate = toDateInputValue(e.endDate);
+      model.licenseNotes = e.licenseNotes ?? '';
+      model.notes = e.notes ?? '';
+    },
+    { immediate: true, deep: false },
+  );
+
+  /******************** Handlers ********************/
+  function onCancel() {
+    console.log('clicked onCancel()');
+    emit('close');
+  }
+
+  async function onSubmit() {
+    if (!props.selectedEmployee || !isValid.value || saving.value) return;
+    saving.value = true;
+    try {
+      const payload: UpdateEmployeeRequest = {
+        id: props.selectedEmployee.id,
+        preferredName: model.preferredName?.trim() || null,
+        companyEmail: model.companyEmail?.trim() || null,
+        department: model.department || null,
+        employmentType: model.employmentType || null,
+        salaryType: model.salaryType || null,
+        workLocation: model.workLocation || null,
+        recommendedRoleId: model.recommendedRoleId?.trim() || null,
+        hireDate: fromDateInputValue(model.hireDate),
+        endDate: fromDateInputValue(model.endDate),
+        licenseNotes: model.licenseNotes?.trim() || null,
+        notes: model.notes?.trim() || null,
+      };
+      emit('save', payload);
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  /******************** Global Escape (optional safety) ********************/
+  const handleKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') onCancel();
+  };
+
+  onMounted(() => window.addEventListener('keydown', handleKeydown));
+  onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
+</script>
