@@ -1,25 +1,43 @@
 <template>
   <div class="pb-4">
-    <TableSearch v-model="nameSearch" placeholder="Search email…" @commit="commitNameNow" />
+    <TableSearch v-model="nameSearch" placeholder="Search by name..." @commit="commitNameNow" />
   </div>
 
   <DataTable :table :loading :total-count empty-text="No employees found.">
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
       <template v-if="(cell.column.columnDef.meta as any)?.kind === 'actions'">
-        <button
-          class="rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500"
-          aria-label="Edit employee"
-          @click="handleEditEmployee(cell.row.original as EmployeeResponse)"
-        >
-          <Pencil class="h-4 w-4" />
-        </button>
+        <span class="flex gap-2">
+          <!-- View button -->
+          <button
+            :class="actionButtonClass"
+            aria-label="Edit employee"
+            @click="handleViewEmployee(cell.row.original as EmployeeSummaryResponse)"
+          >
+            <Eye class="h-4 w-4" />
+          </button>
+
+          <!-- Edit button -->
+          <button
+            :class="actionButtonClass"
+            aria-label="Edit employee"
+            @click="handleEditEmployee(cell.row.original as EmployeeSummaryResponse)"
+          >
+            <Pencil class="h-4 w-4" />
+          </button>
+        </span>
       </template>
       <CellRenderer :cell="cell" />
     </template>
   </DataTable>
 
   <TableFooter :table :totalCount :totalPages :pagination :setPageSize />
+
+  <ViewEmployeeDialog
+    :open="viewUserDialogIsOpen"
+    :employee="employeeBeingViewed"
+    @close="viewUserDialogIsOpen = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -34,80 +52,61 @@
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
   import TableSearch from '@/components/TableSearch.vue';
+  import ViewEmployeeDialog from '@/components/ViewEmployeeDialog.vue';
   import { useDataTable } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { Pencil } from 'lucide-vue-next';
-  import { onBeforeUnmount, ref, watch } from 'vue';
+  import { Eye, Pencil } from 'lucide-vue-next';
+  import { computed, onBeforeUnmount, ref, watch } from 'vue';
+  /* ------------------------------- Constants ------------------------------ */
+  // Buttons
+  const actionButtonClass =
+    'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
 
-  const editUserDialogIsOpen = ref(false);
-  const userBeingEdited = ref<EmployeeResponse | null>(null);
-  const col: ColumnHelper<EmployeeSummaryResponse> = createColumnHelper<EmployeeSummaryResponse>();
-  const columns: ColumnDef<EmployeeSummaryResponse, any>[] = [
-    col.accessor('lastName', {
-      header: 'Last Name',
-      meta: { kind: 'text' as const },
-    }),
-    col.accessor('firstName', {
-      header: 'First Name',
-      meta: { kind: 'text' as const },
-    }),
-    col.accessor('preferredName', {
-      header: 'Preferred Name',
-      meta: { kind: 'text' as const },
-    }),
-    col.accessor('department', {
-      header: 'Department',
-      meta: {
-        kind: 'badge' as const,
-        classFor: (val: string) => getDepartmentClass(val),
-      },
-    }),
-    col.accessor('employmentType', {
-      header: 'Employment Type',
-      meta: { kind: 'text' as const },
-    }),
-    col.accessor('hireDate', {
-      header: 'Hire Date',
-      meta: { kind: 'datetime' as const },
-    }),
-    col.accessor('isActive', {
-      header: 'Active Employee?',
-      meta: { kind: 'boolean' as const },
-    }),
-    {
-      id: 'actions',
-      header: 'Actions',
-      meta: { kind: 'actions' as const },
-      enableSorting: false,
-    },
-  ];
-
-  /* ------------------------------ Department ------------------------------- */
+  // Department badge colors
   type DepartmentType = 'Engineering' | 'Drafting' | 'Surveying' | 'OfficeAdmin';
-
   const departmentClasses: Record<DepartmentType, string> = {
     Engineering: 'bg-sky-700 text-sky-100',
     Drafting: 'bg-fuchsia-700 text-fuchsia-100',
     Surveying: 'bg-amber-700 text-amber-100',
     OfficeAdmin: 'bg-slate-700 text-slate-200',
   };
-
   const getDepartmentClass = (dept: string): string =>
     departmentClasses[dept as DepartmentType] ?? 'bg-slate-800/60 text-slate-300';
 
-  /* ---------------------------- Search ---------------------------- */
-  const {
-    input: nameSearch, // bind to v-model
-    debounced: name, // use in fetch
-    setNow: commitNameNow, // optional: commit immediately on Enter
-    cancel: cancelNameDebounce, // optional
-  } = useDebouncedRef('', 500);
+  /* -------------------------------- Columns ------------------------------- */
+  const col: ColumnHelper<EmployeeSummaryResponse> = createColumnHelper<EmployeeSummaryResponse>();
+  // Use `any` for TValue because columns mix string | boolean | date, etc.
+  const columns: ColumnDef<EmployeeSummaryResponse, any>[] = [
+    col.accessor('lastName', { header: 'Last Name', meta: { kind: 'text' as const } }),
+    col.accessor('firstName', { header: 'First Name', meta: { kind: 'text' as const } }),
+    col.accessor('preferredName', { header: 'Preferred Name', meta: { kind: 'text' as const } }),
+    col.accessor('department', {
+      header: 'Department',
+      meta: { kind: 'badge' as const, classFor: (val: string) => getDepartmentClass(val) },
+    }),
+    col.accessor('employmentType', { header: 'Employment Type', meta: { kind: 'text' as const } }),
+    col.accessor('hireDate', { header: 'Hire Date', meta: { kind: 'datetime' as const } }),
+    col.accessor('isActive', { header: 'Active Employee?', meta: { kind: 'boolean' as const } }),
+    { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
+  ];
 
+  /* ------------------------------- Searching ------------------------------ */
+  const {
+    input: nameSearch, // bound to v-model
+    debounced: name, // used in fetch
+    setNow: commitNameNow, // call on Enter
+    cancel: cancelNameDebounce, // cleanup on unmount
+  } = useDebouncedRef('', 500);
   onBeforeUnmount(cancelNameDebounce);
 
-  /* ------------------------------ Fetching ------------------------------- */
+  /* ------------------------------- Fetching ------------------------------- */
   type EmpQuery = { name?: string };
+
+  // Detail cache (from server) and quick lookup map
+  const employeeDetails = ref<EmployeeResponse[]>([]);
+  const employeeDetailsById = computed(() => new Map(employeeDetails.value.map(e => [e.id, e])));
+
   const fetchEmployees = async ({
     page,
     pageSize,
@@ -120,8 +119,11 @@
     const params: GetEmployeesRequest = { page, pageSize, name: query?.name || undefined };
     const response: GetEmployeesResponse = await employeeService.get(params);
 
+    // Cache details for action dialogs
+    employeeDetails.value = response.employees.map(e => e.details);
+
     return {
-      items: response.employees.map(e => e.summary),
+      items: response.employees.map(e => e.summary), // summaries are the table rows
       totalCount: response.totalCount,
       totalPages: response.totalPages,
       page: response.page,
@@ -132,11 +134,25 @@
   const { table, loading, totalCount, totalPages, pagination, setQuery, setPageSize } =
     useDataTable<EmployeeSummaryResponse, EmpQuery>(columns, fetchEmployees, { name: undefined });
 
+  // Update query when search changes
   watch(name, () => setQuery({ name: name.value || undefined }));
 
-  /* ------------------------------ Handlers ------------------------------- */
-  const handleEditEmployee = (employee: EmployeeResponse): void => {
-    //employeeBeingEdited.value = employee;
-    //editemployeeDialogIsOpen.value = true;
+  /* ------------------------------- Dialogs/UX ----------------------------- */
+  const viewUserDialogIsOpen = ref(false);
+  const employeeBeingViewed = ref<EmployeeResponse | null>(null);
+  const editEmployeeDialogIsOpen = ref(false);
+  const employeeBeingEdited = ref<EmployeeResponse | null>(null);
+
+  /* -------------------------------- Handlers ------------------------------ */
+  const handleViewEmployee = (summary: EmployeeSummaryResponse): void => {
+    const detail = employeeDetailsById.value.get(summary.id) ?? null;
+    employeeBeingViewed.value = detail;
+    viewUserDialogIsOpen.value = !!detail;
+  };
+
+  const handleEditEmployee = (summary: EmployeeSummaryResponse): void => {
+    const detail = employeeDetailsById.value.get(summary.id) ?? null;
+    employeeBeingEdited.value = detail;
+    editEmployeeDialogIsOpen.value = !!detail;
   };
 </script>

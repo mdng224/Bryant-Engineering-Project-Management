@@ -101,7 +101,6 @@
 
   const emit = defineEmits<{
     (e: 'close'): void;
-    (e: 'saved', user: UserResponse): void;
   }>();
 
   const errorMessage = ref<string | null>(null);
