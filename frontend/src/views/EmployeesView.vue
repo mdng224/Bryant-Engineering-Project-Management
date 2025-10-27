@@ -43,7 +43,7 @@
   const editUserDialogIsOpen = ref(false);
   const userBeingEdited = ref<EmployeeResponse | null>(null);
   const col: ColumnHelper<EmployeeSummaryResponse> = createColumnHelper<EmployeeSummaryResponse>();
-  const columns: ColumnDef<EmployeeSummaryResponse>[] = [
+  const columns: ColumnDef<EmployeeSummaryResponse, any>[] = [
     col.accessor('lastName', {
       header: 'Last Name',
       meta: { kind: 'text' as const },
@@ -58,7 +58,10 @@
     }),
     col.accessor('department', {
       header: 'Department',
-      meta: { kind: 'department' as const },
+      meta: {
+        kind: 'badge' as const,
+        classFor: (val: string) => getDepartmentClass(val),
+      },
     }),
     col.accessor('employmentType', {
       header: 'Employment Type',
@@ -126,16 +129,8 @@
     };
   };
 
-  const {
-    table,
-    rows: employees,
-    loading,
-    totalCount,
-    totalPages,
-    pagination,
-    setQuery,
-    setPageSize,
-  } = useDataTable<EmployeeSummaryResponse, EmpQuery>(columns, fetchEmployees, { name: undefined });
+  const { table, loading, totalCount, totalPages, pagination, setQuery, setPageSize } =
+    useDataTable<EmployeeSummaryResponse, EmpQuery>(columns, fetchEmployees, { name: undefined });
 
   watch(name, () => setQuery({ name: name.value || undefined }));
 

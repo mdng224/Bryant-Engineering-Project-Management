@@ -1,7 +1,7 @@
 <!-- components/SkeletonRows.vue -->
 <template>
-  <tr v-for="i in rows" :key="i">
-    <td v-for="c in cols" :key="c" class="px-4 py-3">
+  <tr v-for="row in rows" :key="row">
+    <td v-for="col in cols" :key="col" class="px-4 py-3">
       <div class="h-3 w-40 animate-pulse rounded bg-slate-700/50" />
     </td>
   </tr>

@@ -31,9 +31,9 @@
             class="whitespace-nowrap px-4 py-2.5"
           >
             <!-- Delegate actual content to a slot with sensible defaults -->
-            <slot name="cell" :cell="cell">
+            <slot name="cell" :cell>
               <!-- default renderer using column meta -->
-              <CellRenderer :cell="cell" />
+              <CellRenderer :cell />
             </slot>
           </td>
         </tr>
@@ -49,9 +49,9 @@
 </template>
 
 <script setup lang="ts">
-  import SkeletonRows from '@/components/SkeletonRows.vue';
   import type { Table } from '@tanstack/table-core';
   import CellRenderer from './CellRenderer.vue';
+  import SkeletonRows from './SkeletonRows.vue';
 
   type Props = {
     table: Table<any>;

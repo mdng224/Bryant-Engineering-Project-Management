@@ -60,7 +60,7 @@
     statusClasses[status as UserStatus] ?? 'bg-slate-800/60 text-slate-400';
 
   const col: ColumnHelper<UserResponse> = createColumnHelper<UserResponse>();
-  const columns: ColumnDef<UserResponse>[] = [
+  const columns: ColumnDef<UserResponse, any>[] = [
     col.accessor('email', {
       header: 'Email',
       meta: { kind: 'text' as const },
@@ -71,7 +71,10 @@
     }),
     col.accessor('status', {
       header: 'Status',
-      meta: { kind: 'status' as const },
+      meta: {
+        kind: 'badge' as const,
+        classFor: (val: string) => getStatusClass(val),
+      },
     }),
     col.accessor('createdAtUtc', {
       header: 'Created',
@@ -129,7 +132,6 @@
 
   const {
     table,
-    rows: users,
     loading,
     totalCount,
     totalPages,
