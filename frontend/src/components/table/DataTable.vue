@@ -54,7 +54,8 @@
   import SkeletonRows from './SkeletonRows.vue';
 
   type Props = {
-    table: Table<unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    table: Table<any>;
     loading: boolean;
     totalCount: number;
     emptyText?: string;

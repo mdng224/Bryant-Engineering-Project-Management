@@ -3,12 +3,7 @@
     <TableSearch v-model="nameSearch" placeholder="Search by name..." @commit="commitNameNow" />
   </div>
 
-  <DataTable
-    :table="table as unknown as import('@tanstack/vue-table').Table<unknown>"
-    :loading
-    :total-count
-    empty-text="No employees found."
-  >
+  <DataTable :table :loading :total-count empty-text="No employees found.">
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
       <template v-if="(cell.column.columnDef.meta as any)?.kind === 'actions'">
@@ -22,7 +17,7 @@
             <Eye class="h-4 w-4" />
           </button>
 
-          <!-- Edit button -->
+          <!-- TODO: PUT MORE THOUGHT INTO THIS
           <button
             :class="actionButtonClass"
             aria-label="Edit employee"
@@ -30,6 +25,7 @@
           >
             <Pencil class="h-4 w-4" />
           </button>
+           -->
         </span>
       </template>
       <CellRenderer :cell="cell" />
@@ -68,7 +64,7 @@
   import { useDataTable } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { Eye, Pencil } from 'lucide-vue-next';
+  import { Eye } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
   /* ------------------------------- Constants ------------------------------ */
@@ -89,8 +85,8 @@
 
   /* -------------------------------- Columns ------------------------------- */
   const col: ColumnHelper<EmployeeSummaryResponse> = createColumnHelper<EmployeeSummaryResponse>();
-  // Use `any` for TValue because columns mix string | boolean | date, etc.
-  const columns: ColumnDef<EmployeeSummaryResponse, unknown>[] = [
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const columns: ColumnDef<EmployeeSummaryResponse, any>[] = [
     col.accessor('lastName', { header: 'Last Name', meta: { kind: 'text' as const } }),
     col.accessor('firstName', { header: 'First Name', meta: { kind: 'text' as const } }),
     col.accessor('preferredName', { header: 'Preferred Name', meta: { kind: 'text' as const } }),

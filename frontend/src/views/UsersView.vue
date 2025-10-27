@@ -48,8 +48,6 @@
   import type { GetUsersRequest, GetUsersResponse, UserResponse, UserStatus } from '../api/users';
   import { useDebouncedRef } from '../composables/useDebouncedRef';
 
-  const editUserDialogIsOpen = ref(false);
-
   /* ------------------------------ Status ------------------------------- */
 
   const statusClasses: Record<UserStatus, string> = {
@@ -63,8 +61,10 @@
   const getStatusClass = (status: string): string =>
     statusClasses[status as UserStatus] ?? 'bg-slate-800/60 text-slate-400';
 
+  /* -------------------------------- Columns ------------------------------- */
   const col: ColumnHelper<UserResponse> = createColumnHelper<UserResponse>();
-  const columns: ColumnDef<UserResponse, unknown>[] = [
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const columns: ColumnDef<UserResponse, any>[] = [
     col.accessor('email', {
       header: 'Email',
       meta: { kind: 'text' as const },
@@ -150,6 +150,7 @@
 
   /* ------------------------------ Handlers ------------------------------- */
   const selectedUser = ref<UserResponse | null>(null);
+  const editUserDialogIsOpen = ref(false);
 
   const handleEditUser = (user: UserResponse): void => {
     selectedUser.value = user;
