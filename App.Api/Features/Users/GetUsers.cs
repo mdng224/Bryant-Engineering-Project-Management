@@ -18,7 +18,7 @@ public static class GetUsers
         var result = await handler.Handle(query, ct);
 
         if (!result.IsSuccess)
-            return Problem(result.Error!.Value.Message ?? "Unexpected error.");
+            return Problem(result.Error!.Value.Message);
 
         var response = result.Value!.ToResponse();
 

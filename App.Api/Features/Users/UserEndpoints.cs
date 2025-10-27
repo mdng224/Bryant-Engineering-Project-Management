@@ -17,10 +17,10 @@ public static class UserEndpoints
             .Produces<GetUsersResponse>()
             .Produces(StatusCodes.Status403Forbidden);
 
-        // PUT /users/users/{id}
-        users.MapPatch("/{userId:guid}", GetUsers.Handle)
+        // PATCH /users/users/{id}
+        users.MapPatch("/{userId:guid}", UpdateUser.Handle)
             .AddEndpointFilter<Validate<UpdateUserRequest>>()
-            .WithSummary("Update a user's role and/or active status")
+            .WithSummary("Update a user's role and/or status")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
             .ProducesValidationProblem()

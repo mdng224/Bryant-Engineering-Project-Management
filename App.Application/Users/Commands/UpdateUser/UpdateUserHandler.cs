@@ -1,6 +1,7 @@
 ﻿using App.Application.Abstractions;
 using App.Application.Common;
 using App.Domain.Security;
+using App.Domain.Users;
 using static App.Application.Common.R;
 
 namespace App.Application.Users.Commands.UpdateUser;
@@ -25,7 +26,7 @@ public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWr
 
         // Apply changes
         ApplyRoleChange(user, intent);
-        ApplyActiveChange(user, command);
+        ApplyStatusChange(user, command);
 
         await userWriter.SaveChangesAsync(ct);
 
@@ -33,20 +34,19 @@ public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWr
     }
     
     // ---------- Helpers ----------
-    private static void ApplyActiveChange(Domain.Users.User user, UpdateUserCommand cmd)
+    private static void ApplyStatusChange(User user, UpdateUserCommand cmd)
     {
-        if (cmd.IsActive is not { } active) return;
-        if (active) user.Activate();
-        else        user.Disable();
+        if (cmd.Status is not { } status) return;
+        user.SetStatus(status); // domain encapsulates all transition rules + Touch()
     }
     
-    private static void ApplyRoleChange(Domain.Users.User user, Intent intent)
+    private static void ApplyRoleChange(User user, Intent intent)
     {
         if (intent is { IsRoleChange: true, NewRoleId: { } roleId })
             user.SetRole(roleId);
     }
     
-    private static Intent ComputeIntent(Domain.Users.User user, UpdateUserCommand cmd)
+    private static Intent ComputeIntent(User user, UpdateUserCommand cmd)
     {
         Guid? newRoleId = null;
         var isRoleChange = false;
@@ -60,19 +60,25 @@ public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWr
             isRoleChange = true;
         }
 
-        var isDeactivation = cmd.IsActive is false;
-        var isRoleDemotion = isRoleChange && user.RoleId == RoleIds.Administrator && newRoleId != RoleIds.Administrator;
+        var isStatusChange = cmd.Status.HasValue;
+        var isDeactivation = cmd.Status == UserStatus.Disabled;
 
+        var isRoleDemotion =
+            isRoleChange &&
+            user.RoleId == RoleIds.Administrator &&
+            newRoleId != RoleIds.Administrator;
+        
         return new Intent(
             Success: true,
             IsRoleChange: isRoleChange,
             NewRoleId: newRoleId,
+            IsStatusChange: isStatusChange,
             IsDeactivation: isDeactivation,
             IsRoleDemotion: isRoleDemotion
         );
     }
     
-    private async Task<Result> EnsureNotRemovingLastAdminAsync(Domain.Users.User user, Intent intent, CancellationToken ct)
+    private async Task<Result> EnsureNotRemovingLastAdminAsync(User user, Intent intent, CancellationToken ct)
     {
         if (!IsCurrentlyActiveAdmin(user) || !(intent.IsDeactivation || intent.IsRoleDemotion))
             return Result.Success();
@@ -84,16 +90,17 @@ public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWr
             : Result.Success();
     }
     
-    private static bool IsCurrentlyActiveAdmin(Domain.Users.User user) =>
-        user.Status == Domain.Users.UserStatus.Active && user.RoleId == RoleIds.Administrator;
+    private static bool IsCurrentlyActiveAdmin(User user) =>
+        user.Status == UserStatus.Active && user.RoleId == RoleIds.Administrator;
     
     private static bool IsNoOp(UpdateUserCommand cmd) =>
-        string.IsNullOrWhiteSpace(cmd.RoleName) && !cmd.IsActive.HasValue;
+        string.IsNullOrWhiteSpace(cmd.RoleName) && !cmd.Status.HasValue;
     
     private readonly record struct Intent(
         bool Success,
         bool IsRoleChange,
         Guid? NewRoleId,
+        bool IsStatusChange,
         bool IsDeactivation,
         bool IsRoleDemotion
     )
@@ -103,7 +110,9 @@ public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWr
                 Success: false,
                 IsRoleChange: false,
                 NewRoleId: null,
+                IsStatusChange: false,
                 IsDeactivation: false,
-                IsRoleDemotion: false);
+                IsRoleDemotion: false
+            );
     }
 }

@@ -61,7 +61,7 @@ public class User : IAuditableEntity
         Touch();
     }
 
-    public void Disable()
+    private void Disable()
     {
         EnsureNotDeleted();
         Status = UserStatus.Disabled;
@@ -101,7 +101,37 @@ public class User : IAuditableEntity
         RoleId = valid;
         Touch();
     }
+    
+    public void SetStatus(UserStatus status)
+    {
+        EnsureNotDeleted();
+        // No change — early exit
+        if (Status == status)
+            return;
 
+        switch (status)
+        {
+            case UserStatus.PendingEmail:
+            case UserStatus.PendingApproval:
+            case UserStatus.Denied:
+                Status = status;
+                break;
+
+            case UserStatus.Active:
+                Activate();  // already enforces domain rules
+                break;
+
+            case UserStatus.Disabled:
+                Disable();   // already enforces domain rules
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(status), status, "Unsupported user status transition.");
+        }
+        
+        Touch();
+    }
+    
     public void SetPasswordHash(string passwordHash)
     {
         EnsureNotDeleted();

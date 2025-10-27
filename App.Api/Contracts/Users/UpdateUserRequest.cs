@@ -1,3 +1,5 @@
-﻿namespace App.Api.Contracts.Users;
+﻿using App.Domain.Users;
 
-public sealed record UpdateUserRequest(string? RoleName, bool? IsActive);
+namespace App.Api.Contracts.Users;
+
+public sealed record UpdateUserRequest(string? RoleName, UserStatus? Status);

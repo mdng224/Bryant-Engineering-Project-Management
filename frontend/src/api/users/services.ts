@@ -1,10 +1,5 @@
 import api from '@/api';
-import type {
-  GetUsersRequest,
-  GetUsersResponse,
-  UpdateUserRequest,
-  UserResponse,
-} from '@/api/users/contracts';
+import type { GetUsersRequest, GetUsersResponse, UpdateUserRequest } from '@/api/users/contracts';
 import type { AxiosError } from 'axios';
 import { UsersRoutes } from './routes';
 
@@ -49,7 +44,9 @@ const get = async (params: GetUsersRequest): Promise<GetUsersResponse> => {
 };
 
 const update = async (id: string, body: UpdateUserRequest): Promise<void> => {
-  await api.patch<UserResponse>(UsersRoutes.byId(id), body);
+  console.log('PATCH', UsersRoutes.byId(id), JSON.stringify(body, null, 2));
+
+  await api.patch<void>(UsersRoutes.byId(id), body);
 };
 
 export const userService = { get, update };

@@ -1,3 +1,5 @@
-﻿namespace App.Application.Users.Commands.UpdateUser;
+﻿using App.Domain.Users;
 
-public sealed record UpdateUserCommand(Guid UserId, string? RoleName, bool? IsActive);
+namespace App.Application.Users.Commands.UpdateUser;
+
+public sealed record UpdateUserCommand(Guid UserId, string? RoleName, UserStatus? Status);

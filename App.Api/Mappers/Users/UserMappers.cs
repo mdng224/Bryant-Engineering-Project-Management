@@ -36,7 +36,7 @@ internal static class UserMappers
     }
 
     public static UpdateUserCommand ToCommand(this UpdateUserRequest request, Guid userId)
-        => new(userId, request.RoleName, request.IsActive);
+        => new(userId, request.RoleName, request.Status);
     
     private static UserResponse ToResponse(this UserDto dto) =>
         new(

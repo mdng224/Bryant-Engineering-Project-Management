@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using App.Api.Contracts.Users;
 
 namespace App.Api.Extensions;
@@ -32,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.ConfigureHttpJsonOptions(o =>
         {
             o.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            o.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
 
         // --- JWT (symmetric) -------------------------------------------------

@@ -43,7 +43,7 @@ public class UpdateUserHandlerTests
         _writer.Setup(w => w.GetForUpdateAsync(userId, It.IsAny<CancellationToken>()))
                .ReturnsAsync((User?)null);
 
-        var command = new UpdateUserCommand(userId, RoleNames.User, true);
+        var command = new UpdateUserCommand(userId, RoleNames.User, UserStatus.Active);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -104,7 +104,7 @@ public class UpdateUserHandlerTests
         _writer.Setup(w => w.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        var command = new UpdateUserCommand(user.Id, null, true);
+        var command = new UpdateUserCommand(user.Id, null, UserStatus.Active);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -116,7 +116,6 @@ public class UpdateUserHandlerTests
         _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-
     [Fact]
     public async Task Updates_Both_Role_And_Status()
     {
@@ -125,7 +124,7 @@ public class UpdateUserHandlerTests
         _writer.Setup(w => w.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
                .ReturnsAsync(user);
 
-        var command = new UpdateUserCommand(user.Id, RoleNames.Administrator, false);
+        var command = new UpdateUserCommand(user.Id, RoleNames.Administrator, UserStatus.Disabled);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -166,7 +165,7 @@ public class UpdateUserHandlerTests
         _writer.Setup(w => w.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
                .ReturnsAsync(user);
 
-        var command = new UpdateUserCommand(user.Id, "   ", true);
+        var command = new UpdateUserCommand(user.Id, "   ", UserStatus.Active);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -214,7 +213,7 @@ public class UpdateUserHandlerTests
         _reader.Setup(r => r.CountActiveAdminsAsync(It.IsAny<CancellationToken>()))
                .ReturnsAsync(1);
 
-        var command = new UpdateUserCommand(admin.Id, null, false); // deactivate
+        var command = new UpdateUserCommand(admin.Id, null, UserStatus.Disabled); // deactivate
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -262,7 +261,7 @@ public class UpdateUserHandlerTests
         _reader.Setup(r => r.CountActiveAdminsAsync(It.IsAny<CancellationToken>()))
                .ReturnsAsync(2);
 
-        var command = new UpdateUserCommand(admin.Id, null, false);
+        var command = new UpdateUserCommand(admin.Id, null, UserStatus.Disabled);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -283,7 +282,7 @@ public class UpdateUserHandlerTests
         EnsureVerified(user);
         user.Activate();
     }
-    
+
     // Marks the user as email-verified using any available API.
     // Tries multiple method names/signatures. If none exist, it sets properties via reflection.
     private static void EnsureVerified(User user)
@@ -294,9 +293,9 @@ public class UpdateUserHandlerTests
         var m = t.GetMethod("MarkEmailVerified",
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             binder: null,
-            types: [typeof(DateTimeOffset)],
+            types: new[] { typeof(DateTimeOffset) },
             modifiers: null);
-        if (m != null) { m.Invoke(user, [DateTimeOffset.UtcNow]); return; }
+        if (m != null) { m.Invoke(user, new object[] { DateTimeOffset.UtcNow }); return; }
 
         // 2) Try MarkEmailVerified()
         m = t.GetMethod("MarkEmailVerified",
@@ -304,15 +303,15 @@ public class UpdateUserHandlerTests
             binder: null,
             types: Type.EmptyTypes,
             modifiers: null);
-        if (m != null) { m.Invoke(user, []); return; }
+        if (m != null) { m.Invoke(user, Array.Empty<object>()); return; }
 
         // 3) Try VerifyEmail(DateTimeOffset)
         m = t.GetMethod("VerifyEmail",
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             binder: null,
-            types: [typeof(DateTimeOffset)],
+            types: new[] { typeof(DateTimeOffset) },
             modifiers: null);
-        if (m != null) { m.Invoke(user, [DateTimeOffset.UtcNow]); return; }
+        if (m != null) { m.Invoke(user, new object[] { DateTimeOffset.UtcNow }); return; }
 
         // 4) Try VerifyEmail()
         m = t.GetMethod("VerifyEmail",
@@ -320,7 +319,7 @@ public class UpdateUserHandlerTests
             binder: null,
             types: Type.EmptyTypes,
             modifiers: null);
-        if (m != null) { m.Invoke(user, []); return; }
+        if (m != null) { m.Invoke(user, Array.Empty<object>()); return; }
 
         // 5) Fallback: set EmailVerifiedAt (if present)
         var pVerifiedAt = t.GetProperty("EmailVerifiedAt",
@@ -328,13 +327,15 @@ public class UpdateUserHandlerTests
         if (pVerifiedAt?.CanWrite == true)
             pVerifiedAt.SetValue(user, DateTimeOffset.UtcNow);
 
-        // 6) Fallback: set Status = EmailVerified (private setter OK via reflection)
+        // 6) Fallback: set Status (private setter OK via reflection)
         var pStatus = t.GetProperty("Status",
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         if (pStatus?.CanWrite != true)
             throw new InvalidOperationException(
                 "Test cannot mark user as email-verified. Expose MarkEmailVerified()/VerifyEmail() or a settable EmailVerifiedAt/Status for testing.");
-        // assuming the enum is App.Domain.Users.UserStatus
-        pStatus.SetValue(user, UserStatus.PendingEmail);
+
+        // If you want a specific 'verified but not active' state, pick what's appropriate for your domain.
+        // Here we choose PendingApproval; ActivateForTests() will move it to Active.
+        pStatus.SetValue(user, UserStatus.PendingApproval);
     }
 }

@@ -1,8 +1,10 @@
 <!-- src/components/EditUserDialog.vue -->
 <template>
   <div v-if="open && user" class="fixed inset-0 z-50 grid place-items-center">
+    <!-- backdrop -->
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="$emit('close')"></div>
 
+    <!-- dialog -->
     <section
       class="relative w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900/90 p-5 text-slate-100 shadow-2xl"
       role="dialog"
@@ -19,26 +21,27 @@
         <div class="pb-2">
           <label class="mb-1 block text-slate-400">Role</label>
           <select
+            id="role"
+            ref="firstField"
             v-model="form.roleName"
             :disabled="saving"
             class="w-full rounded-md border border-slate-700 bg-slate-900/70 px-3 py-2 pr-10 text-sm text-slate-100 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60"
           >
-            <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
+            <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
           </select>
         </div>
 
         <!-- STATUS -->
-        <div class="flex items-center gap-3">
-          <label class="text-slate-400">Status</label>
-          <input
-            v-model="form.isActive"
-            class="h-4 w-4 rounded-sm border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
-            type="checkbox"
+        <div class="pb-2">
+          <label for="status" class="mb-1 block text-slate-400">Status</label>
+          <select
+            id="status"
+            v-model="form.status"
             :disabled="saving"
-          />
-          <span class="text-sm" :class="form.isActive ? 'text-emerald-300' : 'text-slate-300'">
-            {{ form.isActive ? 'Active' : 'Inactive' }}
-          </span>
+            class="w-full rounded-md border border-slate-700 bg-slate-900/70 px-3 py-2 pr-10 text-sm text-slate-100 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60"
+          >
+            <option v-for="status in statuses" :key="status" :value="status">{{ status }}</option>
+          </select>
         </div>
       </div>
 
@@ -72,10 +75,24 @@
 
 <script setup lang="ts">
   import { userService } from '@/api/users';
-  import type { UpdateUserRequest, UserResponse } from '@/api/users/contracts';
+  import type {
+    RoleName,
+    UpdateUserRequest,
+    UserResponse,
+    UserStatus,
+  } from '@/api/users/contracts';
   import type { AxiosError } from 'axios';
   import { AlertTriangle } from 'lucide-vue-next';
-  import { computed, ref, watch } from 'vue';
+  import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+
+  const roles: RoleName[] = ['Administrator', 'Manager', 'User'];
+  const statuses: UserStatus[] = [
+    'PendingEmail',
+    'PendingApproval',
+    'Active',
+    'Denied',
+    'Disabled',
+  ];
 
   const props = defineProps<{
     open: boolean;
@@ -88,15 +105,36 @@
   }>();
 
   const errorMessage = ref<string | null>(null);
-  const form = ref({ roleName: '', isActive: false });
-  const roles = ['Administrator', 'Manager', 'User'];
   const saving = ref(false);
 
+  // Form state (typed)
+  const form = ref<{ roleName: RoleName; status: UserStatus }>({
+    roleName: 'User',
+    status: 'PendingEmail',
+  });
+
+  // autofocus first field
+  const firstField = ref<HTMLSelectElement | null>(null);
+  onMounted(() => {
+    if (props.open) firstField.value?.focus();
+  });
+  watch(
+    () => props.open,
+    isOpen => {
+      if (isOpen) {
+        errorMessage.value = null;
+        // next tick not necessary here; simple focus retry
+        setTimeout(() => firstField.value?.focus(), 0);
+      }
+    },
+  );
+
+  // hydrate form from prop
   watch(
     () => props.user,
     u => {
       if (!u) return;
-      form.value = { roleName: u.roleName, isActive: u.isActive };
+      form.value = { roleName: u.roleName, status: u.status };
     },
     { immediate: true },
   );
@@ -107,11 +145,18 @@
       if (isOpen) errorMessage.value = null; // reset error each time dialog opens
     },
   );
+  // ESC to close (if not saving)
+  const onKey = (e: KeyboardEvent) => {
+    if (!props.open) return;
+    if (e.key === 'Escape' && !saving.value) emit('close');
+  };
+  onMounted(() => window.addEventListener('keydown', onKey));
+  onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 
   const isNoop = computed(
     () =>
       !props.user ||
-      (form.value.roleName === props.user.roleName && form.value.isActive === props.user.isActive),
+      (form.value.roleName === props.user.roleName && form.value.status === props.user.status),
   );
 
   const save = async (): Promise<void> => {
@@ -123,10 +168,9 @@
     try {
       const request: Partial<UpdateUserRequest> = {};
       if (form.value.roleName !== props.user.roleName) request.roleName = form.value.roleName;
-      if (form.value.isActive !== props.user.isActive) request.isActive = form.value.isActive;
+      if (form.value.status !== props.user.status) request.status = form.value.status;
 
       await userService.update(props.user.id, request);
-      //emit('saved', { ...props.user, ...response });
       emit('close');
     } catch (error) {
       const err = error as AxiosError<{ message?: string; error?: string }>;

@@ -3,73 +3,21 @@
     <TableSearch v-model="nameSearch" placeholder="Search email…" @commit="commitNameNow" />
   </div>
 
-  <div class="overflow-x-auto rounded-xl border border-slate-700 bg-slate-900/70 shadow">
-    <table
-      class="sticky top-0 z-10 min-w-full divide-y divide-slate-700 text-sm text-slate-200 backdrop-blur"
-    >
-      <thead class="bg-slate-800/80 text-slate-100">
-        <tr v-for="hg in table.getHeaderGroups()" :key="hg.id">
-          <th
-            v-for="header in hg.headers"
-            :key="header.id"
-            class="px-4 py-3 text-left font-semibold uppercase tracking-wider"
-          >
-            {{ header.column.columnDef.header as string }}
-          </th>
-        </tr>
-      </thead>
-
-      <tbody class="divide-y divide-slate-800">
-        <SkeletonRows v-if="loading" :rows="10" :cols="table.getAllLeafColumns().length" />
-
-        <tr
-          v-for="row in table.getRowModel().rows"
-          v-else
-          :key="row.id"
-          class="odd:bg-slate-900/40 even:bg-slate-700/30 hover:bg-slate-800/40 ..."
+  <DataTable :table :loading :total-count empty-text="No employees found.">
+    <!-- actions slot for this table only -->
+    <template #cell="{ cell }">
+      <template v-if="(cell.column.columnDef.meta as any)?.kind === 'actions'">
+        <button
+          class="rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500"
+          aria-label="Edit employee"
+          @click="handleEditEmployee(cell.row.original as EmployeeResponse)"
         >
-          <td
-            v-for="cell in row.getVisibleCells()"
-            :key="cell.id"
-            class="whitespace-nowrap px-4 py-2.5"
-          >
-            <template v-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'text'">
-              <span class="text-md text-slate-100">{{ cell.getValue() as string }}</span>
-            </template>
-
-            <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'department'">
-              <span
-                :class="[
-                  'rounded-full px-2 py-0.5 text-sm font-medium',
-                  getDepartmentClass(cell.getValue() as string),
-                ]"
-              >
-                {{ cell.getValue() as string }}
-              </span>
-            </template>
-
-            <template v-else-if="(cell.column.columnDef.meta as ColMeta)?.kind === 'datetime'">
-              <span class="text-[12px] tracking-wide text-slate-100">
-                {{ formatUtc(cell.getValue() as string | null) }}
-              </span>
-            </template>
-            <template v-else>{{ cell.getValue() as any }}</template>
-          </td>
-        </tr>
-
-        <tr v-if="!loading && employees.length === 0">
-          <td class="px-6 py-6 text-slate-400" :colspan="table.getAllLeafColumns().length">
-            No results.
-          </td>
-        </tr>
-        <tr v-if="loading">
-          <td class="px-6 py-6 text-slate-400" :colspan="table.getAllLeafColumns().length">
-            Loading…
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+          <Pencil class="h-4 w-4" />
+        </button>
+      </template>
+      <CellRenderer :cell="cell" />
+    </template>
+  </DataTable>
 
   <TableFooter :table :totalCount :totalPages :pagination :setPageSize />
 </template>
@@ -77,34 +25,23 @@
 <script setup lang="ts">
   import { employeeService } from '@/api/employees';
   import type {
+    EmployeeResponse,
     EmployeeSummaryResponse,
     GetEmployeesRequest,
     GetEmployeesResponse,
   } from '@/api/employees/contracts';
-  import SkeletonRows from '@/components/SkeletonRows.vue';
-  import TableFooter from '@/components/TableFooter.vue';
+  import CellRenderer from '@/components/table/CellRenderer.vue';
+  import DataTable from '@/components/table/DataTable.vue';
+  import TableFooter from '@/components/table/TableFooter.vue';
   import TableSearch from '@/components/TableSearch.vue';
-
   import { useDataTable } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { onBeforeUnmount, watch } from 'vue';
-  type ColMeta =
-    | { kind: 'text' }
-    | { kind: 'department' }
-    | { kind: 'datetime' }
-    | { kind: 'actions' };
+  import { Pencil } from 'lucide-vue-next';
+  import { onBeforeUnmount, ref, watch } from 'vue';
 
-  // formatting helpers
-  const fmt = new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-  const formatUtc = (iso: string | null) => (iso ? fmt.format(new Date(iso)) : '—');
-
+  const editUserDialogIsOpen = ref(false);
+  const userBeingEdited = ref<EmployeeResponse | null>(null);
   const col: ColumnHelper<EmployeeSummaryResponse> = createColumnHelper<EmployeeSummaryResponse>();
   const columns: ColumnDef<EmployeeSummaryResponse>[] = [
     col.accessor('lastName', {
@@ -203,4 +140,8 @@
   watch(name, () => setQuery({ name: name.value || undefined }));
 
   /* ------------------------------ Handlers ------------------------------- */
+  const handleEditEmployee = (employee: EmployeeResponse): void => {
+    //employeeBeingEdited.value = employee;
+    //editemployeeDialogIsOpen.value = true;
+  };
 </script>

@@ -11,8 +11,8 @@ public sealed class UpdateUserRequestValidator : AbstractValidator<UpdateUserReq
     {
         // Require at least one field
         RuleFor(uur => uur)
-            .Must(uur => !string.IsNullOrWhiteSpace(uur.RoleName) || uur.IsActive.HasValue)
-            .WithMessage("Provide roleName and/or isActive.");
+            .Must(uur => !string.IsNullOrWhiteSpace(uur.RoleName) || uur.Status.HasValue)
+            .WithMessage("Provide roleName and/or status.");
 
         // Validate role only when provided
         When(x => x.RoleName is not null, () =>
@@ -20,11 +20,20 @@ public sealed class UpdateUserRequestValidator : AbstractValidator<UpdateUserReq
             RuleFor(uur => uur.RoleName!)
                 .Cascade(CascadeMode.Stop)
                 .Must(s => !string.IsNullOrWhiteSpace(s))
-                .WithMessage("roleName cannot be empty.")
+                    .WithMessage("roleName cannot be empty.")
                 .Must(s => s!.Trim().Length <= 64)
-                .WithMessage("roleName is too long.")
+                    .WithMessage("roleName is too long.")
                 .Must(s => RoleRegex.IsMatch(s!.Trim()))
-                .WithMessage("roleName contains invalid characters.");
+                    .WithMessage("roleName contains invalid characters.");
+        });
+        
+        // Validate status only when provided
+        When(uur => uur.Status.HasValue, () =>
+        {
+            // If Status is an enum (UserStatus), this ensures it's a defined value
+            RuleFor(uur => uur.Status!.Value)
+                .IsInEnum()
+                .WithMessage("status is invalid.");
         });
     }
 }

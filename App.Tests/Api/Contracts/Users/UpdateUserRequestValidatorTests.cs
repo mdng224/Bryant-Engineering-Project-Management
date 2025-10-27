@@ -1,4 +1,5 @@
 ﻿using App.Api.Contracts.Users;
+using App.Domain.Users;
 using FluentAssertions;
 using FluentValidation.TestHelper;
 
@@ -12,23 +13,22 @@ public class UpdateUserRequestValidatorTests
     public void Requires_At_Least_One_Field()
     {
         // Arrange
-        var model = new UpdateUserRequest(RoleName: null, IsActive: null);
+        var model = new UpdateUserRequest(RoleName: null, Status: null);
 
         // Act
         var result = _validator.TestValidate(model);
 
         // Assert
-        // Top-level rule -> easiest is to check any error with the expected message
         result.Errors
             .Should()
-            .ContainSingle(e => e.ErrorMessage == "Provide roleName and/or isActive.");
+            .ContainSingle(e => e.ErrorMessage == "Provide roleName and/or status.");
     }
 
     [Fact]
-    public void Accepts_Only_IsActive_Change()
+    public void Accepts_Only_Status_Change()
     {
         // Arrange
-        var model = new UpdateUserRequest(RoleName: null, IsActive: true);
+        var model = new UpdateUserRequest(RoleName: null, Status: UserStatus.Active);
 
         // Act
         var result = _validator.TestValidate(model);
@@ -41,7 +41,7 @@ public class UpdateUserRequestValidatorTests
     public void Rejects_Whitespace_RoleName()
     {
         // Arrange
-        var model = new UpdateUserRequest(RoleName: "   ", IsActive: null);
+        var model = new UpdateUserRequest(RoleName: "   ", Status: null);
 
         // Act
         var result = _validator.TestValidate(model);
@@ -55,7 +55,7 @@ public class UpdateUserRequestValidatorTests
     public void Rejects_RoleName_Too_Long()
     {
         // Arrange
-        var model = new UpdateUserRequest(RoleName: new string('A', 65), IsActive: null);
+        var model = new UpdateUserRequest(RoleName: new string('A', 65), Status: null);
 
         // Act
         var result = _validator.TestValidate(model);
@@ -73,7 +73,7 @@ public class UpdateUserRequestValidatorTests
     public void Rejects_RoleName_With_Invalid_Characters(string bad)
     {
         // Arrange
-        var model = new UpdateUserRequest(RoleName: bad, IsActive: null);
+        var model = new UpdateUserRequest(RoleName: bad, Status: null);
 
         // Act
         var result = _validator.TestValidate(model);
@@ -92,7 +92,7 @@ public class UpdateUserRequestValidatorTests
     public void Accepts_RoleName_With_Allowed_Characters(string ok)
     {
         // Arrange
-        var model = new UpdateUserRequest(RoleName: ok, IsActive: null);
+        var model = new UpdateUserRequest(RoleName: ok, Status: null);
 
         // Act
         var result = _validator.TestValidate(model);

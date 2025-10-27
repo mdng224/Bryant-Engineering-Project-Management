@@ -21,17 +21,6 @@ public static class UpdateUser
         return !result.IsSuccess ? ToHttpError(result.Error!.Value) : ToHttpSuccess(result.Value);
     }
     
-    private static IResult ToHttpError(Error error) =>
-        error.Code switch
-        {
-            "not_found"  => NotFound(new { message = error.Message }),
-            "forbidden"  => Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
-            "conflict"   => Conflict(new { message = error.Message }),
-            "validation" => ValidationProblem(
-                new Dictionary<string, string[]> { ["body"] = [error.Message ?? "Validation failed."] }),
-            _            => Problem(error.Message ?? "Unexpected error.")
-        };
-
     private static IResult ToHttpSuccess(UpdateUserResult value) =>
         value switch
         {
@@ -39,7 +28,18 @@ public static class UpdateUser
             UpdateUserResult.UserNotFound       => NotFound(new { message = "User not found." }),
             UpdateUserResult.RoleNotFound       => NotFound(new { message = "Role not found." }),
             UpdateUserResult.NoChangesSpecified => ValidationProblem(
-                new Dictionary<string, string[]> { ["body"] = ["Provide roleName and/or isActive."] }),
+                new Dictionary<string, string[]> { ["body"] = ["Provide roleName and/or status."] }), // <- was isActive
             _ => Problem("Unknown result.")
         };
+
+    private static IResult ToHttpError(Error error) =>
+        error.Code switch
+        {
+            "not_found"  => NotFound(new { message = error.Message }),
+            "forbidden"  => Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden), // ok
+            "conflict"   => Conflict(new { message = error.Message }),
+            "validation" => ValidationProblem(new Dictionary<string, string[]> { ["body"] = [error.Message ?? "Validation failed."] }),
+            _            => Problem(error.Message)
+        };
+
 }
