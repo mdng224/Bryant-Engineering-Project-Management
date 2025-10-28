@@ -6,10 +6,14 @@ namespace App.Application.Common.Mappers;
 
 public static class PositionMapper
 {
-    public static GetAllPositionsResult ToResult(this IReadOnlyList<Position> positions) => new(positions.ToDto());
-    
-    private static List<PositionDto> ToDto(this IEnumerable<Position> positions) =>
-        positions
-            .Select(p => new PositionDto(p.Id, p.Name, p.Code, p.RequiresLicense))
-            .ToList();
+    public static IEnumerable<PositionDto> ToDto(this IEnumerable<Position> positions) =>
+        positions.Select(ToDto);
+    private static PositionDto ToDto(this Position position) =>
+        new(
+            Id: position.Id,
+            Name: position.Name,
+            Code:  position.Code,
+            RequiresLicense: position.RequiresLicense
+        );
+
 }

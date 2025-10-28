@@ -35,9 +35,9 @@ public sealed class EmployeeRepository(AppDbContext db) : IEmployeeReader
             );
         }
 
-        var totalEmployees = await query.CountAsync(ct);
-        if (totalEmployees == 0 || skip >= totalEmployees)
-            return ([], totalEmployees);
+        var totalCount = await query.CountAsync(ct);
+        if (totalCount == 0 || skip >= totalCount)
+            return ([], totalCount);
 
         var employees = await query
             .OrderBy(e => e.LastName)
@@ -49,6 +49,6 @@ public sealed class EmployeeRepository(AppDbContext db) : IEmployeeReader
             .Take(take)
             .ToListAsync(ct);
 
-        return (employees, totalEmployees);
+        return (employees, totalCount);
     }
 }

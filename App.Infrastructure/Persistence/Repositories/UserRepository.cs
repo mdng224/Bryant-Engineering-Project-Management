@@ -51,9 +51,9 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
             query = query.Where(u => EF.Functions.ILike(u.Email, pattern));
         }
 
-        var totalUsers = await query.CountAsync(ct);
-        if (totalUsers == 0 || skip >= totalUsers)
-            return ([], totalUsers);
+        var totalCount = await query.CountAsync(ct);
+        if (totalCount == 0 || skip >= totalCount)
+            return ([], totalCount);
 
         var users = await query
             .OrderBy(u => u.Email)
@@ -62,7 +62,7 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
             .Take(take)
             .ToListAsync(ct);
 
-        return (users, totalUsers);
+        return (users, totalCount);
     }
 
     // --- Writers --------------------------------------------------------

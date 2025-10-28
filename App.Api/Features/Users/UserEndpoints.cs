@@ -11,7 +11,7 @@ public static class UserEndpoints
             .WithTags("users")
             .RequireAuthorization("AdminOnly");
 
-        // GET /users/users?page=&pageSize=
+        // GET /users?page=&pageSize=
         users.MapGet("/", GetUsers.Handle)
             .WithSummary("List users (paginated)")
             .Produces<GetUsersResponse>()

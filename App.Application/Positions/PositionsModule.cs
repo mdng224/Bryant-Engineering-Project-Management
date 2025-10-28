@@ -10,7 +10,7 @@ public static class PositionsModule
     public static IServiceCollection AddPositionsApplication(this IServiceCollection services)
     {
         // Queries
-        services.AddScoped<IQueryHandler<GetAllPositionsQuery, Result<GetAllPositionsResult>>, GetAllPositionsHandler>();
+        services.AddScoped<IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>>, GetPositionsHandler>();
 
         // Commands
 

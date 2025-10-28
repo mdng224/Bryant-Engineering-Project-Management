@@ -10,6 +10,7 @@ public static class EmployeeEndpoints
         var employees = app.MapGroup("/employees")
             .WithTags("Employees");
 
+        // GET /employees?page=&pageSize=
         employees.MapGet("/", GetEmployees.Handle)
             .WithSummary("List all employees (paginated)")
             .Produces<GetEmployeesResponse>();

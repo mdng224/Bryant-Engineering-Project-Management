@@ -6,6 +6,7 @@ namespace App.Application.Common.Mappers;
 
 public static class UserMapper
 {
+    public static IEnumerable<UserDto> ToDto(this IEnumerable<User> users) => users.Select(ToDto);
     private static UserDto ToDto(this User user) =>
         new(
             Id: user.Id,
@@ -17,5 +18,4 @@ public static class UserMapper
             DeletedAtUtc: user.DeletedAtUtc
         );
 
-    public static IEnumerable<UserDto> ToDto(this IEnumerable<User> users) => users.Select(ToDto);
 }

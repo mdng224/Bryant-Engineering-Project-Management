@@ -8,6 +8,8 @@ using App.Application.Positions.Queries;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Moq;
+// IMPORTANT: allow R.Ok / R.Fail
+using static App.Application.Common.R;
 
 namespace App.Tests.Application.Employees.Queries;
 
@@ -49,7 +51,6 @@ public class GetEmployeesHandlerTests
             )
         };
 
-        // Fix: include TotalPages parameter
         var totalCount = employeesDtos.Count;
         const int pageSize = 10;
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -62,23 +63,31 @@ public class GetEmployeesHandlerTests
             TotalPages: totalPages
         );
 
-        var mockEmployeesHandler = new Mock<IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>>>();
+        var mockEmployeesHandler =
+            new Mock<IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>>>();
+
         mockEmployeesHandler
             .Setup(h => h.Handle(It.IsAny<GetEmployeesQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(R.Ok(employeesResult));
+            .ReturnsAsync(Ok(employeesResult));
 
-        var positionsResult = new GetAllPositionsResult(
+        var positionsResult = new GetPositionsResult(
             Positions: new List<PositionDto>
             {
                 new(PosA, "Engineer", "ENG", false),
                 new(PosB, "Manager", "MGR", false)
-            }
+            },
+            TotalCount: 2,
+            Page: 1,
+            PageSize: 200,   // whatever your repo caps at (e.g., MaxPageSize)
+            TotalPages: 1
         );
 
-        var mockPositionsHandler = new Mock<IQueryHandler<GetAllPositionsQuery, Result<GetAllPositionsResult>>>();
+        var mockPositionsHandler =
+            new Mock<IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>>>();
+
         mockPositionsHandler
-            .Setup(h => h.Handle(It.IsAny<GetAllPositionsQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(R.Ok(positionsResult));
+            .Setup(h => h.Handle(It.IsAny<GetPositionsQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Ok(positionsResult));
 
         // Act
         var result = await GetEmployees.Handle(
@@ -91,14 +100,23 @@ public class GetEmployeesHandlerTests
         result.Should().BeOfType<Ok<GetEmployeesResponse>>();
         var ok = result.As<Ok<GetEmployeesResponse>>();
         ok.Value.Should().NotBeNull();
-        ok.Value!.Employees.Should().ContainSingle();
+
+        ok.Value!.Employees.Should().HaveCount(1);
         ok.Value!.TotalCount.Should().Be(1);
         ok.Value!.Page.Should().Be(1);
         ok.Value!.PageSize.Should().Be(10);
         ok.Value!.TotalPages.Should().Be(totalPages);
 
         var employee = ok.Value!.Employees[0];
-        employee.Details.PositionNames.Should().Contain(["Engineer", "Manager"]);
+
+        // Order-insensitive and avoids C# 12 collection expressions
+        employee.Details.PositionNames
+            .Should()
+            .BeEquivalentTo(new[] { "Engineer", "Manager" });
+
+        mockPositionsHandler.Verify(
+            h => h.Handle(It.IsAny<GetPositionsQuery>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -107,12 +125,15 @@ public class GetEmployeesHandlerTests
         // Arrange
         var request = new GetEmployeesRequest(Page: 1, PageSize: 10, Name: "doe");
 
-        var mockEmployeesHandler = new Mock<IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>>>();
+        var mockEmployeesHandler =
+            new Mock<IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>>>();
+
         mockEmployeesHandler
             .Setup(h => h.Handle(It.IsAny<GetEmployeesQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(R.Fail<GetEmployeesResult>("employees_failed", "Employees query failed."));
+            .ReturnsAsync(Fail<GetEmployeesResult>("employees_failed", "Employees query failed."));
 
-        var mockPositionsHandler = new Mock<IQueryHandler<GetAllPositionsQuery, Result<GetAllPositionsResult>>>();
+        var mockPositionsHandler =
+            new Mock<IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>>>();
 
         // Act
         var result = await GetEmployees.Handle(
@@ -123,8 +144,9 @@ public class GetEmployeesHandlerTests
 
         // Assert
         result.Should().BeOfType<ProblemHttpResult>();
+
         mockPositionsHandler.Verify(
-            h => h.Handle(It.IsAny<GetAllPositionsQuery>(), It.IsAny<CancellationToken>()),
+            h => h.Handle(It.IsAny<GetPositionsQuery>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -142,15 +164,19 @@ public class GetEmployeesHandlerTests
             TotalPages: 0
         );
 
-        var mockEmployeesHandler = new Mock<IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>>>();
+        var mockEmployeesHandler =
+            new Mock<IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>>>();
+
         mockEmployeesHandler
             .Setup(h => h.Handle(It.IsAny<GetEmployeesQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(R.Ok(employeesResult));
+            .ReturnsAsync(Ok(employeesResult));
 
-        var mockPositionsHandler = new Mock<IQueryHandler<GetAllPositionsQuery, Result<GetAllPositionsResult>>>();
+        var mockPositionsHandler =
+            new Mock<IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>>>();
+
         mockPositionsHandler
-            .Setup(h => h.Handle(It.IsAny<GetAllPositionsQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(R.Fail<GetAllPositionsResult>("positions_failed", "Positions query failed."));
+            .Setup(h => h.Handle(It.IsAny<GetPositionsQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Fail<GetPositionsResult>("positions_failed", "Positions query failed."));
 
         // Act
         var result = await GetEmployees.Handle(

@@ -13,19 +13,19 @@ public static class GetEmployees
     public static async Task<IResult> Handle(
         [AsParameters] GetEmployeesRequest request,
         IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>> getEmployeesHandler,
-        IQueryHandler<GetAllPositionsQuery, Result<GetAllPositionsResult>> getAllPositionsHandler,
+        IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>> getPositionsHandler,
         CancellationToken ct = default)
     {
         var getEmployeesQuery = request.ToQuery();
         
         var employeesResult  = await getEmployeesHandler.Handle(getEmployeesQuery, ct);
         if (!employeesResult.IsSuccess)
-            return Problem(employeesResult.Error!.Value.Message ?? "Unexpected error.");
+            return Problem(employeesResult.Error!.Value.Message);
         
 
-        var positionsResult = await getAllPositionsHandler.Handle(new GetAllPositionsQuery(), ct);
+        var positionsResult = await getPositionsHandler.Handle(new GetPositionsQuery(1,  int.MaxValue), ct);
         if (!positionsResult.IsSuccess)
-            return Problem(positionsResult.Error!.Value.Message ?? "Unexpected error.");
+            return Problem(positionsResult.Error!.Value.Message);
         
         var positionLookup = positionsResult.Value!.Positions
             .ToDictionary(p => p.Id, p => p.Name);

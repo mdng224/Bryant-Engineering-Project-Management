@@ -24,6 +24,11 @@
           Users
         </RouterLink>
 
+        <RouterLink to="/positions" :class="navLink" class="flex items-center gap-2">
+          <BadgeCheck class="h-4 w-4 text-indigo-400" />
+          Positions
+        </RouterLink>
+
         <RouterLink to="/employees" :class="navLink" class="flex items-center gap-2">
           <BadgeCheck class="h-4 w-4 text-indigo-400" />
           Employees

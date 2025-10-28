@@ -22,7 +22,11 @@ const router = createRouter({
 
     // --- Public / root routes ---
     { path: '/', name: 'home', component: HomeView },
-
+    {
+      path: '/positions',
+      name: 'positions',
+      component: () => import('../views/PositionsView.vue'),
+    },
     // --- Protected routes ---
     { path: '/clients', name: 'clients', component: () => import('../views/ClientsView.vue') },
     {

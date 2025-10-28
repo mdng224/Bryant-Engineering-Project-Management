@@ -1,0 +1,101 @@
+﻿using App.Application.Abstractions;
+using App.Application.Positions.Queries;
+using App.Domain.Employees;
+using FluentAssertions;
+using Moq;
+
+namespace App.Tests.Application.Positions.Queries;
+
+public class GetPositionsHandlerTests
+{
+    [Fact]
+    public async Task Handle_Should_Return_Ok_With_Paged_Result_When_Positions_Exist()
+    {
+        // Arrange
+        // Query asks for page 2 with pageSize 1 -> skip should be 1, take 1
+        var query = new GetPositionsQuery(Page: 2, PageSize: 1);
+
+        var pageItems = new List<Position>
+        {
+            new("Manager", "MGR", true)
+        };
+
+        var mockReader = new Mock<IPositionReader>();
+        mockReader
+            .Setup(r => r.GetPagedAsync(
+                It.Is<int>(skip => skip == 1),
+                It.Is<int>(take => take == 1),
+                It.IsAny<CancellationToken>()))
+            // total = 2 to yield TotalPages = 2 with pageSize 1
+            .ReturnsAsync((pageItems, totalCount: 2));
+
+        var handler = new GetPositionsHandler(mockReader.Object);
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+
+        var value = result.Value!;
+        value.Positions.Should().HaveCount(1);
+        value.Positions[0].Name.Should().Be("Manager");
+        value.TotalCount.Should().Be(2);
+        value.Page.Should().Be(2);
+        value.PageSize.Should().Be(1);
+        value.TotalPages.Should().Be(2); // ceil(2 / 1)
+
+        value.Positions.Should().AllSatisfy(dto =>
+        {
+            dto.Id.Should().NotBeEmpty();
+            dto.Name.Should().NotBeNullOrWhiteSpace();
+            dto.Code.Should().NotBeNullOrWhiteSpace();
+        });
+
+        mockReader.Verify(
+            r => r.GetPagedAsync(
+                It.Is<int>(s => s == 1),
+                It.Is<int>(t => t == 1),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_Should_Return_Ok_With_Empty_Payload_When_No_Positions()
+    {
+        // Arrange
+        var query = new GetPositionsQuery(Page: 1, PageSize: 10);
+
+        var mockReader = new Mock<IPositionReader>();
+        mockReader
+            .Setup(r => r.GetPagedAsync(
+                It.Is<int>(skip => skip == 0),
+                It.Is<int>(take => take == 10),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Position>(), totalCount: 0));
+
+        var handler = new GetPositionsHandler(mockReader.Object);
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+
+        var value = result.Value!;
+        value.Positions.Should().BeEmpty();
+        value.TotalCount.Should().Be(0);
+        value.Page.Should().Be(1);
+        value.PageSize.Should().Be(10);
+        value.TotalPages.Should().Be(0); // matches handler logic for total == 0
+
+        mockReader.Verify(
+            r => r.GetPagedAsync(
+                It.Is<int>(s => s == 0),
+                It.Is<int>(t => t == 10),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+}

@@ -1,5 +1,6 @@
 ﻿using App.Api.Features.Auth;
 using App.Api.Features.Employees;
+using App.Api.Features.Positions;
 using App.Api.Features.Users;
 using App.Infrastructure.Persistence;
 using App.Infrastructure.Persistence.Seed;
@@ -43,9 +44,10 @@ public static class WebApplicationExtensions
 
         // feature endpoints
         app.MapDefaultEndpoints();
-        app.MapEmployeeEndpoints();
-        app.MapUserEndpoints();
         app.MapAuthEndpoints();
+        app.MapEmployeeEndpoints();
+        app.MapPositionEndpoints();
+        app.MapUserEndpoints();
         app.MapVerificationEndpoints();
         
         return app;

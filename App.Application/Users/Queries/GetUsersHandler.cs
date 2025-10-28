@@ -16,11 +16,11 @@ public sealed class GetUsersHandler(IUserReader reader)
         
         var (users, total) = await reader.GetPagedAsync(skip, pageSize, normalizedEmail, ct);
 
-        var items = users.ToDto().ToList();
+        var userDtos = users.ToDto().ToList();
         var totalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize);
 
-        var getUsersResult = new GetUsersResult(items, total, page, pageSize, totalPages);
+        var result = new GetUsersResult(userDtos, total, page, pageSize, totalPages);
 
-        return Ok(getUsersResult);
+        return Ok(result);
     }
 }
