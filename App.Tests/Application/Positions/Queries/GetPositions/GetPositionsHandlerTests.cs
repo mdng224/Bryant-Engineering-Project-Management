@@ -1,5 +1,6 @@
 ﻿using App.Application.Abstractions;
 using App.Application.Positions.Queries;
+using App.Application.Positions.Queries.GetPositions;
 using App.Domain.Employees;
 using FluentAssertions;
 using Moq;

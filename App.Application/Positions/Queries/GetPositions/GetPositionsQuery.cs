@@ -1,3 +1,3 @@
-﻿namespace App.Application.Positions.Queries;
+﻿namespace App.Application.Positions.Queries.GetPositions;
 
 public sealed record GetPositionsQuery(int Page, int PageSize);

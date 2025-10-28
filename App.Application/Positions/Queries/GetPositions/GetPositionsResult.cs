@@ -1,6 +1,6 @@
 ﻿using App.Application.Common.Dtos;
 
-namespace App.Application.Positions.Queries;
+namespace App.Application.Positions.Queries.GetPositions;
 
 public sealed record GetPositionsResult(
     IReadOnlyList<PositionDto> Positions,

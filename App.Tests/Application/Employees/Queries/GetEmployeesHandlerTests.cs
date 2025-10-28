@@ -5,6 +5,7 @@ using App.Application.Common;
 using App.Application.Common.Dtos;
 using App.Application.Employees.Queries;
 using App.Application.Positions.Queries;
+using App.Application.Positions.Queries.GetPositions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Moq;

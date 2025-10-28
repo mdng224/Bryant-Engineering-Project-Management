@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IEmployeeReader, EmployeeRepository>();
         services.AddScoped<IOutboxWriter, OutboxRepository>();
         services.AddScoped<IPositionReader, PositionRepository>();
+        services.AddScoped<IPositionWriter, PositionRepository>();
 
         // --- Auth helpers (hashing + token creation) ---
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();

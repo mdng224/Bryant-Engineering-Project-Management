@@ -4,11 +4,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Infrastructure.Persistence.Repositories;
 
-public class PositionRepository(AppDbContext db) : IPositionReader
+public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWriter
 {
     private const int MaxPageSize = 200;
     
-    // --- Readers --------------------------------------------------------
+    // -------------------- Readers --------------------
+    public async Task<IReadOnlyList<Position>> GetAllAsync(CancellationToken ct = default)
+    {
+        // Stable, no-tracking read for listing and mapping
+        var positions = await db.Positions
+            .AsNoTracking()
+            .OrderBy(p => p.Name)
+            .ToListAsync(ct);
+
+        return positions;
+    }
+    
     public async Task<(IReadOnlyList<Position> positions, int totalCount)> GetPagedAsync(
         int skip,
         int take,
@@ -31,4 +42,11 @@ public class PositionRepository(AppDbContext db) : IPositionReader
         
         return (positions, totalCount: totalCount);
     }
+    
+    // -------------------- Writers --------------------
+    public async Task AddAsync(Position position, CancellationToken ct = default)
+        => await db.Positions.AddAsync(position, ct);
+
+    public Task<int> SaveChangesAsync(CancellationToken ct = default)
+        => db.SaveChangesAsync(ct);
 }

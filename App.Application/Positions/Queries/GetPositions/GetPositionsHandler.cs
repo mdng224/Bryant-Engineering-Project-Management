@@ -3,7 +3,7 @@ using App.Application.Common;
 using App.Application.Common.Mappers;
 using static App.Application.Common.R;
 
-namespace App.Application.Positions.Queries;
+namespace App.Application.Positions.Queries.GetPositions;
 
 public sealed class GetPositionsHandler(IPositionReader reader)
     : IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>>

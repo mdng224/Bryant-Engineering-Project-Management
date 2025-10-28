@@ -4,6 +4,7 @@ using App.Application.Abstractions;
 using App.Application.Common;
 using App.Application.Employees.Queries;
 using App.Application.Positions.Queries;
+using App.Application.Positions.Queries.GetPositions;
 using static Microsoft.AspNetCore.Http.Results;
 
 namespace App.Api.Features.Employees;
@@ -22,7 +23,6 @@ public static class GetEmployees
         if (!employeesResult.IsSuccess)
             return Problem(employeesResult.Error!.Value.Message);
         
-
         var positionsResult = await getPositionsHandler.Handle(new GetPositionsQuery(1,  int.MaxValue), ct);
         if (!positionsResult.IsSuccess)
             return Problem(positionsResult.Error!.Value.Message);
