@@ -39,11 +39,11 @@
           </button>
 
           <button
-            :class="actionButtonClass"
+            class="rounded-md bg-indigo-600 p-1.5 transition hover:bg-rose-200"
             aria-label="delete position"
             @click="handleOpenDeleteDialog(cell.row.original as PositionResponse)"
           >
-            <Trash2 class="h-4 w-4" />
+            <Trash2 class="h-4 w-4 text-rose-500 hover:text-rose-400" />
           </button>
         </template>
       </template>
@@ -67,6 +67,7 @@
     title="Delete position"
     message="This action cannot be undone. This will permanently delete the selected position."
     @confirm="handleDeletePosition"
+    @close="deleteDialogIsOpen = false"
   />
   <!--
   <EditPositionDialog

@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-  import { nextTick, onMounted, ref, watch } from 'vue';
+  import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
   type Props = {
     open: boolean;
@@ -104,7 +104,6 @@
     v => {
       if (v) focusDefault();
     },
-    { immediate: true },
   );
 
   function onBackdropClick(e: MouseEvent) {
@@ -120,5 +119,9 @@
 
   onMounted(() => {
     window.addEventListener('keydown', onEsc);
+  });
+
+  onUnmounted(() => {
+    window.removeEventListener('keydown', onEsc);
   });
 </script>
