@@ -1,4 +1,5 @@
 ﻿using App.Application.Abstractions;
+using App.Application.Abstractions.Messaging;
 using App.Domain.Common;
 
 namespace App.Infrastructure.Persistence.Repositories;

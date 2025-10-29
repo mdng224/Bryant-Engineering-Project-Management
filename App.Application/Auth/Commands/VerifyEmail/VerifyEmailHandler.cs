@@ -1,6 +1,8 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using App.Application.Abstractions;
+using App.Application.Abstractions.Handlers;
+using App.Application.Abstractions.Persistence;
 using App.Application.Common;
 using App.Domain.Auth;
 using App.Domain.Common;

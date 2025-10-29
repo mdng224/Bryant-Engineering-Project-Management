@@ -1,5 +1,6 @@
 ﻿// App.Application/Auth/AuthModule.cs
 using App.Application.Abstractions;
+using App.Application.Abstractions.Handlers;
 using App.Application.Auth.Commands.Register;
 using App.Application.Auth.Commands.VerifyEmail;
 using App.Application.Auth.Queries.Login;

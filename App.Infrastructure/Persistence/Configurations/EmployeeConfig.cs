@@ -1,6 +1,5 @@
 ﻿using App.Domain.Employees;
 using App.Domain.Users;
-using App.Infrastructure.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

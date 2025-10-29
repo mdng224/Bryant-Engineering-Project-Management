@@ -1,4 +1,7 @@
 ﻿using App.Application.Abstractions;
+using App.Application.Abstractions.Messaging;
+using App.Application.Abstractions.Persistence;
+using App.Application.Abstractions.Security;
 using App.Application.Auth.Commands.Register;
 using App.Domain.Security;
 using App.Domain.Users;

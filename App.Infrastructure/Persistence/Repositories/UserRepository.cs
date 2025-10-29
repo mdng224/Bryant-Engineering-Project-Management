@@ -1,4 +1,5 @@
 ﻿using App.Application.Abstractions;
+using App.Application.Abstractions.Persistence;
 using App.Domain.Security;
 using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;

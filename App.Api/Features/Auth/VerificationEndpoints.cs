@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using App.Application.Abstractions;
+using App.Application.Abstractions.Handlers;
 using App.Application.Auth.Commands.VerifyEmail;
 using App.Application.Common;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,7 @@ public static class VerificationEndpoints
             .WithOpenApi();
 
         // GET /auth/verify?token=...
-        verify.MapGet("/", HandleVerificationAsync)
+        verify.MapGet("", HandleVerificationAsync)
             .WithSummary("Verify email")
             .WithDescription("Consumes a one-time token and activates the user.")
             .Produces(302) // Redirect to frontend result page

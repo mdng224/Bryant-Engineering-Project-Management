@@ -1,5 +1,11 @@
-﻿using System.Reflection.Metadata;
-using App.Api.Contracts.Employees;
+﻿using App.Api.Contracts.Employees;
+using App.Api.Features.Employees.Mappers;
+using App.Application.Abstractions;
+using App.Application.Abstractions.Handlers;
+using App.Application.Common;
+using App.Application.Employees.Queries;
+using App.Application.Positions.Queries.GetPositions;
+using static Microsoft.AspNetCore.Http.Results;
 
 namespace App.Api.Features.Employees;
 
@@ -11,8 +17,34 @@ public static class EmployeeEndpoints
             .WithTags("Employees");
 
         // GET /employees?page=&pageSize=
-        employees.MapGet("/", GetEmployees.Handle)
+        employees.MapGet("", HandleGetEmployees)
             .WithSummary("List all employees (paginated)")
             .Produces<GetEmployeesResponse>();
+    }
+    
+    private static async Task<IResult> HandleGetEmployees(
+        [AsParameters] GetEmployeesRequest request,
+        IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>> getEmployeesHandler,
+        IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>> getPositionsHandler,
+        CancellationToken ct = default)
+    {
+        // 1) Employees
+        var getEmployeesQuery = request.ToQuery();
+        var employeesResult  = await getEmployeesHandler.Handle(getEmployeesQuery, ct);
+        if (!employeesResult.IsSuccess)
+            return Problem(employeesResult.Error!.Value.Message);
+        
+        // 2) Positions lookup (prefer a dedicated lookup query or cap the size)
+        // TODO: Make a dedicated position lookup without pagination
+        var positionsResult = await getPositionsHandler.Handle(new GetPositionsQuery(1,  int.MaxValue), ct);
+        if (!positionsResult.IsSuccess)
+            return Problem(positionsResult.Error!.Value.Message);
+        
+        var positionLookup = positionsResult.Value!.Positions
+            .ToDictionary(p => p.Id, p => p.Name);
+        
+        // 3) Map to response
+        var response = employeesResult.Value!.ToGetEmployeesResponse(positionLookup);
+        return Ok(response);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using App.Application.Abstractions;
+using App.Application.Abstractions.Security;
 using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace App.Infrastructure.Auth;

@@ -6,15 +6,12 @@ public sealed class AddPositionRequestValidator : AbstractValidator<AddPositionR
 {
     public AddPositionRequestValidator()
     {
-        RuleFor(x => x.Name)
+        RuleFor(apr => apr.Name)
             .NotEmpty().WithMessage("Name is required.")
-            .MaximumLength(100).WithMessage("Name must not exceed 100 characters.");
+            .MaximumLength(128).WithMessage("Name must not exceed 128 characters.");
 
-        RuleFor(x => x.Code)
+        RuleFor(apr => apr.Code)
             .NotEmpty().WithMessage("Code is required.")
-            .MaximumLength(20).WithMessage("Code must not exceed 20 characters.");
-
-        RuleFor(x => x.RequiresLicense)
-            .NotNull().WithMessage("RequiresLicense must be specified.");
+            .MaximumLength(16).WithMessage("Code must not exceed 16 characters.");
     }
 }

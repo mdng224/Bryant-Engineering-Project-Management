@@ -1,5 +1,18 @@
 // src/api/positions/contracts.ts
 
+// Shared base for all position shapes
+type PositionBase = {
+  name: string;
+  code: string;
+  requiresLicense: boolean;
+};
+
+export type AddPositionRequest = PositionBase;
+
+export type AddPositionResponse = PositionBase & {
+  id: string;
+};
+
 export type GetPositionsRequest = {
   page: number;
   pageSize: number;
@@ -13,9 +26,8 @@ export type GetPositionsResponse = {
   totalPages: number;
 };
 
-export type PositionResponse = {
+// Response for each individual position (used in table)
+export type PositionResponse = PositionBase & {
   id: string;
-  name: string;
-  code: string | null;
-  requiresLicense: boolean;
+  code: string | null; // nullable in existing records
 };

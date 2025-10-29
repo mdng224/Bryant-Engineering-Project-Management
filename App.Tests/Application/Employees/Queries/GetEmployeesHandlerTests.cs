@@ -1,192 +1,90 @@
-﻿using App.Api.Contracts.Employees;
-using App.Api.Features.Employees;
-using App.Application.Abstractions;
-using App.Application.Common;
-using App.Application.Common.Dtos;
+﻿using App.Application.Abstractions.Persistence;
 using App.Application.Employees.Queries;
-using App.Application.Positions.Queries;
-using App.Application.Positions.Queries.GetPositions;
 using FluentAssertions;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Moq;
-// IMPORTANT: allow R.Ok / R.Fail
-using static App.Application.Common.R;
 
 namespace App.Tests.Application.Employees.Queries;
 
-public class GetEmployeesHandlerTests
+ public class GetEmployeesHandlerTests
 {
-    private static readonly Guid PosA = Guid.NewGuid();
-    private static readonly Guid PosB = Guid.NewGuid();
-
     [Fact]
-    public async Task Handle_Should_Return_Ok_When_Both_Queries_Succeed()
+    public async Task Handle_Should_Return_Ok_With_EmptyEmployees_And_ZeroTotals()
     {
         // Arrange
-        var request = new GetEmployeesRequest(Page: 1, PageSize: 10, Name: "doe");
+        var mockReader = new Mock<IEmployeeReader>();
 
-        var employeesDtos = new List<EmployeeDto>
-        {
-            new(
-                Id: Guid.NewGuid(),
-                UserId: null,
-                FirstName: "John",
-                LastName: "Doe",
-                PreferredName: "Johnny",
-                EmploymentType: "FullTime",
-                SalaryType: "Salary",
-                HireDate: DateTimeOffset.UtcNow.AddYears(-1),
-                EndDate: null,
-                Department: "Engineering",
-                PositionIds: new List<Guid> { PosA, PosB },
-                CompanyEmail: "john.doe@corp.com",
-                WorkLocation: "HQ",
-                LicenseNotes: null,
-                Notes: null,
-                RecommendedRoleId: null,
-                IsPreapproved: false,
-                CreatedAtUtc: DateTimeOffset.UtcNow.AddYears(-1),
-                UpdatedAtUtc: DateTimeOffset.UtcNow,
-                DeletedAtUtc: null,
-                IsActive: true
-            )
-        };
+        // Return an empty list with 0 total
+        mockReader
+            .Setup(r => r.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(([], 0));
 
-        var totalCount = employeesDtos.Count;
-        const int pageSize = 10;
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        var handler = new GetEmployeesHandler(mockReader.Object);
 
-        var employeesResult = new GetEmployeesResult(
-            EmployeesDtos: employeesDtos,
-            TotalCount: totalCount,
-            Page: 1,
-            PageSize: pageSize,
-            TotalPages: totalPages
-        );
-
-        var mockEmployeesHandler =
-            new Mock<IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>>>();
-
-        mockEmployeesHandler
-            .Setup(h => h.Handle(It.IsAny<GetEmployeesQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Ok(employeesResult));
-
-        var positionsResult = new GetPositionsResult(
-            Positions: new List<PositionDto>
-            {
-                new(PosA, "Engineer", "ENG", false),
-                new(PosB, "Manager", "MGR", false)
-            },
-            TotalCount: 2,
-            Page: 1,
-            PageSize: 200,   // whatever your repo caps at (e.g., MaxPageSize)
-            TotalPages: 1
-        );
-
-        var mockPositionsHandler =
-            new Mock<IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>>>();
-
-        mockPositionsHandler
-            .Setup(h => h.Handle(It.IsAny<GetPositionsQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Ok(positionsResult));
+        var query = new GetEmployeesQuery(Page: 1, PageSize: 10, Name: null);
 
         // Act
-        var result = await GetEmployees.Handle(
-            request,
-            mockEmployeesHandler.Object,
-            mockPositionsHandler.Object,
-            CancellationToken.None);
+        var result = await handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().BeOfType<Ok<GetEmployeesResponse>>();
-        var ok = result.As<Ok<GetEmployeesResponse>>();
-        ok.Value.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
 
-        ok.Value!.Employees.Should().HaveCount(1);
-        ok.Value!.TotalCount.Should().Be(1);
-        ok.Value!.Page.Should().Be(1);
-        ok.Value!.PageSize.Should().Be(10);
-        ok.Value!.TotalPages.Should().Be(totalPages);
+        var payload = result.Value;
+        payload.Should().NotBeNull();
 
-        var employee = ok.Value!.Employees[0];
-
-        // Order-insensitive and avoids C# 12 collection expressions
-        employee.Details.PositionNames
-            .Should()
-            .BeEquivalentTo(new[] { "Engineer", "Manager" });
-
-        mockPositionsHandler.Verify(
-            h => h.Handle(It.IsAny<GetPositionsQuery>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        payload.EmployeesDtos.Should().BeEmpty();
+        payload.TotalCount.Should().Be(0);
+        payload.Page.Should().Be(1);
+        payload.PageSize.Should().Be(10);
+        payload.TotalPages.Should().Be(0);
     }
 
     [Fact]
-    public async Task Handle_Should_Return_Problem_When_Employees_Query_Fails()
+    public async Task Handle_Should_Compute_TotalPages_Correctly()
     {
         // Arrange
-        var request = new GetEmployeesRequest(Page: 1, PageSize: 10, Name: "doe");
+        var mockReader = new Mock<IEmployeeReader>();
 
-        var mockEmployeesHandler =
-            new Mock<IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>>>();
+        // total = 25 with empty current page list; pageSize=10 -> totalPages=3
+        mockReader
+            .Setup(r => r.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(([], 25));
 
-        mockEmployeesHandler
-            .Setup(h => h.Handle(It.IsAny<GetEmployeesQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Fail<GetEmployeesResult>("employees_failed", "Employees query failed."));
+        var handler = new GetEmployeesHandler(mockReader.Object);
 
-        var mockPositionsHandler =
-            new Mock<IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>>>();
+        var query = new GetEmployeesQuery(Page: 2, PageSize: 10, Name: null);
 
         // Act
-        var result = await GetEmployees.Handle(
-            request,
-            mockEmployeesHandler.Object,
-            mockPositionsHandler.Object,
-            CancellationToken.None);
+        var result = await handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().BeOfType<ProblemHttpResult>();
+        result.IsSuccess.Should().BeTrue();
 
-        mockPositionsHandler.Verify(
-            h => h.Handle(It.IsAny<GetPositionsQuery>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        var payload = result.Value!;
+        payload.TotalCount.Should().Be(25);
+        payload.Page.Should().Be(2);
+        payload.PageSize.Should().Be(10);
+        payload.TotalPages.Should().Be(3); // 25 / 10 => 3 pages
     }
 
     [Fact]
-    public async Task Handle_Should_Return_Problem_When_Positions_Query_Fails()
+    public async Task Handle_Should_Bubble_Repository_Exception()
     {
         // Arrange
-        var request = new GetEmployeesRequest(Page: 1, PageSize: 10, Name: "doe");
+        var mockReader = new Mock<IEmployeeReader>();
 
-        var employeesResult = new GetEmployeesResult(
-            EmployeesDtos: new List<EmployeeDto>(),
-            TotalCount: 0,
-            Page: 1,
-            PageSize: 10,
-            TotalPages: 0
-        );
+        mockReader
+            .Setup(r => r.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("boom"));
 
-        var mockEmployeesHandler =
-            new Mock<IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>>>();
+        var handler = new GetEmployeesHandler(mockReader.Object);
 
-        mockEmployeesHandler
-            .Setup(h => h.Handle(It.IsAny<GetEmployeesQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Ok(employeesResult));
-
-        var mockPositionsHandler =
-            new Mock<IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>>>();
-
-        mockPositionsHandler
-            .Setup(h => h.Handle(It.IsAny<GetPositionsQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Fail<GetPositionsResult>("positions_failed", "Positions query failed."));
+        var query = new GetEmployeesQuery(Page: 1, PageSize: 10, Name: "doe");
 
         // Act
-        var result = await GetEmployees.Handle(
-            request,
-            mockEmployeesHandler.Object,
-            mockPositionsHandler.Object,
-            CancellationToken.None);
+        Func<Task> act = async () => await handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().BeOfType<ProblemHttpResult>();
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*boom*");
     }
 }

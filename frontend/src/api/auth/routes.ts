@@ -3,5 +3,5 @@
 export const AuthRoutes = {
   login: '/auth/login',
   me: '/auth/me',
-  register: `/users/register`,
+  register: `/auth/register`,
 } as const;

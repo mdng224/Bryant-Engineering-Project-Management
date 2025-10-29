@@ -1,6 +1,7 @@
 ﻿using App.Application.Common.Dtos;
+using App.Application.Positions.Commands.AddPosition;
+using App.Application.Positions.Commands.UpdatePosition;
 using App.Application.Positions.Queries;
-using App.Application.Positions.Queries.AddPosition;
 using App.Domain.Employees;
 
 namespace App.Application.Common.Mappers;
@@ -15,7 +16,7 @@ public static class PositionMapper
     public static IEnumerable<PositionDto> ToDto(this IEnumerable<Position> positions) =>
         positions.Select(ToDto);
 
-    public static AddPositionResult ToResult(this Position position) =>
+    public static PositionResult ToResult(this Position position) =>
         new(Id: position.Id,
             Name: position.Name,
             Code: position.Code ?? string.Empty,

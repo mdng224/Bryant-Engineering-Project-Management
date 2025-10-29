@@ -1,4 +1,5 @@
 ﻿using App.Application.Abstractions;
+using App.Application.Abstractions.Persistence;
 using App.Application.Positions.Queries;
 using App.Application.Positions.Queries.GetPositions;
 using App.Domain.Employees;

@@ -1,4 +1,14 @@
 <template>
+  <div class="flex items-center justify-between pb-4">
+    <h2 class="text-xl font-semibold text-slate-100">Positions</h2>
+    <button
+      class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
+      @click="addDialogIsOpen = true"
+    >
+      <span class="text-white">+ Add Position</span>
+    </button>
+  </div>
+
   <DataTable
     :table="table as unknown as import('@tanstack/vue-table').Table<unknown>"
     :loading
@@ -22,6 +32,15 @@
 
   <TableFooter :table :total-count :total-pages :pagination :set-page-size />
 
+  <AddPositionDialog
+    :open="addDialogIsOpen"
+    @close="addDialogIsOpen = false"
+    @saved="
+      addDialogIsOpen = false;
+      refetch();
+    "
+  />
+
   <!--
   <EditPositionDialog
     :open="editUserDialogIsOpen"
@@ -39,6 +58,7 @@
     PositionResponse,
   } from '@/api/positions/contracts';
   import { positionService } from '@/api/positions/services';
+  import AddPositionDialog from '@/components/dialogs/AddPositionDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
@@ -46,6 +66,8 @@
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { Pencil } from 'lucide-vue-next';
   import { ref } from 'vue';
+
+  const addDialogIsOpen = ref(false);
 
   /* -------------------------------- Columns ------------------------------- */
   const col: ColumnHelper<PositionResponse> = createColumnHelper<PositionResponse>();
@@ -75,7 +97,6 @@
   const fetchUsers = async ({ page, pageSize }: { page: number; pageSize: number }) => {
     const params: GetPositionsRequest = { page, pageSize };
     const response: GetPositionsResponse = await positionService.get(params);
-    console.log(response.positions);
 
     return {
       items: response.positions,

@@ -1,6 +1,7 @@
 ﻿// App.Application/Users/UsersModule.cs
 
 using App.Application.Abstractions;
+using App.Application.Abstractions.Handlers;
 using App.Application.Common;
 using App.Application.Users.Commands.UpdateUser;
 using App.Application.Users.Queries;

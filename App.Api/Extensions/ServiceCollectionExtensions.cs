@@ -11,6 +11,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using App.Api.Contracts.Positions;
 using App.Api.Contracts.Users;
 
 namespace App.Api.Extensions;
@@ -23,7 +24,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApi(this IServiceCollection services, IConfiguration cfg)
     {
         // --- CORS (Vite dev) -----------------------------------------------
-        services.AddCors(o => o.AddPolicy(CorsPolicy, p => p
+        services.AddCors(o => o.AddPolicy(CorsPolicy, p =>
+            p.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
             .WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -91,7 +93,8 @@ public static class ServiceCollectionExtensions
         // --- Validators -------------------------------------------------------
         services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
         services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
-        services.AddScoped<IValidator<UpdateUserRequest>, UpdateUserRequestValidator>();
+        services.AddScoped<IValidator<AddPositionRequest>, AddPositionRequestValidator>();
+        services.AddScoped<IValidator<UpdatePositionRequest>, UpdatePositionRequestValidator>();
 
         return services;
     }

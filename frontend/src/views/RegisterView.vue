@@ -152,6 +152,7 @@
         <!-- Error -->
         <p
           v-if="errorMessage"
+          ref="errorEl"
           class="flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
           role="alert"
           aria-live="assertive"
@@ -188,9 +189,8 @@
 <script setup lang="ts">
   import type { RegisterRequest, RegisterResponse } from '@/api/auth';
   import { authService } from '@/api/auth';
-  import type { ApiErrorResponse } from '@/api/error';
+  import { extractApiError } from '@/api/error';
   import { useAuthFields } from '@/composables/useAuthFields';
-  import { isAxiosError } from 'axios';
   import { AlertTriangle, CheckCircle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
   import { computed, nextTick, onMounted, ref } from 'vue';
   import { useRoute } from 'vue-router';
@@ -242,32 +242,23 @@
       const registerResponse: RegisterResponse = await authService.register(payload);
       success.value = registerResponse;
     } catch (err: unknown) {
-      let msg = 'Registration failed. Please try again.';
-      let emailFieldError: string | null = null;
-
-      if (isAxiosError<ApiErrorResponse>(err)) {
-        const data = err.response?.data;
-        const emailErr = data?.errors?.['email'];
-        emailFieldError =
-          typeof emailErr === 'string' ? emailErr : Array.isArray(emailErr) ? emailErr[0] : null;
-
-        msg = emailFieldError ?? data?.detail ?? data?.message ?? err.message ?? msg;
-      } else if (err instanceof Error) {
-        msg = err.message || msg;
-      }
-
+      // Prefer email field error if present; otherwise fall back
+      const msg = extractApiError(err, 'email');
       errorMessage.value = msg;
-      resetForms();
+
+      // Only clear passwords; keep email so user can fix typos or retry
+      await resetForms(false);
     } finally {
       loading.value = false;
     }
   };
 
-  const resetForms = async (): Promise<void> => {
+  const resetForms = async (clearEmail = false): Promise<void> => {
     showPassword.value = false;
     showPassword2.value = false;
     password.value = '';
     password2.value = '';
+    if (clearEmail) email.value = '';
     await nextTick();
 
     if (errorMessage.value) errorEl.value?.focus();

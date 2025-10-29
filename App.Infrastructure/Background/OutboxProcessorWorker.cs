@@ -1,4 +1,6 @@
 ﻿using App.Application.Abstractions;
+using App.Application.Abstractions.Messaging;
+using App.Application.Abstractions.Persistence;
 using App.Domain.Common;
 using App.Domain.Users.Events;
 using App.Infrastructure.Persistence;

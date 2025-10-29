@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using App.Application.Abstractions;
+using App.Application.Abstractions.Persistence;
 using App.Application.Users.Commands.UpdateUser;
 using App.Domain.Security;
 using App.Domain.Users;
