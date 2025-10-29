@@ -5,7 +5,9 @@
       class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
       @click="addDialogIsOpen = true"
     >
-      <span class="text-white">+ Add Position</span>
+      <CirclePlus class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+
+      <span class="text-white">Add Position</span>
     </button>
   </div>
   <p
@@ -53,14 +55,8 @@
 
   <TableFooter :table :total-count :total-pages :pagination :set-page-size />
 
-  <AddPositionDialog
-    :open="addDialogIsOpen"
-    @close="addDialogIsOpen = false"
-    @saved="
-      addDialogIsOpen = false;
-      refetch();
-    "
-  />
+  <!-- Dialogs -->
+  <AddPositionDialog :open="addDialogIsOpen" @close="addDialogIsOpen = false" @saved="refetch" />
 
   <DeleteDialog
     :open="deleteDialogIsOpen"
@@ -69,14 +65,13 @@
     @confirm="handleDeletePosition"
     @close="deleteDialogIsOpen = false"
   />
-  <!--
+
   <EditPositionDialog
     :open="editPositionDialogIsOpen"
     :selected-position
     @close="editPositionDialogIsOpen = false"
-    @saved="refetch"
+    @save="refetch"
   />
-  -->
 </template>
 
 <script setup lang="ts">
@@ -89,12 +84,13 @@
   import { positionService } from '@/api/positions/services';
   import AddPositionDialog from '@/components/dialogs/AddPositionDialog.vue';
   import DeleteDialog from '@/components/dialogs/DeleteDialog.vue';
+  import EditPositionDialog from '@/components/dialogs/EditPositionDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
   import { useDataTable } from '@/composables/useDataTable';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { AlertTriangle, Pencil, Trash2 } from 'lucide-vue-next';
+  import { AlertTriangle, CirclePlus, Pencil, Trash2 } from 'lucide-vue-next';
   import { ref } from 'vue';
 
   const errorMessage = ref<string | null>(null);

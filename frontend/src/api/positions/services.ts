@@ -5,6 +5,7 @@ import type {
   AddPositionResponse,
   GetPositionsRequest,
   GetPositionsResponse,
+  UpdatePositionRequest,
 } from '@/api/positions/contracts';
 import { PositionsRoutes } from '@/api/positions/routes';
 import api from '..';
@@ -26,9 +27,15 @@ const deletePosition = async (id: string): Promise<void> => {
   await api.delete<string>(PositionsRoutes.delete(id));
 };
 
+/* ------------------------------ PATCH (update) ------------------------------ */
+export async function update(id: string, payload: UpdatePositionRequest): Promise<void> {
+  await api.patch(PositionsRoutes.update(id), payload);
+}
+
 /* ----------------------------- Export Service ---------------------------- */
 export const positionService = {
   add,
   deletePosition,
   get,
+  update,
 };

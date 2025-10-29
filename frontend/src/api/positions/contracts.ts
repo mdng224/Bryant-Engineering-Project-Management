@@ -29,5 +29,6 @@ export type GetPositionsResponse = {
 // Response for each individual position (used in table)
 export type PositionResponse = PositionBase & {
   id: string;
-  code: string | null; // nullable in existing records
 };
+
+export type UpdatePositionRequest = PositionBase;

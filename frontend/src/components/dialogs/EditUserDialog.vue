@@ -11,8 +11,17 @@
       aria-modal="true"
       aria-labelledby="editUserTitle"
     >
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Edit Position</h2>
+        <button
+          class="rounded-md px-2 py-1 text-sm text-slate-300 hover:bg-slate-700/70"
+          @click="$emit('close')"
+        >
+          <X class="block h-5 w-5" />
+        </button>
+      </div>
+
       <header class="mb-3">
-        <h3 id="editUserTitle" class="pb-2 text-center text-lg font-semibold">Edit user</h3>
         <span class="truncate text-slate-400">{{ selectedUser?.email }}</span>
       </header>
 
@@ -46,14 +55,13 @@
       </div>
 
       <footer class="mt-6 flex justify-end gap-2 pb-4">
-        <button class="rounded-md border border-slate-700 px-3 py-1.5" @click="$emit('close')">
-          Cancel
-        </button>
         <button
-          class="rounded-md bg-indigo-600 px-3 py-1.5 text-white disabled:opacity-60"
+          class="flex gap-2 rounded-md bg-indigo-600 px-3 py-2 text-white disabled:opacity-60"
           :disabled="saving || isNoop"
           @click="save"
         >
+          <Save class="block h-4 w-4 shrink-0 self-center" />
+
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
       </footer>
@@ -82,7 +90,7 @@
     UserStatus,
   } from '@/api/users/contracts';
   import type { AxiosError } from 'axios';
-  import { AlertTriangle } from 'lucide-vue-next';
+  import { AlertTriangle, Save, X } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
   const roles: RoleName[] = ['Administrator', 'Manager', 'User'];

@@ -13,14 +13,24 @@
         >
           <div class="mb-4 flex items-center justify-between">
             <h2 class="text-lg font-semibold">Add Position</h2>
+            <button
+              class="rounded-md px-2 py-1 text-sm text-slate-300 hover:bg-slate-700/70"
+              @click="$emit('close')"
+            >
+              <X class="block h-5 w-5" />
+            </button>
           </div>
 
-          <!-- Error banner -->
           <p
-            v-if="error"
-            class="mb-3 rounded-md border border-red-600/50 bg-red-900/40 px-3 py-2 text-sm text-red-200"
+            v-if="errorMessage"
+            ref="errorEl"
+            class="flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
+            role="alert"
+            aria-live="assertive"
+            tabindex="-1"
           >
-            {{ error }}
+            <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+            <span>{{ errorMessage }}</span>
           </p>
 
           <form @submit.prevent="submit" class="space-y-4">
@@ -60,18 +70,12 @@
 
             <div class="mt-6 flex justify-end gap-3">
               <button
-                type="button"
-                class="rounded-md bg-slate-700 px-3 py-1.5 text-sm text-white hover:bg-slate-600"
-                @click="$emit('close')"
-              >
-                Cancel
-              </button>
-              <button
                 type="submit"
                 :disabled="submitting"
-                class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                class="flex gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {{ submitting ? 'Saving…' : 'Save' }}
+                <Plus class="block h-4 w-4 shrink-0 self-center" />
+                {{ submitting ? 'Creating...' : 'Create' }}
               </button>
             </div>
           </form>
@@ -84,15 +88,16 @@
 <script setup lang="ts">
   import { extractApiError } from '@/api/error';
   import { positionService } from '@/api/positions/services';
+  import { AlertTriangle, Plus, X } from 'lucide-vue-next';
   import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
   const props = defineProps<{ open: boolean }>();
   const emit = defineEmits<{ (e: 'close'): void; (e: 'saved'): void }>();
 
+  const errorMessage = ref<string | null>(null);
   const form = ref({ name: '', code: '', requiresLicense: false });
   const submitting = ref(false);
   const touched = ref(false);
-  const error = ref<string | null>(null);
 
   /* Escape key */
   const handleKeydown = (e: KeyboardEvent): void => {
@@ -107,7 +112,7 @@
         form.value = { name: '', code: '', requiresLicense: false };
         submitting.value = false;
         touched.value = false;
-        error.value = null;
+        errorMessage.value = null;
         window.addEventListener('keydown', handleKeydown);
       } else {
         window.removeEventListener('keydown', handleKeydown);
@@ -124,10 +129,10 @@
   /* Submit */
   const submit = async () => {
     touched.value = true;
-    error.value = null;
+    errorMessage.value = null;
 
     if (!form.value.name || !form.value.code) {
-      error.value = 'Please fill out Name and Code.';
+      errorMessage.value = 'Please fill out Name and Code.';
       return;
     }
 
@@ -136,7 +141,8 @@
 
     try {
       await positionService.add(form.value); // POST /positions
-      emit('saved'); // parent should close + refetch
+      emit('saved');
+      emit('close');
     } catch (e: unknown) {
       // Prefer field-level errors when available; fall back to ProblemDetails/detail/message
       // Try "name" first, then "code" (your validator uses Name/Code keys server-side -> JSON name/code)
@@ -144,7 +150,7 @@
       if (!msg || msg === 'An unexpected error occurred.') {
         msg = extractApiError(e, 'code');
       }
-      error.value = msg;
+      errorMessage.value = msg;
     } finally {
       submitting.value = false;
     }

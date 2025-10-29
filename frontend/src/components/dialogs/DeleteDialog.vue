@@ -77,6 +77,7 @@
     /** Disable controls & show spinner while deleting */
     loading?: boolean;
   };
+
   const props = withDefaults(defineProps<Props>(), {
     title: 'Delete item',
     message: 'This action cannot be undone. This will permanently delete the selected item.',

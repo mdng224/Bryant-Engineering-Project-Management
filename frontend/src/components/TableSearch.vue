@@ -11,7 +11,13 @@
 <script setup lang="ts">
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { watch } from 'vue';
-  const props = defineProps<{ modelValue?: string; delay?: number; placeholder?: string }>();
+
+  const props = defineProps<{
+    delay?: number;
+    modelValue?: string;
+    placeholder?: string;
+  }>();
+
   const emit = defineEmits<{ 'update:modelValue': [string]; commit: [] }>();
 
   const {

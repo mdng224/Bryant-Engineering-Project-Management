@@ -17,7 +17,7 @@
               class="rounded-md px-2 py-1 text-sm text-slate-300 hover:bg-slate-700/70"
               @click="$emit('close')"
             >
-              Close
+              <X class="block h-5 w-5" />
             </button>
           </div>
 
@@ -122,6 +122,7 @@
 <script setup lang="ts">
   import type { EmployeeResponse } from '@/api/employees/contracts';
   import { useDateFormat } from '@/composables/UseDateFormat';
+  import { X } from 'lucide-vue-next';
   import { onBeforeUnmount, onMounted, watch } from 'vue';
 
   const props = defineProps<{

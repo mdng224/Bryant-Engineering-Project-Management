@@ -42,7 +42,7 @@ public static class PositionEndpoints
             .Produces<GetPositionsResponse>();
         
         // PATCH /positions/{id}
-        positions.MapPut("/{id:guid}", HandleUpdatePosition)
+        positions.MapPatch("/{id:guid}", HandleUpdatePosition)
             .AddEndpointFilter<Validate<UpdatePositionRequest>>()
             .WithSummary("Update a position")
             .Accepts<UpdatePositionRequest>("application/json")
