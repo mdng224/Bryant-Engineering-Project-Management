@@ -25,7 +25,7 @@
         </RouterLink>
 
         <RouterLink to="/positions" :class="navLink" class="flex items-center gap-2">
-          <BadgeCheck class="h-4 w-4 text-indigo-400" />
+          <Briefcase class="h-4 w-4 text-indigo-400" />
           Positions
         </RouterLink>
 
@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-  import { BadgeCheck, Building2, FolderKanban, LogOut, Users } from 'lucide-vue-next';
+  import { BadgeCheck, Briefcase, Building2, FolderKanban, LogOut, Users } from 'lucide-vue-next';
   import { RouterView } from 'vue-router';
   import { useAuth } from './composables/useAuth';
 

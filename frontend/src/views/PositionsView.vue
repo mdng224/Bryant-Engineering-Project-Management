@@ -8,23 +8,44 @@
       <span class="text-white">+ Add Position</span>
     </button>
   </div>
+  <p
+    v-if="errorMessage"
+    ref="errorEl"
+    class="flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
+    role="alert"
+    aria-live="assertive"
+    tabindex="-1"
+  >
+    <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+    <span>{{ errorMessage }}</span>
+  </p>
 
   <DataTable
     :table="table as unknown as import('@tanstack/vue-table').Table<unknown>"
     :loading
     :total-count
-    empty-text="No users found."
+    empty-text="No positions found."
   >
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
       <template v-if="(cell.column.columnDef.meta as any)?.kind === 'actions'">
-        <button
-          class="rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500"
-          aria-label="Edit user"
-          @click="handleEditPosition(cell.row.original as PositionResponse)"
-        >
-          <Pencil class="h-4 w-4" />
-        </button>
+        <template class="flex gap-2">
+          <button
+            :class="actionButtonClass"
+            aria-label="Edit position"
+            @click="handleEditPosition(cell.row.original as PositionResponse)"
+          >
+            <Pencil class="h-4 w-4" />
+          </button>
+
+          <button
+            :class="actionButtonClass"
+            aria-label="delete position"
+            @click="handleOpenDeleteDialog(cell.row.original as PositionResponse)"
+          >
+            <Trash2 class="h-4 w-4" />
+          </button>
+        </template>
       </template>
       <CellRenderer :cell="cell" />
     </template>
@@ -41,17 +62,24 @@
     "
   />
 
+  <DeleteDialog
+    :open="deleteDialogIsOpen"
+    title="Delete position"
+    message="This action cannot be undone. This will permanently delete the selected position."
+    @confirm="handleDeletePosition"
+  />
   <!--
   <EditPositionDialog
-    :open="editUserDialogIsOpen"
-    :selected-user
-    @close="editUserDialogIsOpen = false"
+    :open="editPositionDialogIsOpen"
+    :selected-position
+    @close="editPositionDialogIsOpen = false"
     @saved="refetch"
   />
   -->
 </template>
 
 <script setup lang="ts">
+  import { extractApiError } from '@/api/error';
   import type {
     GetPositionsRequest,
     GetPositionsResponse,
@@ -59,15 +87,18 @@
   } from '@/api/positions/contracts';
   import { positionService } from '@/api/positions/services';
   import AddPositionDialog from '@/components/dialogs/AddPositionDialog.vue';
+  import DeleteDialog from '@/components/dialogs/DeleteDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
   import { useDataTable } from '@/composables/useDataTable';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { Pencil } from 'lucide-vue-next';
+  import { AlertTriangle, Pencil, Trash2 } from 'lucide-vue-next';
   import { ref } from 'vue';
 
-  const addDialogIsOpen = ref(false);
+  const errorMessage = ref<string | null>(null);
+  const actionButtonClass =
+    'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
 
   /* -------------------------------- Columns ------------------------------- */
   const col: ColumnHelper<PositionResponse> = createColumnHelper<PositionResponse>();
@@ -94,7 +125,7 @@
   ];
 
   /* ------------------------------ Fetching ------------------------------- */
-  const fetchUsers = async ({ page, pageSize }: { page: number; pageSize: number }) => {
+  const fetchPositions = async ({ page, pageSize }: { page: number; pageSize: number }) => {
     const params: GetPositionsRequest = { page, pageSize };
     const response: GetPositionsResponse = await positionService.get(params);
 
@@ -115,15 +146,39 @@
     pagination,
     setPageSize,
     fetchNow: refetch,
-  } = useDataTable<PositionResponse>(columns, fetchUsers, { email: undefined });
+  } = useDataTable<PositionResponse>(columns, fetchPositions, { email: undefined });
 
   /* ------------------------------ Handlers ------------------------------- */
 
-  const selectedUser = ref<PositionResponse | null>(null);
-  const editUserDialogIsOpen = ref(false);
+  const selectedPosition = ref<PositionResponse | null>(null);
+  const addDialogIsOpen = ref(false);
+  const deleteDialogIsOpen = ref(false);
+  const editPositionDialogIsOpen = ref(false);
 
-  const handleEditPosition = (user: PositionResponse): void => {
-    selectedUser.value = user;
-    editUserDialogIsOpen.value = true;
+  const handleDeletePosition = async (): Promise<void> => {
+    const id = selectedPosition.value?.id;
+    if (!id) return;
+
+    try {
+      await positionService.deletePosition(id);
+
+      await refetch();
+    } catch (err: unknown) {
+      const msg = extractApiError(err, 'position');
+      errorMessage.value = msg;
+    } finally {
+      deleteDialogIsOpen.value = false;
+      selectedPosition.value = null;
+    }
+  };
+
+  const handleOpenDeleteDialog = (position: PositionResponse): void => {
+    selectedPosition.value = position;
+    deleteDialogIsOpen.value = true;
+  };
+
+  const handleEditPosition = (position: PositionResponse): void => {
+    selectedPosition.value = position;
+    editPositionDialogIsOpen.value = true;
   };
 </script>

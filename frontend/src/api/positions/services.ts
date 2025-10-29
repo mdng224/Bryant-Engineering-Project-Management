@@ -17,13 +17,18 @@ const get = async (params: GetPositionsRequest): Promise<GetPositionsResponse> =
 
 /* ------------------------------ POST (add) ------------------------------ */
 const add = async (payload: AddPositionRequest): Promise<AddPositionResponse> => {
-  console.log(payload);
   const { data } = await api.post<AddPositionResponse>(PositionsRoutes.add, payload);
   return data;
 };
 
+/* ------------------------------ POST (delete) ------------------------------ */
+const deletePosition = async (id: string): Promise<void> => {
+  await api.delete<string>(PositionsRoutes.delete(id));
+};
+
 /* ----------------------------- Export Service ---------------------------- */
 export const positionService = {
-  get,
   add,
+  deletePosition,
+  get,
 };
