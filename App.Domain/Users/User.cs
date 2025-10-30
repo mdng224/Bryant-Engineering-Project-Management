@@ -1,4 +1,5 @@
 ﻿using App.Domain.Common;
+using App.Domain.Common.Abstractions;
 using App.Domain.Employees;
 
 namespace App.Domain.Users;

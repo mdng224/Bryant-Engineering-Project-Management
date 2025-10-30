@@ -1,6 +1,7 @@
 ﻿// Infrastructure/Persistence/Extensions/EntityTypeBuilderExtensions.cs
 
 using App.Domain.Common;
+using App.Domain.Common.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

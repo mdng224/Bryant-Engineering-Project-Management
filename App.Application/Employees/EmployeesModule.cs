@@ -1,6 +1,9 @@
 ﻿using App.Application.Abstractions;
 using App.Application.Abstractions.Handlers;
 using App.Application.Common;
+using App.Application.Common.Dtos;
+using App.Application.Common.Pagination;
+using App.Application.Common.Results;
 using App.Application.Employees.Queries;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,7 +14,7 @@ public static class EmployeesModule
     public static IServiceCollection AddEmployeesApplication(this IServiceCollection services)
     {
         // Queries
-        services.AddScoped<IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>>, GetEmployeesHandler>();
+        services.AddScoped<IQueryHandler<GetEmployeesQuery, Result<PagedResult<EmployeeDto>>>, GetEmployeesHandler>();
 
         // Commands
 

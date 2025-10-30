@@ -1,6 +1,7 @@
 ﻿using App.Api.Contracts.Employees;
 using App.Application.Common;
 using App.Application.Common.Dtos;
+using App.Application.Common.Pagination;
 using App.Application.Employees.Queries;
 using App.Domain.Common;
 
@@ -9,14 +10,14 @@ namespace App.Api.Features.Employees.Mappers;
 internal static class EmployeeMappers
 {
     public static GetEmployeesResponse ToGetEmployeesResponse(
-        this GetEmployeesResult result,
+        this PagedResult<EmployeeDto> pagedResult,
         IReadOnlyDictionary<Guid, string> positionLookup) =>
         new(
-            Employees: result.EmployeesDtos.Select(dto => dto.ToListItem(positionLookup)).ToList(),
-            TotalCount: result.TotalCount,
-            Page: result.Page,
-            PageSize: result.PageSize,
-            TotalPages: result.TotalPages
+            Employees: pagedResult.Items.Select(dto => dto.ToListItem(positionLookup)).ToList(),
+            TotalCount: pagedResult.TotalCount,
+            Page: pagedResult.Page,
+            PageSize: pagedResult.PageSize,
+            TotalPages: pagedResult.TotalPages
         );
 
     public static GetEmployeesQuery ToQuery(this GetEmployeesRequest request)

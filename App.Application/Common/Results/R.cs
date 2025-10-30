@@ -1,4 +1,6 @@
-﻿namespace App.Application.Common;
+﻿using App.Application.Common.Results;
+
+namespace App.Application.Common;
 
 public static class R
 {

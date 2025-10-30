@@ -3,6 +3,9 @@ using App.Api.Features.Employees.Mappers;
 using App.Application.Abstractions;
 using App.Application.Abstractions.Handlers;
 using App.Application.Common;
+using App.Application.Common.Dtos;
+using App.Application.Common.Pagination;
+using App.Application.Common.Results;
 using App.Application.Employees.Queries;
 using App.Application.Positions.Queries.GetPositions;
 using static Microsoft.AspNetCore.Http.Results;
@@ -24,8 +27,8 @@ public static class EmployeeEndpoints
     
     private static async Task<IResult> HandleGetEmployees(
         [AsParameters] GetEmployeesRequest request,
-        IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>> getEmployeesHandler,
-        IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>> getPositionsHandler,
+        IQueryHandler<GetEmployeesQuery, Result<PagedResult<EmployeeDto>>> getEmployeesHandler,
+        IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionDto>>> getPositionsHandler,
         CancellationToken ct = default)
     {
         // 1) Employees
@@ -40,7 +43,7 @@ public static class EmployeeEndpoints
         if (!positionsResult.IsSuccess)
             return Problem(positionsResult.Error!.Value.Message);
         
-        var positionLookup = positionsResult.Value!.Positions
+        var positionLookup = positionsResult.Value!.Items
             .ToDictionary(p => p.Id, p => p.Name);
         
         // 3) Map to response

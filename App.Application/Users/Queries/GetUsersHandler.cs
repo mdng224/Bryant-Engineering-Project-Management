@@ -2,27 +2,28 @@
 using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
 using App.Application.Common;
-using App.Application.Common.Mappers;
+using App.Application.Common.Dtos;
+using App.Application.Common.Pagination;
+using App.Application.Common.Results;
 using App.Domain.Common;
+using App.Domain.Users;
 using static App.Application.Common.R;
 
 namespace App.Application.Users.Queries;
 
 public sealed class GetUsersHandler(IUserReader reader)
-    : IQueryHandler<GetUsersQuery, Result<GetUsersResult>>
+    : IQueryHandler<GetUsersQuery, Result<PagedResult<UserDto>>>
 {
-    public async Task<Result<GetUsersResult>> Handle(GetUsersQuery query, CancellationToken ct)
+    public async Task<Result<PagedResult<UserDto>>> Handle(GetUsersQuery query, CancellationToken ct)
     {
         var (page, pageSize, skip) = PagingDefaults.Normalize(query.Page, query.PageSize);
         var normalizedEmail = query.Email?.ToNormalizedEmail();
         
         var (users, total) = await reader.GetPagedAsync(skip, pageSize, normalizedEmail, ct);
 
-        var userDtos = users.ToDto().ToList();
-        var totalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize);
+        var pagedResult = new PagedResult<User>(users, total, page, pageSize)
+            .Map(user => user.ToDto());
 
-        var result = new GetUsersResult(userDtos, total, page, pageSize, totalPages);
-
-        return Ok(result);
+        return Ok(pagedResult);
     }
 }

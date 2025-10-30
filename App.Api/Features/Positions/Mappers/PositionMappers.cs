@@ -1,8 +1,10 @@
 ﻿using App.Api.Contracts.Positions;
 using App.Application.Common.Dtos;
+using App.Application.Common.Pagination;
 using App.Application.Positions.Commands.AddPosition;
 using App.Application.Positions.Commands.UpdatePosition;
 using App.Application.Positions.Queries.GetPositions;
+using App.Domain.Employees;
 
 namespace App.Api.Features.Positions.Mappers;
 
@@ -23,22 +25,19 @@ public static class PositionMappers
     public static GetPositionsQuery ToQuery(this GetPositionsRequest request) =>
         new(Page: request.Page, PageSize: request.PageSize);
 
-    public static PositionResponse ToResponse(this PositionResult result) =>
-        new(Id: result.Id,
-            Name: result.Name,
-            Code: result.Code ?? string.Empty,
-            RequiresLicense: result.RequiresLicense);
-    
-    public static GetPositionsResponse ToResponse(this GetPositionsResult result) =>
+    public static GetPositionsResponse ToResponse(this PagedResult<PositionDto> pagedResult) =>
         new(
             [
-                .. result.Positions.Select(pd => pd.ToResponse())
+                .. pagedResult.Items.Select(pd => pd.ToResponse())
             ],
-            result.TotalCount,
-            result.Page,
-            result.PageSize,
-            result.TotalPages);
+            pagedResult.TotalCount,
+            pagedResult.Page,
+            pagedResult.PageSize,
+            pagedResult.TotalPages);
 
-    private static PositionResponse ToResponse(this PositionDto dto) =>
-        new(Id: dto.Id, Name: dto.Name, Code: dto.Code, RequiresLicense: dto.RequiresLicense);
+    public static PositionResponse ToResponse(this PositionDto dto) =>
+        new(Id: dto.Id,
+            Name: dto.Name,
+            Code: dto.Code,
+            RequiresLicense: dto.RequiresLicense);
 }

@@ -2,16 +2,20 @@
 using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
 using App.Application.Common;
-using App.Application.Common.Mappers;
+using App.Application.Common.Dtos;
+using App.Application.Common.Pagination;
+using App.Application.Common.Results;
+using App.Application.Employees.Mappers;
 using App.Domain.Common;
+using App.Domain.Employees;
 using static App.Application.Common.R;
 
 namespace App.Application.Employees.Queries;
 
 public sealed class GetEmployeesHandler(IEmployeeReader reader)
-    : IQueryHandler<GetEmployeesQuery, Result<GetEmployeesResult>>
+    : IQueryHandler<GetEmployeesQuery, Result<PagedResult<EmployeeDto>>>
 {
-    public async Task<Result<GetEmployeesResult>> Handle(GetEmployeesQuery query, CancellationToken ct)
+    public async Task<Result<PagedResult<EmployeeDto>>> Handle(GetEmployeesQuery query, CancellationToken ct)
     {
         // Normalize pagination input
         var (page, pageSize, skip) = PagingDefaults.Normalize(query.Page, query.PageSize);
@@ -20,12 +24,10 @@ public sealed class GetEmployeesHandler(IEmployeeReader reader)
         // Read data from repository
         var (employees, total) = await reader.GetPagedAsync(skip, pageSize, normalizedName, ct);
 
-        // Map to DTOs
-        var employeeDtos = employees.ToDto().ToList();
-        var totalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize);
-
-        var getEmployeesResult = new GetEmployeesResult(employeeDtos, total, page, pageSize, totalPages);
+        // Map to DTOs and wrap in paged result
+        var pagedResult = new PagedResult<Employee>(employees, total, page, pageSize)
+            .Map(employee => employee.ToDto());
         
-        return Ok(getEmployeesResult);
+        return Ok(pagedResult);
     }
 }

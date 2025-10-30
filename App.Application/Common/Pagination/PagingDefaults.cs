@@ -1,5 +1,4 @@
-﻿// App.Application/Common/PagingDefaults.cs
-namespace App.Application.Common;
+﻿namespace App.Application.Common.Pagination;
 
 public static class PagingDefaults
 {

@@ -1,6 +1,7 @@
 ﻿using App.Api.Contracts.Users;
 using App.Application.Common;
 using App.Application.Common.Dtos;
+using App.Application.Common.Pagination;
 using App.Application.Users.Commands.UpdateUser;
 using App.Application.Users.Queries;
 using App.Domain.Common;
@@ -9,15 +10,15 @@ namespace App.Api.Features.Users.Mappers;
 
 internal static class UserMappers
 {
-    public static GetUsersResponse ToResponse(this GetUsersResult result) =>
+    public static GetUsersResponse ToResponse(this PagedResult<UserDto> pagedResult) =>
         new(
             [
-                .. result.Users.Select(u => u.ToResponse())
+                .. pagedResult.Items.Select(u => u.ToResponse())
             ],
-            result.TotalCount,
-            result.Page,
-            result.PageSize,
-            result.TotalPages);
+            pagedResult.TotalCount,
+            pagedResult.Page,
+            pagedResult.PageSize,
+            pagedResult.TotalPages);
 
     public static GetUsersQuery ToQuery(this GetUsersRequest request)
     {

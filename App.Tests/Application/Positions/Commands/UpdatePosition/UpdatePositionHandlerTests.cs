@@ -1,6 +1,7 @@
 ﻿using App.Application.Abstractions.Persistence;
 using App.Application.Common;
 using App.Application.Common.Dtos;
+using App.Application.Common.Results;
 using App.Application.Positions.Commands.UpdatePosition;
 using App.Domain.Employees;
 using FluentAssertions;
@@ -11,7 +12,7 @@ namespace App.Tests.Application.Positions.Commands.UpdatePosition;
 public class UpdatePositionHandlerTests
 {
     [Fact]
-    public async Task Handle_Should_Update_And_Return_PositionResult()
+    public async Task Handle_Should_Update_And_Return_PositionDto()
     {
         // Arrange
         var writer = new Mock<IPositionWriter>();
@@ -36,17 +37,17 @@ public class UpdatePositionHandlerTests
         );
 
         // Act
-        Result<PositionResult> result = await handler.Handle(command, CancellationToken.None);
+        var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
 
-        var payload = result.Value!;
-        payload.Id.Should().Be(id);
-        payload.Name.Should().Be("New Name");
-        payload.Code.Should().Be("NEW"); // adjust if your domain normalizes differently
-        payload.RequiresLicense.Should().BeTrue();
+        var positionDto = result.Value!;
+        positionDto.Id.Should().Be(id);
+        positionDto.Name.Should().Be("New Name");
+        positionDto.Code.Should().Be("NEW"); // adjust if your domain normalizes differently
+        positionDto.RequiresLicense.Should().BeTrue();
 
         writer.Verify(w => w.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
         writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);

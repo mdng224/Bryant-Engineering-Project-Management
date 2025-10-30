@@ -1,4 +1,5 @@
 ﻿using App.Domain.Common;
+using App.Domain.Common.Abstractions;
 
 namespace App.Domain.Clients;
 

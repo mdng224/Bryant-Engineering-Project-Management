@@ -1,4 +1,4 @@
-﻿namespace App.Application.Common;
+﻿namespace App.Application.Common.Results;
 
 /// <summary>
 /// Represents a type with a single possible value, used when a method or command

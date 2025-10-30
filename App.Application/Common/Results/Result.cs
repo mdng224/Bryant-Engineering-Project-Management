@@ -1,4 +1,4 @@
-﻿namespace App.Application.Common;
+﻿namespace App.Application.Common.Results;
 
 /// <summary> Represents the outcome of an operation that does not return a value.</summary>
 public sealed class Result

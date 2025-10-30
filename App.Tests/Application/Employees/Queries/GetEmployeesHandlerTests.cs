@@ -31,7 +31,7 @@ namespace App.Tests.Application.Employees.Queries;
         var payload = result.Value;
         payload.Should().NotBeNull();
 
-        payload.EmployeesDtos.Should().BeEmpty();
+        payload.Items.Should().BeEmpty();
         payload.TotalCount.Should().Be(0);
         payload.Page.Should().Be(1);
         payload.PageSize.Should().Be(10);

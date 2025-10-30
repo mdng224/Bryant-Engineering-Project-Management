@@ -52,7 +52,7 @@ public sealed class GetUsersHandlerTests
         payload.TotalCount.Should().Be(42);
         payload.Page.Should().Be(1);
         payload.PageSize.Should().Be(25);
-        payload.Users.Count.Should().Be(10);
+        payload.Items.Count.Should().Be(10);
         payload.TotalPages.Should().Be((int)Math.Ceiling(42 / 25.0)); // 2
     }
 
@@ -78,7 +78,7 @@ public sealed class GetUsersHandlerTests
         var payload = res.Value!;
         payload.Page.Should().Be(3);
         payload.PageSize.Should().Be(100);
-        payload.Users.Count.Should().Be(100);
+        payload.Items.Count.Should().Be(100);
         payload.TotalCount.Should().Be(1234);
         payload.TotalPages.Should().Be((int)Math.Ceiling(1234 / 100.0)); // 13
     }
@@ -105,7 +105,7 @@ public sealed class GetUsersHandlerTests
         var payload = res.Value!;
         payload.Page.Should().Be(2);
         payload.PageSize.Should().Be(50);
-        payload.Users.Count.Should().Be(50);
+        payload.Items.Count.Should().Be(50);
         payload.TotalPages.Should().Be((int)Math.Ceiling(120 / 50.0)); // 3
     }
 
@@ -126,7 +126,7 @@ public sealed class GetUsersHandlerTests
         res.IsSuccess.Should().BeTrue();
         var payload = res.Value!;
         payload.TotalCount.Should().Be(0);
-        payload.Users.Should().BeEmpty();
+        payload.Items.Should().BeEmpty();
         payload.TotalPages.Should().Be(0);
         payload.Page.Should().Be(5);
         payload.PageSize.Should().Be(25);
@@ -151,7 +151,7 @@ public sealed class GetUsersHandlerTests
         payload.Page.Should().Be(1);
         payload.PageSize.Should().Be(25);
         payload.TotalPages.Should().Be(1);
-        payload.Users.Count.Should().Be(3);
+        payload.Items.Count.Should().Be(3);
     }
 
     // ---------- New tests for email search ----------
@@ -174,7 +174,7 @@ public sealed class GetUsersHandlerTests
         var payload = res.Value!;
         payload.Page.Should().Be(1);
         payload.PageSize.Should().Be(25);
-        payload.Users.Count.Should().Be(2);
+        payload.Items.Count.Should().Be(2);
         payload.TotalCount.Should().Be(2);
         payload.TotalPages.Should().Be(1);
     }
@@ -200,8 +200,8 @@ public sealed class GetUsersHandlerTests
         passedEmail.Should().Be("dan"); // verify the trimming actually happened
 
         var payload = res.Value!;
-        payload.Users.Should().NotBeNull();
-        payload.Users.Count.Should().Be(1);
+        payload.Items.Should().NotBeNull();
+        payload.Items.Count.Should().Be(1);
         payload.TotalCount.Should().Be(1);
     }
 }

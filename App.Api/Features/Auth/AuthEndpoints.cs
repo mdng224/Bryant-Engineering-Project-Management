@@ -8,6 +8,7 @@ using System.Security.Claims;
 using App.Api.Common.Mappers;
 using App.Api.Features.Auth.Mappers;
 using App.Application.Abstractions.Handlers;
+using App.Application.Common.Results;
 using Microsoft.AspNetCore.Mvc;
 using static Microsoft.AspNetCore.Http.Results;
 

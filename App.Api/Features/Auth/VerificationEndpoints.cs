@@ -4,6 +4,7 @@ using App.Application.Abstractions;
 using App.Application.Abstractions.Handlers;
 using App.Application.Auth.Commands.VerifyEmail;
 using App.Application.Common;
+using App.Application.Common.Results;
 using Microsoft.AspNetCore.Mvc;
 using static Microsoft.AspNetCore.Http.Results;
 

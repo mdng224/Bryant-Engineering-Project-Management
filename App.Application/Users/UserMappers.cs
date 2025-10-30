@@ -2,12 +2,12 @@
 using App.Domain.Security;
 using App.Domain.Users;
 
-namespace App.Application.Common.Mappers;
+namespace App.Application.Users;
 
-public static class UserMapper
+public static class UserMappers
 {
     public static IEnumerable<UserDto> ToDto(this IEnumerable<User> users) => users.Select(ToDto);
-    private static UserDto ToDto(this User user) =>
+    public static UserDto ToDto(this User user) =>
         new(
             Id: user.Id,
             Email: user.Email,

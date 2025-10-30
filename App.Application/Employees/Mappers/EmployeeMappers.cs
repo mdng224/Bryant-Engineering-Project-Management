@@ -1,11 +1,11 @@
 ﻿using App.Application.Common.Dtos;
 using App.Domain.Employees;
 
-namespace App.Application.Common.Mappers;
+namespace App.Application.Employees.Mappers;
 
-public static class EmployeeMapper
+public static class EmployeeMappers
 {
-    private static EmployeeDto ToDto(this Employee e) =>
+    public static EmployeeDto ToDto(this Employee e) =>
         new EmployeeDto(
             e.Id,
             e.UserId,
@@ -36,6 +36,4 @@ public static class EmployeeMapper
             // Convenience flag computed in projection
             e.DeletedAtUtc == null && e.EndDate == null
         );
-
-    public static IEnumerable<EmployeeDto> ToDto(this IEnumerable<Employee> employees) => employees.Select(ToDto);
 }

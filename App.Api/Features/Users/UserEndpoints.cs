@@ -4,6 +4,9 @@ using App.Api.Filters;
 using App.Application.Abstractions;
 using App.Application.Abstractions.Handlers;
 using App.Application.Common;
+using App.Application.Common.Dtos;
+using App.Application.Common.Pagination;
+using App.Application.Common.Results;
 using App.Application.Users.Commands.UpdateUser;
 using App.Application.Users.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +40,7 @@ public static class UserEndpoints
     
     private static async Task<IResult> HandleGetUsers(
         [AsParameters] GetUsersRequest request,
-        IQueryHandler<GetUsersQuery, Result<GetUsersResult>> handler,
+        IQueryHandler<GetUsersQuery, Result<PagedResult<UserDto>>> handler,
         CancellationToken ct)
     {
         var query = request.ToQuery();

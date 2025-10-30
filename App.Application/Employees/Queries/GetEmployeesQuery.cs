@@ -1,3 +1,5 @@
-﻿namespace App.Application.Employees.Queries;
+﻿using App.Application.Common.Abstractions;
 
-public record GetEmployeesQuery(int Page, int PageSize, string? Name);
+namespace App.Application.Employees.Queries;
+
+public record GetEmployeesQuery(int Page, int PageSize, string? Name) : IPagedQuery;

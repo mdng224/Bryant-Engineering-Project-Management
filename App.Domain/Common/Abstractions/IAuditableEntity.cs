@@ -1,4 +1,4 @@
-﻿namespace App.Domain.Common;
+﻿namespace App.Domain.Common.Abstractions;
 
 /// <summary>
 /// Marker contract for entities that participate in auditing.

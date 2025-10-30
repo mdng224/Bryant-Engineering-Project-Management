@@ -5,6 +5,8 @@ using App.Application.Abstractions;
 using App.Application.Abstractions.Handlers;
 using App.Application.Common;
 using App.Application.Common.Dtos;
+using App.Application.Common.Pagination;
+using App.Application.Common.Results;
 using App.Application.Positions.Commands.AddPosition;
 using App.Application.Positions.Commands.DeletePosition;
 using App.Application.Positions.Commands.UpdatePosition;
@@ -53,7 +55,7 @@ public static class PositionEndpoints
     
     private static async Task<IResult> HandleAddPosition(
         [FromBody] AddPositionRequest request,
-        ICommandHandler<AddPositionCommand, Result<PositionResult>> handler,
+        ICommandHandler<AddPositionCommand, Result<PositionDto>> handler,
         CancellationToken ct)
     {
         var command = request.ToCommand();
@@ -98,7 +100,7 @@ public static class PositionEndpoints
     
     private static async Task<IResult> HandleGetPositions(
         [AsParameters] GetPositionsRequest request,
-        IQueryHandler<GetPositionsQuery, Result<GetPositionsResult>> handler,
+        IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionDto>>> handler,
         CancellationToken ct)
     {
         var query = request.ToQuery();
@@ -115,7 +117,7 @@ public static class PositionEndpoints
     private static async Task<IResult> HandleUpdatePosition(
         [FromRoute] Guid id,
         UpdatePositionRequest request,
-        ICommandHandler<UpdatePositionCommand, Result<PositionResult>> handler,
+        ICommandHandler<UpdatePositionCommand, Result<PositionDto>> handler,
         CancellationToken ct)
     {
         var command = request.ToCommand(id);

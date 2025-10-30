@@ -1,12 +1,10 @@
-﻿using App.Application.Abstractions;
-using App.Application.Abstractions.Persistence;
-using App.Application.Positions.Queries;
+﻿using App.Application.Abstractions.Persistence;
 using App.Application.Positions.Queries.GetPositions;
 using App.Domain.Employees;
 using FluentAssertions;
 using Moq;
 
-namespace App.Tests.Application.Positions.Queries;
+namespace App.Tests.Application.Positions.Queries.GetPositions;
 
 public class GetPositionsHandlerTests
 {
@@ -41,14 +39,14 @@ public class GetPositionsHandlerTests
         result.Value.Should().NotBeNull();
 
         var value = result.Value!;
-        value.Positions.Should().HaveCount(1);
-        value.Positions[0].Name.Should().Be("Manager");
+        value.Items.Should().HaveCount(1);
+        value.Items[0].Name.Should().Be("Manager");
         value.TotalCount.Should().Be(2);
         value.Page.Should().Be(2);
         value.PageSize.Should().Be(1);
         value.TotalPages.Should().Be(2); // ceil(2 / 1)
 
-        value.Positions.Should().AllSatisfy(dto =>
+        value.Items.Should().AllSatisfy(dto =>
         {
             dto.Id.Should().NotBeEmpty();
             dto.Name.Should().NotBeNullOrWhiteSpace();
@@ -87,7 +85,7 @@ public class GetPositionsHandlerTests
         result.Value.Should().NotBeNull();
 
         var value = result.Value!;
-        value.Positions.Should().BeEmpty();
+        value.Items.Should().BeEmpty();
         value.TotalCount.Should().Be(0);
         value.Page.Should().Be(1);
         value.PageSize.Should().Be(10);
