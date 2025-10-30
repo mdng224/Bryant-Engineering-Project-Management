@@ -1,4 +1,5 @@
 ﻿using App.Application.Abstractions.Persistence;
+using App.Application.Common.Pagination;
 using App.Application.Positions.Queries.GetPositions;
 using App.Domain.Employees;
 using FluentAssertions;
@@ -13,7 +14,8 @@ public class GetPositionsHandlerTests
     {
         // Arrange
         // Query asks for page 2 with pageSize 1 -> skip should be 1, take 1
-        var query = new GetPositionsQuery(Page: 2, PageSize: 1);
+        var pagedQuery = new PagedQuery(page: 2, pageSize: 1);
+        var query = new GetPositionsQuery(pagedQuery);
 
         var pageItems = new List<Position>
         {
@@ -65,7 +67,8 @@ public class GetPositionsHandlerTests
     public async Task Handle_Should_Return_Ok_With_Empty_Payload_When_No_Positions()
     {
         // Arrange
-        var query = new GetPositionsQuery(Page: 1, PageSize: 10);
+        var pagedQuery = new PagedQuery(page: 1, pageSize: 10);
+        var query = new GetPositionsQuery(pagedQuery);
 
         var mockReader = new Mock<IPositionReader>();
         mockReader

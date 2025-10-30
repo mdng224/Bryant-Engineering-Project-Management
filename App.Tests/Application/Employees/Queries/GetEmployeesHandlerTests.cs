@@ -1,6 +1,8 @@
 ﻿using App.Application.Abstractions.Persistence;
+using App.Application.Common.Pagination;
 using App.Application.Employees.Queries;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Moq;
 
 namespace App.Tests.Application.Employees.Queries;
@@ -19,8 +21,8 @@ namespace App.Tests.Application.Employees.Queries;
             .ReturnsAsync(([], 0));
 
         var handler = new GetEmployeesHandler(mockReader.Object);
-
-        var query = new GetEmployeesQuery(Page: 1, PageSize: 10, Name: null);
+        var pagedQuery = new PagedQuery(page: 1, pageSize: 10);
+        var query = new GetEmployeesQuery(pagedQuery, Name: null);
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -50,8 +52,8 @@ namespace App.Tests.Application.Employees.Queries;
             .ReturnsAsync(([], 25));
 
         var handler = new GetEmployeesHandler(mockReader.Object);
-
-        var query = new GetEmployeesQuery(Page: 2, PageSize: 10, Name: null);
+        var pagedQuery = new PagedQuery(page: 2, pageSize: 10);
+        var query = new GetEmployeesQuery(pagedQuery, Name: null);
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -77,8 +79,8 @@ namespace App.Tests.Application.Employees.Queries;
             .ThrowsAsync(new InvalidOperationException("boom"));
 
         var handler = new GetEmployeesHandler(mockReader.Object);
-
-        var query = new GetEmployeesQuery(Page: 1, PageSize: 10, Name: "doe");
+        var pagedQuery = new PagedQuery(page: 1, pageSize: 10);
+        var query = new GetEmployeesQuery(pagedQuery, Name: "doe");
 
         // Act
         Func<Task> act = async () => await handler.Handle(query, CancellationToken.None);

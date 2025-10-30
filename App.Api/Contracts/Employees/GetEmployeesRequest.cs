@@ -1,4 +1,6 @@
-﻿namespace App.Api.Contracts.Employees;
+﻿using App.Api.Common.Pagination;
 
-// name can be last, first, or nickname
-public record GetEmployeesRequest(int Page, int PageSize, string? Name);
+namespace App.Api.Contracts.Employees;
+
+// Search name can be last, first, or nickname
+public record GetEmployeesRequest(PagedRequest PagedRequest, string? Name);

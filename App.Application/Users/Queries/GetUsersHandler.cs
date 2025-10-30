@@ -16,7 +16,7 @@ public sealed class GetUsersHandler(IUserReader reader)
 {
     public async Task<Result<PagedResult<UserDto>>> Handle(GetUsersQuery query, CancellationToken ct)
     {
-        var (page, pageSize, skip) = PagingDefaults.Normalize(query.Page, query.PageSize);
+        var (page, pageSize, skip) = query.PagedQuery;
         var normalizedEmail = query.Email?.ToNormalizedEmail();
         
         var (users, total) = await reader.GetPagedAsync(skip, pageSize, normalizedEmail, ct);

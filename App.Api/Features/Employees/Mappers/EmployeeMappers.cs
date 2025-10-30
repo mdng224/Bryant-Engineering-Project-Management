@@ -22,16 +22,11 @@ internal static class EmployeeMappers
 
     public static GetEmployeesQuery ToQuery(this GetEmployeesRequest request)
     {
-        var page = request.Page is >= 1
-            ? request.Page
-            : PagingDefaults.DefaultPage;
-        var size = request.PageSize is >= 1 and <= PagingDefaults.MaxPageSize
-            ? request.PageSize
-            : PagingDefaults.DefaultPageSize;
-
-        var normalizedName = request.Name?.ToNormalizedName();
-
-        return new GetEmployeesQuery(page, size, normalizedName);
+        var (page, pageSize) = request.PagedRequest;
+        var normalizedName = (request.Name ?? string.Empty).ToNormalizedName();
+        var pagedQuery = new PagedQuery(page, pageSize);
+        
+        return new GetEmployeesQuery(pagedQuery, normalizedName);
     }
 
     private static EmployeeResponse

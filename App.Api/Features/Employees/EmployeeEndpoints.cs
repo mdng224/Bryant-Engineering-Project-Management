@@ -39,7 +39,8 @@ public static class EmployeeEndpoints
         
         // 2) Positions lookup (prefer a dedicated lookup query or cap the size)
         // TODO: Make a dedicated position lookup without pagination
-        var positionsResult = await getPositionsHandler.Handle(new GetPositionsQuery(1,  int.MaxValue), ct);
+        var pagedQuery = new PagedQuery(1, int.MaxValue);
+        var positionsResult = await getPositionsHandler.Handle(new GetPositionsQuery(pagedQuery), ct);
         if (!positionsResult.IsSuccess)
             return Problem(positionsResult.Error!.Value.Message);
         

@@ -4,7 +4,6 @@ using App.Application.Common.Pagination;
 using App.Application.Positions.Commands.AddPosition;
 using App.Application.Positions.Commands.UpdatePosition;
 using App.Application.Positions.Queries.GetPositions;
-using App.Domain.Employees;
 
 namespace App.Api.Features.Positions.Mappers;
 
@@ -21,10 +20,14 @@ public static class PositionMappers
             Name: request.Name,
             Code: request.Code,
             RequiresLicense: request.RequiresLicense);
-    
-    public static GetPositionsQuery ToQuery(this GetPositionsRequest request) =>
-        new(Page: request.Page, PageSize: request.PageSize);
 
+    public static GetPositionsQuery ToQuery(this GetPositionsRequest request)
+    {
+        var (page, pageSize) = request.PagedRequest;
+        
+        return new GetPositionsQuery(new PagedQuery(page, pageSize));
+    }
+    
     public static GetPositionsResponse ToResponse(this PagedResult<PositionDto> pagedResult) =>
         new(
             [

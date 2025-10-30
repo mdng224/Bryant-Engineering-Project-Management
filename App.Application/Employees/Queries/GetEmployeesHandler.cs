@@ -17,14 +17,11 @@ public sealed class GetEmployeesHandler(IEmployeeReader reader)
 {
     public async Task<Result<PagedResult<EmployeeDto>>> Handle(GetEmployeesQuery query, CancellationToken ct)
     {
-        // Normalize pagination input
-        var (page, pageSize, skip) = PagingDefaults.Normalize(query.Page, query.PageSize);
+        var (page, pageSize, skip) = query.PagedQuery;
         var normalizedName = query.Name?.ToNormalizedName();
-        
-        // Read data from repository
+
         var (employees, total) = await reader.GetPagedAsync(skip, pageSize, normalizedName, ct);
 
-        // Map to DTOs and wrap in paged result
         var pagedResult = new PagedResult<Employee>(employees, total, page, pageSize)
             .Map(employee => employee.ToDto());
         

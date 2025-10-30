@@ -1,5 +1,5 @@
-﻿using App.Application.Common.Abstractions;
+﻿using App.Application.Common.Pagination;
 
 namespace App.Application.Positions.Queries.GetPositions;
 
-public sealed record GetPositionsQuery(int Page, int PageSize) : IPagedQuery;
+public sealed record GetPositionsQuery(PagedQuery PagedQuery);

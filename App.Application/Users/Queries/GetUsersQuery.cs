@@ -1,5 +1,5 @@
-﻿using App.Application.Common.Abstractions;
+﻿using App.Application.Common.Pagination;
 
 namespace App.Application.Users.Queries;
 
-public sealed record GetUsersQuery(int Page, int PageSize, string? Email) : IPagedQuery;
+public sealed record GetUsersQuery(PagedQuery PagedQuery, string? Email);

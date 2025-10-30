@@ -1,3 +1,5 @@
-﻿namespace App.Api.Contracts.Users;
+﻿using App.Api.Common.Pagination;
 
-public sealed record GetUsersRequest(int Page, int PageSize, string? Email);
+namespace App.Api.Contracts.Users;
+
+public sealed record GetUsersRequest(PagedRequest PagedRequest, string? Email);

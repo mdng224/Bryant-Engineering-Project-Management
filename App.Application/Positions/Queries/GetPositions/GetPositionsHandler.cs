@@ -16,7 +16,7 @@ public sealed class GetPositionsHandler(IPositionReader reader)
 {
     public async Task<Result<PagedResult<PositionDto>>> Handle(GetPositionsQuery query, CancellationToken ct)
     {
-        var (page, pageSize, skip) = PagingDefaults.Normalize(query.Page, query.PageSize);
+        var (page, pageSize, skip) = query.PagedQuery;
         var (positions, total) = await reader.GetPagedAsync(skip, pageSize, ct);
 
         var pagedResult = new PagedResult<Position>(positions, total, page, pageSize)

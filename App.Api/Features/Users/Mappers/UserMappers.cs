@@ -22,16 +22,11 @@ internal static class UserMappers
 
     public static GetUsersQuery ToQuery(this GetUsersRequest request)
     {
-        var page = request.Page is >= 1
-            ? request.Page
-            : PagingDefaults.DefaultPage;
-        var size = request.PageSize is >= 1 and <= PagingDefaults.MaxPageSize
-            ? request.PageSize
-            : PagingDefaults.DefaultPageSize;
-
+        var (page, pageSize) = request.PagedRequest;
+        var pagedQuery = new PagedQuery(page, pageSize);
         var normalizedEmail = request.Email?.ToNormalizedEmail();
 
-        return new GetUsersQuery(page, size, normalizedEmail);
+        return new GetUsersQuery(pagedQuery, normalizedEmail);
     }
 
     public static UpdateUserCommand ToCommand(this UpdateUserRequest request, Guid userId)
