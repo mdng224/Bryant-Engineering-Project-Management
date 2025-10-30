@@ -158,11 +158,6 @@ namespace App.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("last_name");
 
-                    b.Property<string>("LicenseNotes")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("license_notes");
-
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -480,6 +475,43 @@ namespace App.Infrastructure.Data.Migrations
                         .WithOne("Employee")
                         .HasForeignKey("App.Domain.Employees.Employee", "UserId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.OwnsOne("App.Domain.Common.Address", "Address", b1 =>
+                        {
+                            b1.Property<Guid>("EmployeeId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("City")
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)");
+
+                            b1.Property<string>("Line1")
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)")
+                                .HasColumnName("Address_Line_1");
+
+                            b1.Property<string>("Line2")
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)")
+                                .HasColumnName("Address_Line_2");
+
+                            b1.Property<string>("PostalCode")
+                                .HasMaxLength(15)
+                                .HasColumnType("character varying(15)");
+
+                            b1.Property<string>("State")
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)");
+
+                            b1.HasKey("EmployeeId");
+
+                            b1.ToTable("employees");
+
+                            b1.WithOwner()
+                                .HasForeignKey("EmployeeId");
+                        });
+
+                    b.Navigation("Address");
 
                     b.Navigation("User");
                 });

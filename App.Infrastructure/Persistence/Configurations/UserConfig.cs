@@ -1,4 +1,5 @@
 ﻿using App.Domain.Users;
+using App.Infrastructure.Email;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -30,20 +31,7 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
             .HasColumnName("email_verified_at")
             .HasColumnType("timestamptz");
         
-        b.Property(u => u.CreatedAtUtc)
-            .HasColumnName("created_at_utc")
-            .IsRequired()
-            .HasColumnType("timestamptz")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
-        
-        b.Property(u => u.UpdatedAtUtc)
-            .HasColumnName("updated_at_utc")
-            .IsRequired()
-            .HasColumnType("timestamptz");
-        
-        b.Property(u => u.DeletedAtUtc)
-            .HasColumnName("deleted_at_utc")
-            .HasColumnType("timestamptz");
+        b.ConfigureAuditable();
         
         // --- Relationships --------------------------------------------------
         b.HasOne(u => u.Role)

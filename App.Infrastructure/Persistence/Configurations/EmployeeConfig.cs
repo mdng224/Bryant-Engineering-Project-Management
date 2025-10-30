@@ -1,5 +1,6 @@
 ﻿using App.Domain.Employees;
 using App.Domain.Users;
+using App.Infrastructure.Email;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -47,48 +48,28 @@ public sealed class EmployeeConfig : IEntityTypeConfiguration<Employee>
         b.Property(e => e.PreferredName).HasColumnName("preferred_name").HasMaxLength(100);
         b.Property(e => e.CompanyEmail).HasColumnName("company_email").HasMaxLength(128);
         b.Property(e => e.WorkLocation).HasColumnName("work_location").HasMaxLength(200);
-        b.Property(e => e.LicenseNotes).HasColumnName("license_notes").HasMaxLength(200);
         b.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(500);
         b.Property(e => e.RecommendedRoleId).HasColumnName("recommended_role_id");
         b.Property(e => e.IsPreapproved).HasColumnName("is_preapproved").HasDefaultValue(false);
-        
+
         b.Property(e => e.EmploymentType)
             .HasColumnName("employee_type")
             .HasConversion<string>()
             .HasColumnType("text");
-        
+
         b.Property(e => e.SalaryType)
             .HasColumnName("salary_type")
             .HasConversion<string>()
             .HasColumnType("text");
-        
-        b.Property(e => e.HireDate)
-            .HasColumnName("hire_date")
-            .HasColumnType("timestamptz");
-        
-        b.Property(e => e.EndDate)
-            .HasColumnName("end_date")
-            .HasColumnType("timestamptz"); // or "date"
-        
-        b.Property(e => e.Department)
-            .HasColumnName("department");
-        
-        b.Property(u => u.CreatedAtUtc)
-            .HasColumnName("created_at_utc")
-            .IsRequired()
-            .HasColumnType("timestamptz")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
-        
-        b.Property(u => u.UpdatedAtUtc)
-            .HasColumnName("updated_at_utc")
-            .IsRequired()
-            .HasColumnType("timestamptz");
-        
-        b.Property(u => u.DeletedAtUtc)
-            .HasColumnName("deleted_at_utc")
-            .HasColumnType("timestamptz");
+
+        b.Property(e => e.HireDate).HasColumnName("hire_date").HasColumnType("timestamptz");
+        b.Property(e => e.EndDate).HasColumnName("end_date").HasColumnType("timestamptz");
+        b.Property(e => e.Department).HasColumnName("department");
+        b.ConfigureAuditable();
         
         // --- Relationships --------------------------------------------------
+        b.OwnsAddress();
+        
         b.HasOne(e => e.User)
             .WithOne(u => u.Employee)
             .HasForeignKey<Employee>(e => e.UserId)

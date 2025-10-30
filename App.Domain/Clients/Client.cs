@@ -13,12 +13,7 @@ public sealed class Client : IAuditableEntity
     public string Email { get; private set; } = null!;
     public string? Phone { get; private set; }
 
-    public string? AddressLine1 { get; private set; }
-    public string? AddressLine2 { get; private set; }
-    public string? City { get; private set; }
-    public string? StateOrProvince { get; private set; }
-    public string? PostalCode { get; private set; }
-    public string? Country { get; private set; }
+    public Address? Address { get; private set; }
     public string? Note { get; private set; }
 
     // --- Auditing ------------------------------------------------------------
@@ -39,12 +34,7 @@ public sealed class Client : IAuditableEntity
         string? companyName = null,
         string? contactName = null,
         string? phone = null,
-        string? addressLine1 = null,
-        string? addressLine2 = null,
-        string? city = null,
-        string? stateOrProvince = null,
-        string? postalCode = null,
-        string? country = null,
+        Address? address = null,
         string? note = null)
     {
         Id = Guid.CreateVersion7();
@@ -56,14 +46,7 @@ public sealed class Client : IAuditableEntity
         CompanyName = string.IsNullOrWhiteSpace(companyName) ? null : companyName.ToNormalizedName();
         ContactName = string.IsNullOrWhiteSpace(contactName) ? null : contactName.ToNormalizedName();
         Phone = phone.ToNormalizedPhone();
-
-        AddressLine1 = addressLine1.ToNormalizedAddressLine();
-        AddressLine2 = addressLine2.ToNormalizedAddressLine();
-        City = city.ToNormalizedCity();
-        StateOrProvince = stateOrProvince.ToNormalizedState();
-        PostalCode = postalCode.ToNormalizedPostal();
-        Country = country.ToNormalizedCountry();
-
+        Address = new Address(address?.Line1, address?.Line2, address?.City, address?.State, address?.PostalCode);
         Note = note.ToNormalizedNote();
 
         var now = DateTimeOffset.UtcNow;
@@ -81,7 +64,7 @@ public sealed class Client : IAuditableEntity
         var newContact = string.IsNullOrWhiteSpace(contactName) ? null : contactName.ToNormalizedName();
         var newPhone = phone.ToNormalizedPhone();
 
-        bool changed = false;
+        var changed = false;
 
         if (newCompany != CompanyName) { CompanyName = newCompany; changed = true; }
         if (newContact != ContactName) { ContactName = newContact; changed = true; }
@@ -91,33 +74,37 @@ public sealed class Client : IAuditableEntity
         if (changed) Touch();
     }
 
-    public void ChangeAddress(
-        string? addressLine1,
-        string? addressLine2,
-        string? city,
-        string? stateOrProvince,
-        string? postalCode,
-        string? country)
+    public void SetAddress(Address? address)
     {
         EnsureNotDeleted();
 
-        var a1 = addressLine1.ToNormalizedAddressLine();
-        var a2 = addressLine2.ToNormalizedAddressLine();
-        var c = city.ToNormalizedCity();
-        var s = stateOrProvince.ToNormalizedState();
-        var p = postalCode.ToNormalizedPostal();
-        var co = country.ToNormalizedCountry();
+        // if null — clear the address
+        switch (address)
+        {
+            case null when Address is null:
+                return;
+            case null when Address is not null:
+                Address = null;
+                Touch();
+                return;
+        }
 
-        var changed = false;
+        // Normalize input values
+        var line1 = address!.Line1.ToNormalizedAddressLine();
+        var line2 = address.Line2.ToNormalizedAddressLine();
+        var city = address.City.ToNormalizedCity();
+        var state = address.State.ToNormalizedState();
+        var postalCode = address.PostalCode.ToNormalizedPostal();
 
-        if (a1 != AddressLine1) { AddressLine1 = a1; changed = true; }
-        if (a2 != AddressLine2) { AddressLine2 = a2; changed = true; }
-        if (c != City) { City = c; changed = true; }
-        if (s != StateOrProvince) { StateOrProvince = s; changed = true; }
-        if (p != PostalCode) { PostalCode = p; changed = true; }
-        if (co != Country) { Country = co; changed = true; }
+        // Construct a new normalized address value object
+        var newAddress = new Address(line1, line2, city, state, postalCode);
 
-        if (changed) Touch();
+        // Only update if something actually changed
+        if (Address == newAddress)
+            return;
+
+        Address = newAddress;
+        Touch();
     }
 
     public void SetNote(string? note)

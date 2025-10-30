@@ -29,9 +29,9 @@ public sealed class Employee : IAuditableEntity
     public IReadOnlyCollection<EmployeePosition> Positions => _positions.AsReadOnly();
     
     // --- Contact / Misc -----------------------------------------------------
+    public Address? Address { get; private set; }
     public string? CompanyEmail { get; private set; }               // optional, used to auto-link at registration
     public string? WorkLocation { get; private set; }               // or OfficeId if you add Office
-    public string? LicenseNotes { get; private set; }               // e.g., "PLS"
     public string? Notes { get; private set; }
     
     /// <summary>
@@ -145,6 +145,39 @@ public sealed class Employee : IAuditableEntity
         Touch();
     }
 
+    public void SetAddress(Address? address)
+    {
+        EnsureNotDeleted();
+
+        // if null — clear the address
+        switch (address)
+        {
+            case null when Address is null:
+                return;
+            case null when Address is not null:
+                Address = null;
+                Touch();
+                return;
+        }
+
+        // Normalize input values
+        var line1 = address!.Line1.ToNormalizedAddressLine();
+        var line2 = address.Line2.ToNormalizedAddressLine();
+        var city = address.City.ToNormalizedCity();
+        var state = address.State.ToNormalizedState();
+        var postalCode = address.PostalCode.ToNormalizedPostal();
+
+        // Construct a new normalized address value object
+        var newAddress = new Address(line1, line2, city, state, postalCode);
+
+        // Only update if something actually changed
+        if (Address == newAddress)
+            return;
+
+        Address = newAddress;
+        Touch();
+    }
+    
     public void SetPreapproved(bool isPreapproved)
     {
         EnsureNotDeleted();
@@ -195,13 +228,6 @@ public sealed class Employee : IAuditableEntity
     {
         EnsureNotDeleted();
         WorkLocation = location.ToNormalizedAddressLine();
-        Touch();
-    }
-
-    public void SetLicenseNotes(string? notes)
-    {
-        EnsureNotDeleted();
-        LicenseNotes = notes.ToNormalizedNote();
         Touch();
     }
 

@@ -18,7 +18,6 @@ public sealed record EmployeeDto(
     // Contact / Misc
     string? CompanyEmail,
     string? WorkLocation,
-    string? LicenseNotes,
     string? Notes,
     Guid? RecommendedRoleId,
     bool IsPreapproved,

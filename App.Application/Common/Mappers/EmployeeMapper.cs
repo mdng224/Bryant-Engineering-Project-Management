@@ -27,7 +27,6 @@ public static class EmployeeMapper
                 .ToList(), // IReadOnlyList<Guid>
             e.CompanyEmail,
             e.WorkLocation,
-            e.LicenseNotes,
             e.Notes,
             e.RecommendedRoleId,
             e.IsPreapproved,

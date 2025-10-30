@@ -14,7 +14,6 @@ public sealed record EmployeeResponse(
     string? Department,
     string? CompanyEmail,
     string? WorkLocation,
-    string? LicenseNotes,
     string? Notes,
     Guid? RecommendedRoleId,
     bool IsPreapproved,

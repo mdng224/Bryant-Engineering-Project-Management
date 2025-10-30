@@ -47,7 +47,6 @@ internal static class EmployeeMappers
             dto.Department,
             dto.CompanyEmail,
             dto.WorkLocation,
-            dto.LicenseNotes,
             dto.Notes,
             dto.RecommendedRoleId,
             dto.IsPreapproved,
