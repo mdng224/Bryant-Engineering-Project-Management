@@ -33,7 +33,7 @@
             <span>{{ errorMessage }}</span>
           </p>
 
-          <form @submit.prevent="submit" class="space-y-4">
+          <form class="space-y-4" @submit.prevent="submit">
             <div>
               <label class="mb-1 block text-sm font-medium text-slate-200">Name</label>
               <input

@@ -70,8 +70,8 @@
             <div class="flex items-center gap-2">
               <input
                 id="pos-req-lic"
-                type="checkbox"
                 v-model="model.requiresLicense"
+                type="checkbox"
                 :disabled="saving"
                 class="h-4 w-4 rounded border-slate-700 bg-slate-800/70"
               />

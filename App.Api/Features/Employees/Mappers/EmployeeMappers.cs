@@ -31,10 +31,11 @@ internal static class EmployeeMappers
         
     public static GetEmployeesQuery ToQuery(this GetEmployeesRequest request)
     {
-        var normalizedName = (request.NameFilter ?? string.Empty).ToNormalizedName();
+        var normalizedNameFilter = (request.NameFilter ?? string.Empty).ToNormalizedName();
         var pagedQuery = new PagedQuery(request.Page, request.PageSize);
-        
-        return new GetEmployeesQuery(pagedQuery, normalizedName);
+         var getEmployeesQuery = new GetEmployeesQuery(pagedQuery, normalizedNameFilter);
+         
+         return getEmployeesQuery;
     }
 
     private static EmployeeResponse

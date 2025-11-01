@@ -1,29 +1,29 @@
 ﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
+using App.Application.Clients.Mappers;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Common.Results;
-using App.Application.Employees.Mappers;
+using App.Domain.Clients;
 using App.Domain.Common;
-using App.Domain.Employees;
 using static App.Application.Common.R;
 
-namespace App.Application.Employees.Queries;
+namespace App.Application.Clients.Queries;
 
-public sealed class GetEmployeesHandler(IEmployeeReader reader)
-    : IQueryHandler<GetEmployeesQuery, Result<PagedResult<EmployeeDto>>>
+public sealed class GetClientsHandler(IClientReader reader)
+    : IQueryHandler<GetClientsQuery, Result<PagedResult<ClientDto>>>
 {
-    public async Task<Result<PagedResult<EmployeeDto>>> Handle(GetEmployeesQuery query, CancellationToken ct)
+    public async Task<Result<PagedResult<ClientDto>>> Handle(GetClientsQuery query, CancellationToken ct)
     {
         var (page, pageSize, skip) = query.PagedQuery;
         var normalizedNameFilter = query.NameFilter?.ToNormalizedName();
 
-        var (employees, total) = await reader.GetPagedAsync(skip,
+        var (clients, total) = await reader.GetPagedAsync(skip,
             pageSize,
             normalizedNameFilter,
             ct);
-
-        var pagedResult = new PagedResult<Employee>(employees, total, page, pageSize)
+        
+        var pagedResult = new PagedResult<Client>(clients, total, page, pageSize)
             .Map(employee => employee.ToDto());
         
         return Ok(pagedResult);

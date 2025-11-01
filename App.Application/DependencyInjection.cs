@@ -1,4 +1,5 @@
 ﻿using App.Application.Auth;
+using App.Application.Clients;
 using App.Application.EmployeePositions;
 using App.Application.Employees;
 using App.Application.Positions;
@@ -17,6 +18,7 @@ public static class DependencyInjection
         services.AddPositionsApplication();
         services.AddUsersApplication();
         services.AddEmployeePositionsApplication();
+        services.AddClientsApplication();
 
         return services;
     }
