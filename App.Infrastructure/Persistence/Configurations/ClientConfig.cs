@@ -10,7 +10,14 @@ public sealed class ClientConfig : IEntityTypeConfiguration<Client>
     public void Configure(EntityTypeBuilder<Client> b)
     {
         // --- Table & constraints -------------------------------------------
-        b.ToTable("clients");
+        b.ToTable("clients", tb =>
+        {
+            tb.HasCheckConstraint(    
+                name: "ck_clients_company_or_person",
+                sql: " (btrim(coalesce(company_name, '')) <> '') " +
+                " OR (btrim(coalesce(first_name,  '')) <> '') " +
+                " OR (btrim(coalesce(last_name,   '')) <> '') ");
+        });
 
         // --- Key ------------------------------------------------------------
         b.HasKey(c => c.Id);
@@ -18,9 +25,13 @@ public sealed class ClientConfig : IEntityTypeConfiguration<Client>
 
         // --- Columns --------------------------------------------------------
         b.Property(c => c.CompanyName).HasColumnName("company_name").HasMaxLength(200).IsRequired(false);
-        b.Property(c => c.ContactName).HasColumnName("contact_name").HasMaxLength(200).IsRequired(false);
-        b.Property(e => e.Email).HasColumnName("email").HasMaxLength(128);
-        b.Property(c => c.Note).HasColumnType("text");
+        b.Property(c => c.FirstName).HasColumnName("first_name").HasMaxLength(100).IsRequired(false);
+        b.Property(c => c.MiddleName).HasColumnName("middle_name").HasMaxLength(100).IsRequired(false);
+        b.Property(c => c.LastName).HasColumnName("last_name").HasMaxLength(100).IsRequired(false);
+        b.Property(c => c.Email).HasColumnName("email").HasMaxLength(128).IsRequired(false); // email is optional
+        b.Property(c => c.Phone).HasColumnName("phone").HasMaxLength(32).IsRequired(false);
+        b.Property(c => c.Note).HasColumnName("note").HasColumnType("text").IsRequired(false);
+
         b.ConfigureAuditable();
 
         // --- Relationships --------------------------------------------------

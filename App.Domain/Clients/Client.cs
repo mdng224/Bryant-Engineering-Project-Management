@@ -9,11 +9,14 @@ public sealed class Client : IAuditableEntity
     public Guid Id { get; private set; }
 
     // --- Core Fields ----------------------------------------------------------
-    public string? CompanyName { get; private set; }   // optional: Will retroactively be set
-    public string? ContactName { get; private set; }   // optional: Will retroactively be set
-    public string Email { get; private set; } = null!;
+    
+    // Company name is required, if First Name and Last Name are left blank
+    public string? CompanyName { get; private set; }   
+    public string? FirstName { get; private set; }
+    public string? MiddleName { get; private set; }
+    public string? LastName { get; private set; }
+    public string? Email { get; private set; }
     public string? Phone { get; private set; }
-
     public Address? Address { get; private set; }
     public string? Note { get; private set; }
 
@@ -22,101 +25,63 @@ public sealed class Client : IAuditableEntity
     public DateTimeOffset UpdatedAtUtc { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
 
-    // TODO: Add client contact domain
-    // public ICollection<ClientContact> Contacts { get; } = new List<ClientContact>();
-
     // TODO: add projects when that domain is ready
     // public ICollection<Project> Projects { get; } = new List<Project>();
-
+    private readonly bool _suppressTouch;
+    
     // --- Constructors --------------------------------------------------------
     private Client() { } // EF
     public Client(
-        string email,
+        string? email = null,
         string? companyName = null,
-        string? contactName = null,
+        string? firstName = null,
+        string? lastName = null,
+        string? middleName = null,
         string? phone = null,
         Address? address = null,
         string? note = null)
     {
         Id = Guid.CreateVersion7();
 
-        // Required
-        Email = Guard.AgainstNullOrWhiteSpace(email, nameof(email)).ToNormalizedEmail();
+        _suppressTouch = true;
 
-        // Optional: null if empty/whitespace
-        CompanyName = string.IsNullOrWhiteSpace(companyName) ? null : companyName.ToNormalizedName();
-        ContactName = string.IsNullOrWhiteSpace(contactName) ? null : contactName.ToNormalizedName();
-        Phone = phone.ToNormalizedPhone();
-        Address = new Address(address?.Line1, address?.Line2, address?.City, address?.State, address?.PostalCode);
-        Note = note.ToNormalizedNote();
+        SetContactInfoInternal(companyName, firstName, lastName, middleName, email, phone);
+        SetAddressInternal(address);
+        SetNoteInternal(note);
 
         var now = DateTimeOffset.UtcNow;
         CreatedAtUtc = now;
         UpdatedAtUtc = now;
+
+        _suppressTouch = false;
     }
 
-    // --- Mutators (domain intent) ---------------------------------------------
-    public void ChangeContactInfo(string companyName, string contactName, string email, string? phone)
+    // --- Public Mutators ------------------------------------------------------
+    public void ChangeContactInfo(
+        string? companyName,
+        string? firstName,
+        string? lastName,
+        string? middleName,
+        string? email,
+        string? phone)
     {
         EnsureNotDeleted();
-        var newEmail = Guard.AgainstNullOrWhiteSpace(email, nameof(email)).ToNormalizedEmail();
-
-        var newCompany = string.IsNullOrWhiteSpace(companyName) ? null : companyName.ToNormalizedName();
-        var newContact = string.IsNullOrWhiteSpace(contactName) ? null : contactName.ToNormalizedName();
-        var newPhone = phone.ToNormalizedPhone();
-
-        var changed = false;
-
-        if (newCompany != CompanyName) { CompanyName = newCompany; changed = true; }
-        if (newContact != ContactName) { ContactName = newContact; changed = true; }
-        if (newEmail != Email) { Email = newEmail; changed = true; }
-        if (newPhone != Phone) { Phone = newPhone; changed = true; }
-
+        var changed = SetContactInfoInternal(companyName, firstName, lastName, middleName, email, phone);
         if (changed) Touch();
     }
 
     public void SetAddress(Address? address)
     {
         EnsureNotDeleted();
-
-        // if null — clear the address
-        switch (address)
-        {
-            case null when Address is null:
-                return;
-            case null when Address is not null:
-                Address = null;
-                Touch();
-                return;
-        }
-
-        // Normalize input values
-        var line1 = address!.Line1.ToNormalizedAddressLine();
-        var line2 = address.Line2.ToNormalizedAddressLine();
-        var city = address.City.ToNormalizedCity();
-        var state = address.State.ToNormalizedState();
-        var postalCode = address.PostalCode.ToNormalizedPostal();
-
-        // Construct a new normalized address value object
-        var newAddress = new Address(line1, line2, city, state, postalCode);
-
-        // Only update if something actually changed
-        if (Address == newAddress)
-            return;
-
-        Address = newAddress;
-        Touch();
+        var changed = SetAddressInternal(address);
+        if (changed) Touch();
     }
 
     public void SetNote(string? note)
     {
         EnsureNotDeleted();
-
-        var normalized = note.ToNormalizedNote();
-        if (normalized == Note) return;
-
-        Note = normalized;
-        Touch();
+        var changed = SetNoteInternal(note);
+        if (changed) Touch();
     }
 
     public void SoftDelete()
@@ -133,11 +98,80 @@ public sealed class Client : IAuditableEntity
         Touch();
     }
 
+    // --- Core Setters ---------------------------------------------------------
+    private bool SetContactInfoInternal(
+        string? companyName,
+        string? firstName,
+        string? lastName,
+        string? middleName,
+        string? email,
+        string? phone)
+    {
+        var newEmail   = string.IsNullOrWhiteSpace(email) ? null : email.ToNormalizedEmail();
+        var newCompany = string.IsNullOrWhiteSpace(companyName) ? null : companyName.ToNormalizedName();
+        var newFirst   = string.IsNullOrWhiteSpace(firstName)   ? null : firstName.ToNormalizedName();
+        var newLast    = string.IsNullOrWhiteSpace(lastName)    ? null : lastName.ToNormalizedName();
+        var newMiddle  = string.IsNullOrWhiteSpace(middleName)  ? null : middleName.ToNormalizedName();
+        var newPhone   = phone.ToNormalizedPhone();
+
+        // Rule: if both names are blank, CompanyName must be provided.
+        if (newFirst is null && newLast is null && newCompany is null)
+            throw new InvalidOperationException("CompanyName is required when both FirstName and LastName are blank.");
+
+        var changed = false;
+
+        if (newCompany != CompanyName) { CompanyName = newCompany; changed = true; }
+        if (newFirst   != FirstName)   { FirstName   = newFirst;   changed = true; }
+        if (newLast    != LastName)    { LastName    = newLast;    changed = true; }
+        if (newMiddle  != MiddleName)  { MiddleName  = newMiddle;  changed = true; }
+        if (newEmail   != Email)       { Email       = newEmail;   changed = true; }
+        if (newPhone   != Phone)       { Phone       = newPhone;   changed = true; }
+
+        return changed;
+    }
+
+    private bool SetAddressInternal(Address? address)
+    {
+        if (address is null)
+        {
+            if (Address is null) return false;
+            Address = null;
+            return true;
+        }
+
+        var line1 = address.Line1.ToNormalizedAddressLine();
+        var line2 = address.Line2.ToNormalizedAddressLine();
+        var city = address.City.ToNormalizedCity();
+        var state = address.State.ToNormalizedState();
+        var postalCode = address.PostalCode.ToNormalizedPostal();
+
+        var newAddress = new Address(line1, line2, city, state, postalCode);
+
+        if (Address == newAddress) return false;
+
+        Address = newAddress;
+        return true;
+    }
+
+    private bool SetNoteInternal(string? note)
+    {
+        var normalized = note.ToNormalizedNote();
+        if (normalized == Note) return false;
+
+        Note = normalized;
+        return true;
+    }
+
     // --- Helpers --------------------------------------------------------------
     private void EnsureNotDeleted()
     {
         if (DeletedAtUtc is not null)
             throw new InvalidOperationException("Cannot mutate a soft-deleted client.");
     }
-    private void Touch() => UpdatedAtUtc = DateTimeOffset.UtcNow;
+
+    private void Touch()
+    {
+        if (_suppressTouch) return;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+    }
 }

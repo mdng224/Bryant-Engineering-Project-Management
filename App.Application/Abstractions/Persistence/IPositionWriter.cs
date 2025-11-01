@@ -8,5 +8,4 @@ public interface IPositionWriter
     Task<bool> DeleteAsync(Guid positionId, CancellationToken ct = default);
     Task<Position?> GetForUpdateAsync(Guid positionId, CancellationToken ct);
     Task<int> SaveChangesAsync(CancellationToken ct = default);
-    Task<bool> UpdateAsync(Position position, CancellationToken ct = default);
 }

@@ -18,7 +18,8 @@ public sealed class GetClientsHandler(IClientReader reader)
         var (page, pageSize, skip) = query.PagedQuery;
         var normalizedNameFilter = query.NameFilter?.ToNormalizedName();
 
-        var (clients, total) = await reader.GetPagedAsync(skip,
+        var (clients, total) = await reader.GetPagedAsync(
+            skip,
             pageSize,
             normalizedNameFilter,
             ct);

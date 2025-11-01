@@ -28,9 +28,6 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
         string? normalizedNameFilter = null,
         CancellationToken ct = default)
     {
-        take = Math.Clamp(take, 1, MaxPageSize);
-        skip = Math.Max(0, skip);
-        
         var query = db.Positions.AsNoTracking();
         // check last, first, and nickname
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
@@ -44,7 +41,7 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
             return ([], totalCount);
         
         var positions = await query
-            .OrderBy(u => u.Name) // stable
+            .OrderBy(u => u.Name)
             .Skip(skip)
             .Take(take)
             .ToListAsync(ct);
@@ -80,34 +77,5 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
     public Task<Position?> GetForUpdateAsync(Guid positionId, CancellationToken ct) =>
         db.Positions.FindAsync([positionId], ct).AsTask(); // tracked
     
-    public Task<int> SaveChangesAsync(CancellationToken ct = default)
-        => db.SaveChangesAsync(ct);
-    
-    public async Task<bool> UpdateAsync(Position position, CancellationToken ct = default)
-    {
-        var existingPosition = await db.Positions.FindAsync([position.Id], ct);
-        if (existingPosition is null)
-            return false;
-
-        existingPosition.Rename(position.Name);
-        existingPosition.SetCode(position.Code);
-        existingPosition.RequireLicense(position.RequiresLicense);
-
-        try
-        {
-            await SaveChangesAsync(ct);
-            return true;
-        }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg)
-        {
-            // Handle Postgres constraint violations gracefully
-            return pg.SqlState switch
-            {
-                "23505" => throw new InvalidOperationException(
-                    "duplicate_entry: A position with the same name or code already exists.", ex),
-                _ => throw new InvalidOperationException(
-                    $"database_error: Unexpected database error (SQL state {pg.SqlState}).", ex)
-            };
-        }
-    }
+    public Task<int> SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 }

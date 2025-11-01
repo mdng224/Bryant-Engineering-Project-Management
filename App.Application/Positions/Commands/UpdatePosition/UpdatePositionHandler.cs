@@ -6,6 +6,7 @@ using App.Application.Common.Dtos;
 using App.Application.Common.Results;
 using App.Application.Positions.Mappers;
 using App.Domain.Employees;
+using Microsoft.EntityFrameworkCore;
 using static App.Application.Common.R;
 
 namespace App.Application.Positions.Commands.UpdatePosition;
@@ -21,13 +22,20 @@ public sealed class UpdatePositionHandler(IPositionWriter writer)
         if (position is null)
             return Fail<PositionDto>("not_found", "Position not found.");
 
-        position.Rename(command.Name);
-        position.SetCode(command.Code);
-        position.RequireLicense(command.RequiresLicense);
-        await writer.SaveChangesAsync(ct);
+        var changed = position.Update(command.Name, command.Code, command.RequiresLicense);
 
-        var positionDto = position.ToDto();
+        if (!changed)
+            return Ok(position.ToDto());
         
-        return Ok(positionDto);
+        try
+        {
+            await writer.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            return Fail<PositionDto>("duplicate", "A position with the same unique field (e.g., code) already exists.");
+        }
+
+        return Ok(position.ToDto());
     }
 }

@@ -19,10 +19,6 @@ public sealed class EmployeeRepository(AppDbContext db) : IEmployeeReader
         string? normalizedNameFilter = null,
         CancellationToken ct = default)
     {
-        const int maxPageSize = 200;
-        take = Math.Clamp(take, 1, maxPageSize);
-        skip = Math.Max(0, skip);
-
         var query = db.Employees.AsNoTracking();
 
         // check last, first, and nickname
@@ -32,7 +28,7 @@ public sealed class EmployeeRepository(AppDbContext db) : IEmployeeReader
             query = query.Where(e =>
                 EF.Functions.ILike(e.LastName, pattern) ||
                 EF.Functions.ILike(e.FirstName, pattern) ||
-                (e.PreferredName != null && EF.Functions.ILike(e.PreferredName, pattern))
+                EF.Functions.ILike(e.PreferredName!, pattern)
             );
         }
 

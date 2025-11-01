@@ -34,10 +34,6 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
         string? email = null,
         CancellationToken ct = default)
     {
-        const int maxPageSize = 200;
-        take = Math.Clamp(take, 1, maxPageSize);
-        skip = Math.Max(0, skip);
-
         var query = db.Users.AsNoTracking();
 
         // Optional partial email match (case-insensitive, Postgres)

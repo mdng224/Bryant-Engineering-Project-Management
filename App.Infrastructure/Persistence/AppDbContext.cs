@@ -1,4 +1,5 @@
 ﻿using App.Domain.Auth;
+using App.Domain.Clients;
 using App.Domain.Common;
 using App.Domain.Common.Abstractions;
 using App.Domain.Employees;
@@ -22,6 +23,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Position> Positions => Set<Position>();
     public DbSet<EmployeePosition> EmployeePositions => Set<EmployeePosition>();
+    public DbSet<Client> Clients => Set<Client>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,7 +35,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration(new EmployeeConfig());         // 4
         modelBuilder.ApplyConfiguration(new EmployeePositionConfig()); // 5
         modelBuilder.ApplyConfiguration(new EmailVerificationConfig()); // 6
-        // modelBuilder.ApplyConfiguration(new ClientConfig());        // 
+        modelBuilder.ApplyConfiguration(new ClientConfig());
     }
 
     // --- Model configuration -----------------------------------------------

@@ -65,6 +65,67 @@ namespace App.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("App.Domain.Clients.Client", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CompanyName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("company_name");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("created_at_utc")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("first_name");
+
+                    b.Property<string>("LastName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_name");
+
+                    b.Property<string>("MiddleName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("middle_name");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("text")
+                        .HasColumnName("note");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("phone");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("clients", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_clients_company_or_person", " (btrim(coalesce(company_name, '')) <> '')  OR (btrim(coalesce(first_name,  '')) <> '')  OR (btrim(coalesce(last_name,   '')) <> '') ");
+                        });
+                });
+
             modelBuilder.Entity("App.Domain.Common.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -465,6 +526,46 @@ namespace App.Infrastructure.Data.Migrations
                         .HasDatabaseName("ix_users_role_id");
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Clients.Client", b =>
+                {
+                    b.OwnsOne("App.Domain.Common.Address", "Address", b1 =>
+                        {
+                            b1.Property<Guid>("ClientId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("City")
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)");
+
+                            b1.Property<string>("Line1")
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)")
+                                .HasColumnName("Address_Line_1");
+
+                            b1.Property<string>("Line2")
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)")
+                                .HasColumnName("Address_Line_2");
+
+                            b1.Property<string>("PostalCode")
+                                .HasMaxLength(15)
+                                .HasColumnType("character varying(15)");
+
+                            b1.Property<string>("State")
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)");
+
+                            b1.HasKey("ClientId");
+
+                            b1.ToTable("clients");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ClientId");
+                        });
+
+                    b.Navigation("Address");
                 });
 
             modelBuilder.Entity("App.Domain.Employees.Employee", b =>

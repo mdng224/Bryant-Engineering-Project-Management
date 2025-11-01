@@ -18,12 +18,10 @@ public sealed class Position
     public Position(string name, string? code = null, bool requiresLicense = false)
     {
         Id = Guid.CreateVersion7();
-        Name = name.ToNormalizedName();
-        Code = string.IsNullOrWhiteSpace(code) ? null : code.ToNormalizedName();
-        RequiresLicense = requiresLicense;
+        SetCore(name, code, requiresLicense);
     }
-    
-    // --- Seeding helper ----------------------------------------------------
+
+    // --- Seeding helper -----------------------------------------------------
     public static Position CreateSeed(Guid id, string name, string? code = null, bool requiresLicense = false)
     {
         var position = new Position(name, code, requiresLicense)
@@ -32,18 +30,26 @@ public sealed class Position
         };
         return position;
     }
-    
-    // --- Mutators ------------------------------------------------------
-    
-    public void Rename(string name)
-    {
-        Name = name.ToNormalizedName();
-    }
 
-    public void SetCode(string? code)
-    {
-        Code = string.IsNullOrWhiteSpace(code) ? null : code.ToNormalizedName();
-    }
+    // --- Single intent method ----------------------------------------------
+    /// <summary>Updates all fields at once. Returns true if anything changed.</summary>
+    public bool Update(string name, string? code, bool requiresLicense)
+        => SetCore(name, code, requiresLicense);
 
-    public void RequireLicense(bool requires) => RequiresLicense = requires;
+    // --- Core logic (single source of truth) --------------------------------
+    private bool SetCore(string name, string? code, bool requiresLicense)
+    {
+        var newName = Guard.AgainstNullOrWhiteSpace(name, nameof(name)).ToNormalizedName();
+        // If you have a dedicated normalizer for codes, use it here:
+        // var newCode = string.IsNullOrWhiteSpace(code) ? null : code.ToNormalizedCode();
+        var newCode = string.IsNullOrWhiteSpace(code) ? null : code.ToNormalizedName();
+
+        var changed = false;
+
+        if (newName != Name) { Name = newName; changed = true; }
+        if (newCode != Code) { Code = newCode; changed = true; }
+        if (requiresLicense != RequiresLicense) { RequiresLicense = requiresLicense; changed = true; }
+
+        return changed;
+    }
 }

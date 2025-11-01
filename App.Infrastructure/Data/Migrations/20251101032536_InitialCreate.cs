@@ -14,6 +14,33 @@ namespace App.Infrastructure.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "clients",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    company_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    first_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    middle_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    last_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    email = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    phone = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    Address_Line_1 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    Address_Line_2 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    Address_City = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Address_State = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Address_PostalCode = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
+                    note = table.Column<string>(type: "text", nullable: true),
+                    created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    deleted_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_clients", x => x.Id);
+                    table.CheckConstraint("ck_clients_company_or_person", " (btrim(coalesce(company_name, '')) <> '')  OR (btrim(coalesce(first_name,  '')) <> '')  OR (btrim(coalesce(last_name,   '')) <> '') ");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "email_verifications",
                 columns: table => new
                 {
@@ -291,6 +318,9 @@ namespace App.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "clients");
+
             migrationBuilder.DropTable(
                 name: "email_verifications");
 
