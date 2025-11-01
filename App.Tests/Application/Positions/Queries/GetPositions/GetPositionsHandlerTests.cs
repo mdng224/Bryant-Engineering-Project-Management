@@ -15,7 +15,7 @@ public class GetPositionsHandlerTests
         // Arrange
         // Query asks for page 2 with pageSize 1 -> skip should be 1, take 1
         var pagedQuery = new PagedQuery(page: 2, pageSize: 1);
-        var query = new GetPositionsQuery(pagedQuery);
+        var query = new GetPositionsQuery(pagedQuery, NameFilter: null);
 
         var pageItems = new List<Position>
         {
@@ -27,6 +27,7 @@ public class GetPositionsHandlerTests
             .Setup(r => r.GetPagedAsync(
                 It.Is<int>(skip => skip == 1),
                 It.Is<int>(take => take == 1),
+                It.Is<string?>(filter => filter == null),
                 It.IsAny<CancellationToken>()))
             // total = 2 to yield TotalPages = 2 with pageSize 1
             .ReturnsAsync((pageItems, totalCount: 2));
@@ -59,6 +60,7 @@ public class GetPositionsHandlerTests
             r => r.GetPagedAsync(
                 It.Is<int>(s => s == 1),
                 It.Is<int>(t => t == 1),
+                It.Is<string?>(filter => filter == null),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -68,13 +70,14 @@ public class GetPositionsHandlerTests
     {
         // Arrange
         var pagedQuery = new PagedQuery(page: 1, pageSize: 10);
-        var query = new GetPositionsQuery(pagedQuery);
+        var query = new GetPositionsQuery(pagedQuery, NameFilter: null);
 
         var mockReader = new Mock<IPositionReader>();
         mockReader
             .Setup(r => r.GetPagedAsync(
                 It.Is<int>(skip => skip == 0),
                 It.Is<int>(take => take == 10),
+                It.Is<string?>(filter => filter == null),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Position>(), totalCount: 0));
 
@@ -92,13 +95,40 @@ public class GetPositionsHandlerTests
         value.TotalCount.Should().Be(0);
         value.Page.Should().Be(1);
         value.PageSize.Should().Be(10);
-        value.TotalPages.Should().Be(0); // matches handler logic for total == 0
+        value.TotalPages.Should().Be(0); // matches PagedResult logic for total == 0
 
         mockReader.Verify(
             r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),
                 It.Is<int>(t => t == 10),
+                It.Is<string?>(filter => filter == null),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_Should_Pass_Normalized_NameFilter_To_Reader()
+    {
+        // Arrange
+        var pagedQuery = new PagedQuery(page: 1, pageSize: 5);
+        var query = new GetPositionsQuery(pagedQuery, NameFilter: "  ProjEcT EnG  ");
+
+        var mockReader = new Mock<IPositionReader>();
+        mockReader
+            .Setup(r => r.GetPagedAsync(
+                It.Is<int>(skip => skip == 0),
+                It.Is<int>(take => take == 5),
+                It.Is<string?>(filter => filter != null && filter.Contains("project", StringComparison.OrdinalIgnoreCase)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Position>(), totalCount: 0));
+
+        var handler = new GetPositionsHandler(mockReader.Object);
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        mockReader.VerifyAll();
     }
 }

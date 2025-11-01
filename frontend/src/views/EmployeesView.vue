@@ -1,6 +1,6 @@
 <template>
   <div class="pb-4">
-    <TableSearch v-model="nameSearch" placeholder="Search by name..." @commit="commitNameNow" />
+    <TableSearch v-model="nameFilter" placeholder="Search by name..." @commit="commitNameNow" />
   </div>
 
   <DataTable :table :loading :total-count empty-text="No employees found.">
@@ -61,7 +61,7 @@
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
   import TableSearch from '@/components/TableSearch.vue';
-  import { useDataTable } from '@/composables/useDataTable';
+  import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { Eye } from 'lucide-vue-next';
@@ -102,7 +102,7 @@
 
   /* ------------------------------- Searching ------------------------------ */
   const {
-    input: nameSearch, // bound to v-model
+    input: nameFilter, // bound to v-model
     debounced: name, // used in fetch
     setNow: commitNameNow, // call on Enter
     cancel: cancelNameDebounce, // cleanup on unmount
@@ -112,19 +112,10 @@
   /* ------------------------------- Fetching ------------------------------- */
   type EmpQuery = { name?: string };
 
-  // Detail cache (from server) and quick lookup map
   const employeeDetails = ref<EmployeeResponse[]>([]);
   const employeeDetailsById = computed(() => new Map(employeeDetails.value.map(e => [e.id, e])));
 
-  const fetchEmployees = async ({
-    page,
-    pageSize,
-    query,
-  }: {
-    page: number;
-    pageSize: number;
-    query?: EmpQuery;
-  }) => {
+  const fetchEmployees = async ({ page, pageSize, query }: FetchParams<EmpQuery>) => {
     const params: GetEmployeesRequest = { page, pageSize, name: query?.name || undefined };
     const response: GetEmployeesResponse = await employeeService.get(params);
 

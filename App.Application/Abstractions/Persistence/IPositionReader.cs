@@ -8,5 +8,6 @@ public interface IPositionReader
     Task<(IReadOnlyList<Position> positions, int totalCount)> GetPagedAsync(
         int skip,
         int take,
+        string? normalizedNameFilter = null,
         CancellationToken ct = default);
 }

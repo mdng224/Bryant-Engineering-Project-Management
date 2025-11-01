@@ -16,6 +16,7 @@ export type AddPositionResponse = PositionBase & {
 export type GetPositionsRequest = {
   page: number;
   pageSize: number;
+  nameFilter?: string;
 };
 
 export type GetPositionsResponse = {

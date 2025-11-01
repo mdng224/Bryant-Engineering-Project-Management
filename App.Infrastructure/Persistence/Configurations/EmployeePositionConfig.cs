@@ -37,5 +37,8 @@ public sealed class EmployeePositionConfig : IEntityTypeConfiguration<EmployeePo
         // --- Indexes --------------------------------------------------------
         b.HasIndex(ep => ep.PositionId)
             .HasDatabaseName("ix_employee_positions_position_id");
+        
+        b.HasIndex(ep => ep.EmployeeId)
+            .HasDatabaseName("ix_employee_positions_employee_id");
     }
 }

@@ -1,5 +1,4 @@
 ﻿using App.Api.Contracts.Employees;
-using App.Application.Common;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Employees.Queries;
@@ -11,20 +10,29 @@ internal static class EmployeeMappers
 {
     public static GetEmployeesResponse ToGetEmployeesResponse(
         this PagedResult<EmployeeDto> pagedResult,
-        IReadOnlyDictionary<Guid, string> positionLookup) =>
-        new(
-            Employees: pagedResult.Items.Select(dto => dto.ToListItem(positionLookup)).ToList(),
+        IReadOnlyDictionary<Guid, IReadOnlyList<PositionMiniDto>> positionsByEmployee)
+    {
+        var employees = pagedResult.Items
+            .Select(dto =>
+            {
+                positionsByEmployee.TryGetValue(dto.Id, out var positions);
+                return dto.ToListItem(positions ?? []);
+            })
+            .ToList();
+
+        return new GetEmployeesResponse(
+            Employees: employees,
             TotalCount: pagedResult.TotalCount,
-            Page: pagedResult.Page,
+            Page:  pagedResult.Page,
             PageSize: pagedResult.PageSize,
             TotalPages: pagedResult.TotalPages
         );
-
+    }
+        
     public static GetEmployeesQuery ToQuery(this GetEmployeesRequest request)
     {
-        var (page, pageSize) = request.PagedRequest;
-        var normalizedName = (request.Name ?? string.Empty).ToNormalizedName();
-        var pagedQuery = new PagedQuery(page, pageSize);
+        var normalizedName = (request.NameFilter ?? string.Empty).ToNormalizedName();
+        var pagedQuery = new PagedQuery(request.Page, request.PageSize);
         
         return new GetEmployeesQuery(pagedQuery, normalizedName);
     }
@@ -52,7 +60,7 @@ internal static class EmployeeMappers
             dto.DeletedAtUtc,
             dto.IsActive);
     
-    private static EmployeeListItem ToListItem(this EmployeeDto dto, IReadOnlyDictionary<Guid, string> positionLookup) =>
+    private static EmployeeListItem ToListItem(this EmployeeDto dto, IReadOnlyList<PositionMiniDto> positionLookup) =>
         new(
             Summary: dto.ToSummaryResponse(),
             Details: dto.ToEmployeeResponse(dto.PositionIds.ToPositionNames(positionLookup))
@@ -68,7 +76,18 @@ internal static class EmployeeMappers
             dto.HireDate,
             dto.IsActive);
 
-    private static IReadOnlyList<string> ToPositionNames(
-        this IEnumerable<Guid> positionIds, IReadOnlyDictionary<Guid, string> lookup) =>
-        positionIds.Distinct().Select(id => lookup.TryGetValue(id, out var name) ? name : "Unknown").ToList();
+    private static List<string> ToPositionNames(
+        this IEnumerable<Guid> positionIds,
+        IReadOnlyList<PositionMiniDto> employeePositions)
+    {
+        // Build a quick lookup: PositionId -> Name
+        var map = employeePositions.Count == 0
+            ? new Dictionary<Guid, string>()
+            : employeePositions.ToDictionary(p => p.Id, p => p.Name);
+
+        return positionIds
+            .Distinct()
+            .Select(id => map.TryGetValue(id, out var name) ? name : "Unknown")
+            .ToList();
+    }
 }

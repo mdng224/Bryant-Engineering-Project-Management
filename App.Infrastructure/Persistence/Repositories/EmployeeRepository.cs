@@ -16,7 +16,7 @@ public sealed class EmployeeRepository(AppDbContext db) : IEmployeeReader
     public async Task<(IReadOnlyList<Employee> employees, int totalCount)> GetPagedAsync(
         int skip,
         int take,
-        string? normalizedName = null,
+        string? normalizedNameFilter = null,
         CancellationToken ct = default)
     {
         const int maxPageSize = 200;
@@ -26,9 +26,9 @@ public sealed class EmployeeRepository(AppDbContext db) : IEmployeeReader
         var query = db.Employees.AsNoTracking();
 
         // check last, first, and nickname
-        if (!string.IsNullOrWhiteSpace(normalizedName))
+        if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {
-            var pattern = $"%{normalizedName.Trim()}%";
+            var pattern = $"%{normalizedNameFilter.Trim()}%";
             query = query.Where(e =>
                 EF.Functions.ILike(e.LastName, pattern) ||
                 EF.Functions.ILike(e.FirstName, pattern) ||

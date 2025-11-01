@@ -2,4 +2,4 @@
 
 namespace App.Application.Positions.Queries.GetPositions;
 
-public sealed record GetPositionsQuery(PagedQuery PagedQuery);
+public sealed record GetPositionsQuery(PagedQuery PagedQuery, string? NameFilter);

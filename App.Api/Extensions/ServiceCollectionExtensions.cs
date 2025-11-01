@@ -12,7 +12,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using App.Api.Contracts.Positions;
-using App.Api.Contracts.Users;
 
 namespace App.Api.Extensions;
 

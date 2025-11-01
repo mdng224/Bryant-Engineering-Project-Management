@@ -25,12 +25,19 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
     public async Task<(IReadOnlyList<Position> positions, int totalCount)> GetPagedAsync(
         int skip,
         int take,
+        string? normalizedNameFilter = null,
         CancellationToken ct = default)
     {
         take = Math.Clamp(take, 1, MaxPageSize);
         skip = Math.Max(0, skip);
         
         var query = db.Positions.AsNoTracking();
+        // check last, first, and nickname
+        if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
+        {
+            var pattern = $"%{normalizedNameFilter.Trim()}%";
+            query = query.Where(p => EF.Functions.ILike(p.Name, pattern));
+        }
         
         var totalCount = await query.CountAsync(ct);
         if (totalCount == 0 || skip >= totalCount)

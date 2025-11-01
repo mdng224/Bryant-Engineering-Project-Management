@@ -1,5 +1,3 @@
-﻿using App.Api.Common.Pagination;
+﻿namespace App.Api.Contracts.Positions;
 
-namespace App.Api.Contracts.Positions;
-
-public sealed record GetPositionsRequest(PagedRequest PagedRequest);
+public sealed record GetPositionsRequest(int Page, int PageSize, string? NameFilter);

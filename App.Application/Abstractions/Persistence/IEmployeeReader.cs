@@ -8,6 +8,6 @@ public interface IEmployeeReader
     Task<(IReadOnlyList<Employee> employees, int totalCount)> GetPagedAsync(
         int skip,
         int take,
-        string? normalizedName = null,
+        string? normalizedNameFilter = null,
         CancellationToken ct = default);
 }

@@ -218,6 +218,11 @@ namespace App.Infrastructure.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "ix_employee_positions_employee_id",
+                table: "employee_positions",
+                column: "employee_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_employee_positions_position_id",
                 table: "employee_positions",
                 column: "position_id");

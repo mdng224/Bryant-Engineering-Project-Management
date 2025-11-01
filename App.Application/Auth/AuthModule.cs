@@ -1,10 +1,7 @@
-﻿// App.Application/Auth/AuthModule.cs
-using App.Application.Abstractions;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Auth.Commands.Register;
 using App.Application.Auth.Commands.VerifyEmail;
 using App.Application.Auth.Queries.Login;
-using App.Application.Common;
 using App.Application.Common.Results;
 using Microsoft.Extensions.DependencyInjection;
 

@@ -22,9 +22,8 @@ internal static class UserMappers
 
     public static GetUsersQuery ToQuery(this GetUsersRequest request)
     {
-        var (page, pageSize) = request.PagedRequest;
-        var pagedQuery = new PagedQuery(page, pageSize);
-        var normalizedEmail = request.Email?.ToNormalizedEmail();
+        var pagedQuery = new PagedQuery(request.Page, request.PageSize);
+        var normalizedEmail = request.EmailFilter?.ToNormalizedEmail();
 
         return new GetUsersQuery(pagedQuery, normalizedEmail);
     }

@@ -2,4 +2,4 @@
 
 namespace App.Application.Users.Queries;
 
-public sealed record GetUsersQuery(PagedQuery PagedQuery, string? Email);
+public sealed record GetUsersQuery(PagedQuery PagedQuery, string? EmailFilter);

@@ -1,4 +1,12 @@
 <template>
+  <div class="pb-4">
+    <TableSearch
+      v-model="positionNameFilter"
+      placeholder="Search by position name..."
+      @commit="commitPositionNameNow"
+    />
+  </div>
+
   <div class="flex items-center justify-between pb-4">
     <h2 class="text-xl font-semibold text-slate-100">Positions</h2>
     <button
@@ -88,10 +96,12 @@
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
-  import { useDataTable } from '@/composables/useDataTable';
+  import TableSearch from '@/components/TableSearch.vue';
+  import { useDataTable, type FetchParams } from '@/composables/useDataTable';
+  import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { AlertTriangle, CirclePlus, Pencil, Trash2 } from 'lucide-vue-next';
-  import { ref } from 'vue';
+  import { onBeforeUnmount, ref, watch } from 'vue';
 
   const errorMessage = ref<string | null>(null);
   const actionButtonClass =
@@ -121,9 +131,24 @@
     },
   ];
 
+  /* ------------------------------- Searching ------------------------------ */
+  const {
+    input: positionNameFilter, // bound to v-model
+    debounced: position, // used in fetch
+    setNow: commitPositionNameNow, // call on Enter
+    cancel: cancelNameDebounce, // cleanup on unmount
+  } = useDebouncedRef('', 500);
+  onBeforeUnmount(cancelNameDebounce);
+
   /* ------------------------------ Fetching ------------------------------- */
-  const fetchPositions = async ({ page, pageSize }: { page: number; pageSize: number }) => {
-    const params: GetPositionsRequest = { page, pageSize };
+  type PosQuery = { position?: string };
+
+  const fetchPositions = async ({ page, pageSize, query }: FetchParams<PosQuery>) => {
+    const params: GetPositionsRequest = {
+      page,
+      pageSize,
+      nameFilter: query?.position || undefined,
+    };
     const response: GetPositionsResponse = await positionService.get(params);
 
     return {
@@ -141,12 +166,14 @@
     totalCount,
     totalPages,
     pagination,
+    setQuery,
     setPageSize,
     fetchNow: refetch,
-  } = useDataTable<PositionResponse>(columns, fetchPositions, { email: undefined });
+  } = useDataTable<PositionResponse, PosQuery>(columns, fetchPositions, { position: undefined });
+
+  watch(position, () => setQuery({ position: position.value || undefined }));
 
   /* ------------------------------ Handlers ------------------------------- */
-
   const selectedPosition = ref<PositionResponse | null>(null);
   const addDialogIsOpen = ref(false);
   const deleteDialogIsOpen = ref(false);

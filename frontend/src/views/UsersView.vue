@@ -41,7 +41,7 @@
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
   import TableSearch from '@/components/TableSearch.vue';
-  import { useDataTable } from '@/composables/useDataTable';
+  import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { Pencil } from 'lucide-vue-next';
   import { onBeforeUnmount, ref, watch } from 'vue';
@@ -113,15 +113,7 @@
   /* ------------------------------ Fetching ------------------------------- */
   type UserQuery = { email?: string };
 
-  const fetchUsers = async ({
-    page,
-    pageSize,
-    query,
-  }: {
-    page: number;
-    pageSize: number;
-    query?: UserQuery;
-  }) => {
+  const fetchUsers = async ({ page, pageSize, query }: FetchParams<UserQuery>) => {
     const params: GetUsersRequest = { page, pageSize, email: query?.email || undefined };
     const response: GetUsersResponse = await userService.get(params);
 

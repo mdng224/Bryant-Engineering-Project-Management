@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251030211408_InitialCreate")]
+    [Migration("20251031193407_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -237,6 +237,9 @@ namespace App.Infrastructure.Data.Migrations
                         .HasColumnName("position_id");
 
                     b.HasKey("EmployeeId", "PositionId");
+
+                    b.HasIndex("EmployeeId")
+                        .HasDatabaseName("ix_employee_positions_employee_id");
 
                     b.HasIndex("PositionId")
                         .HasDatabaseName("ix_employee_positions_position_id");

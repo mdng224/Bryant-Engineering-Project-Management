@@ -35,7 +35,7 @@ public sealed class GetUsersHandlerTests
     {
         // Arrange: page < 1 -> normalized to 1; pageSize < 1 -> default to 25
         var pagedQuery = new PagedQuery(page: 0, pageSize: 0);
-        var query = new GetUsersQuery(pagedQuery, Email: null);
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: null);
 
         // Expect skip = (1 - 1) * 25 = 0; take = 25; email = null
         _reader.Setup(r => r.GetPagedAsync(
@@ -63,7 +63,7 @@ public sealed class GetUsersHandlerTests
     {
         // Arrange: page=3, requested pageSize=500 -> capped at 100
         var pagedQuery = new PagedQuery(page: 3, pageSize: 500);
-        var query = new GetUsersQuery(pagedQuery, Email: null);
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: null);
 
         // Expect skip = (3 - 1) * 100 = 200; take = 100; email = null
         _reader.Setup(r => r.GetPagedAsync(
@@ -91,7 +91,7 @@ public sealed class GetUsersHandlerTests
     {
         // Arrange: page=2, pageSize=50 (valid)
         var pagedQuery = new PagedQuery(page: 2, pageSize: 50);
-        var query = new GetUsersQuery(pagedQuery, Email: null);
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: null);
 
         // Expect skip = (2 - 1) * 50 = 50; take = 50; email = null
         _reader.Setup(r => r.GetPagedAsync(
@@ -117,7 +117,7 @@ public sealed class GetUsersHandlerTests
     public async Task TotalPages_Is_Zero_When_Total_Is_Zero()
     {
         var pagedQuery = new PagedQuery(page: 5, pageSize: 25);
-        var query = new GetUsersQuery(pagedQuery, Email: null);
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: null);
 
         _reader.Setup(r => r.GetPagedAsync(
                 It.IsAny<int>(),
@@ -141,7 +141,7 @@ public sealed class GetUsersHandlerTests
     public async Task Normalizes_Negative_Page_To_1_And_Defaults_PageSize_To_25()
     {
         var pagedQuery = new PagedQuery(page: -10, pageSize: -3);
-        var query = new GetUsersQuery(pagedQuery, Email: null);
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: null);
 
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),   // (1-1)*25
@@ -166,7 +166,7 @@ public sealed class GetUsersHandlerTests
     public async Task Applies_Email_Filter_When_Provided()
     {
         var pagedQuery = new PagedQuery(page: 1, pageSize: 25);
-        var query = new GetUsersQuery(pagedQuery, Email: "dan");
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: "dan");
 
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),
@@ -190,7 +190,7 @@ public sealed class GetUsersHandlerTests
     public async Task Trims_Email_Filter_Before_Passing_To_Reader()
     {
         var pagedQuery = new PagedQuery(page: 1, pageSize: 25);
-        var query = new GetUsersQuery(pagedQuery, Email: "  dan  ");
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: "  dan  ");
 
         string? passedEmail = null;
 
