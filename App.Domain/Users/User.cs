@@ -4,11 +4,8 @@ using App.Domain.Employees;
 
 namespace App.Domain.Users;
 
-/// <summary>
-/// Represents an application user with authentication credentials.
-/// Implements <see cref="IAuditableEntity"/> to support audit tracking.
-/// </summary>
-public class User : IAuditableEntity
+/// <summary>Application user with credentials; audited and soft-deletable.</summary>
+public sealed class User : IAuditableEntity, ISoftDeletable
 {
     // --- Key ------------------------------------------------------------------
     public Guid Id { get; private set; }
@@ -22,17 +19,16 @@ public class User : IAuditableEntity
     public DateTimeOffset? EmailVerifiedAt { get; private set; }
     public UserStatus Status { get; private set; } = UserStatus.PendingEmail;
 
-    // TODO: Point to a client when that domain is ready.
-    // TODO: Point to an employee when that domain is ready.
-
-    // --- Auditing ------------------------------------------------------------
-
-    /// <inheritdoc/>
-    public DateTimeOffset CreatedAtUtc { get; }
-    /// <inheritdoc/>
-    public DateTimeOffset UpdatedAtUtc { get; private set; }
-    /// <inheritdoc/>
+    // --- Auditing ----------------------------------------------------------
+    public DateTimeOffset CreatedAtUtc  { get; private set; }
+    public DateTimeOffset UpdatedAtUtc  { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
+
+    public Guid? CreatedById            { get; private set; }
+    public Guid? UpdatedById            { get; private set; }
+    public Guid? DeletedById            { get; private set; }
+
+    public bool IsDeleted => DeletedAtUtc.HasValue;
 
     // --- Constructors --------------------------------------------------------
     private User() { }
@@ -40,14 +36,10 @@ public class User : IAuditableEntity
     public User(string email, string passwordHash, Guid roleId)
     {
         Id = Guid.CreateVersion7();
-
         Email = Guard.AgainstNullOrWhiteSpace(email, nameof(email)).ToNormalizedEmail();
         PasswordHash = Guard.AgainstNullOrWhiteSpace(passwordHash, nameof(passwordHash));
         RoleId = Guard.AgainstDefault(roleId, nameof(roleId));
         Status = UserStatus.PendingEmail;
-        var now = DateTimeOffset.UtcNow;
-        CreatedAtUtc = now;
-        UpdatedAtUtc = now;
     }
 
     // --- Mutators  -------------------------------------------------------------
@@ -59,39 +51,37 @@ public class User : IAuditableEntity
         if (EmailVerifiedAt is null)
             throw new InvalidOperationException("Cannot activate before email verification.");
         Status = UserStatus.Active;
-        Touch();
-    }
-
-    private void Disable()
-    {
-        EnsureNotDeleted();
-        Status = UserStatus.Disabled;
-        Touch();
     }
 
     public void MarkPendingApproval()
     {
         EnsureNotDeleted();
+        if (Status == UserStatus.PendingApproval)
+            return;
+        
         if (EmailVerifiedAt is null)
             throw new InvalidOperationException("Cannot mark pending approval before email verification.");
         Status = UserStatus.PendingApproval;
-        Touch();
     }
     
     public void Deny()
     {
         EnsureNotDeleted();
+        if (Status == UserStatus.Denied)
+            return;
+        
         if (Status != UserStatus.PendingApproval)
             throw new InvalidOperationException("Can only deny from PendingApproval.");
         Status = UserStatus.Denied;
-        Touch();
     }
     
     public void MarkEmailVerified()
     {
         EnsureNotDeleted();
+        if (EmailVerifiedAt is not null)
+            return;
+        
         EmailVerifiedAt = DateTimeOffset.UtcNow;
-        Touch();
     }
     
     public void SetRole(Guid newRoleId)
@@ -100,13 +90,19 @@ public class User : IAuditableEntity
         var valid = Guard.AgainstDefault(newRoleId, nameof(newRoleId));
         if (valid == RoleId) return;
         RoleId = valid;
-        Touch();
+    }
+    
+    public void SetPasswordHash(string passwordHash)
+    {
+        EnsureNotDeleted();
+        var hash = Guard.AgainstNullOrWhiteSpace(passwordHash, nameof(passwordHash));
+        if (hash == PasswordHash) return;
+        PasswordHash = hash;
     }
     
     public void SetStatus(UserStatus status)
     {
         EnsureNotDeleted();
-        // No change — early exit
         if (Status == status)
             return;
 
@@ -117,50 +113,35 @@ public class User : IAuditableEntity
             case UserStatus.Denied:
                 Status = status;
                 break;
-
             case UserStatus.Active:
-                Activate();  // already enforces domain rules
+                Activate();  // enforces rules
                 break;
-
             case UserStatus.Disabled:
                 Disable();   // already enforces domain rules
                 break;
-
             default:
                 throw new ArgumentOutOfRangeException(nameof(status), status, "Unsupported user status transition.");
         }
-        
-        Touch();
     }
     
-    public void SetPasswordHash(string passwordHash)
-    {
-        EnsureNotDeleted();
-        var hash = Guard.AgainstNullOrWhiteSpace(passwordHash, nameof(passwordHash));
-        if (hash == PasswordHash) return;
-        PasswordHash = hash;
-        Touch();
-    }
-
-    public void SoftDelete()
-    {
-        if (DeletedAtUtc is not null) return;
-        DeletedAtUtc = DateTimeOffset.UtcNow;
-        UpdatedAtUtc = DeletedAtUtc.Value;
-    }
-
+    // Optional convenience: undo soft-delete (interceptor will bump Updated*)
     public void Restore()
     {
-        if (DeletedAtUtc is null) return;
+        if (DeletedAtUtc is null && DeletedById is null) return;
         DeletedAtUtc = null;
-        Touch();
+        DeletedById = null;
     }
 
+    // --- Helpers --------------------------------------------------------------
+    private void Disable()
+    {
+        EnsureNotDeleted();
+        Status = UserStatus.Disabled;
+    }
+    
     private void EnsureNotDeleted()
     {
         if (DeletedAtUtc is not null)
             throw new InvalidOperationException("Cannot mutate a soft-deleted user.");
     }
-
-    private void Touch() => UpdatedAtUtc = DateTimeOffset.UtcNow;
 }

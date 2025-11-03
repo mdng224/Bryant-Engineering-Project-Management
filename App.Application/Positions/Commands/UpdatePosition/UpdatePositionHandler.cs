@@ -17,15 +17,11 @@ public sealed class UpdatePositionHandler(IPositionWriter writer)
     public async Task<Result<PositionDto>> Handle(UpdatePositionCommand command, CancellationToken ct)
     {
         var positionId = command.PositionId;
-        
         var position = await writer.GetForUpdateAsync(positionId, ct);
         if (position is null)
-            return Fail<PositionDto>("not_found", "Position not found.");
+            return Fail<PositionDto>(code: "not_found", message: "Position not found.");
 
-        var changed = position.Update(command.Name, command.Code, command.RequiresLicense);
-
-        if (!changed)
-            return Ok(position.ToDto());
+        position.Update(command.Name, command.Code, command.RequiresLicense);
         
         try
         {
@@ -33,7 +29,9 @@ public sealed class UpdatePositionHandler(IPositionWriter writer)
         }
         catch (DbUpdateException)
         {
-            return Fail<PositionDto>("duplicate", "A position with the same unique field (e.g., code) already exists.");
+            return Fail<PositionDto>(
+                code: "duplicate",
+                message: "A position with the same unique field (e.g., code) already exists.");
         }
 
         return Ok(position.ToDto());

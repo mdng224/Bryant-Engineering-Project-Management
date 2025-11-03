@@ -32,6 +32,7 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
             .HasColumnType("timestamptz");
         
         b.ConfigureAuditable();
+        b.ConfigureSoftDeletable();
         
         // --- Relationships --------------------------------------------------
         b.HasOne(u => u.Role)

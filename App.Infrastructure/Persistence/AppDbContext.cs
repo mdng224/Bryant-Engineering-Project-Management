@@ -41,41 +41,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     // --- Model configuration -----------------------------------------------
     public override Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
-        var now = DateTimeOffset.UtcNow;
-
-        foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Added:
-                    entry.Property(nameof(IAuditableEntity.CreatedAtUtc)).CurrentValue = now;
-                    entry.Property(nameof(IAuditableEntity.UpdatedAtUtc)).CurrentValue = now;
-                    break;
-
-                case EntityState.Modified:
-                    // Prevent overwriting CreatedAtUtc on updates
-                    entry.Property(nameof(IAuditableEntity.CreatedAtUtc)).IsModified = false;
-                    entry.Property(nameof(IAuditableEntity.UpdatedAtUtc)).CurrentValue = now;
-                    break;
-
-                case EntityState.Deleted:
-                    // Soft delete: mark as modified and set DeletedAtUtc
-                    entry.State = EntityState.Modified;
-                    entry.Property(nameof(IAuditableEntity.DeletedAtUtc)).CurrentValue = now;
-                    entry.Property(nameof(IAuditableEntity.UpdatedAtUtc)).CurrentValue = now;
-                    break;
-
-                case EntityState.Detached:
-                case EntityState.Unchanged:
-                default:
-                    break;  // no-op
-            }
-        }
-
-        // Enforce immutable email invariant
+        // Keep domain invariants that are unrelated to auditing
         return ChangeTracker.Entries<User>()
-            .Any(ee => ee.State == EntityState.Modified && ee.Property(u => u.Email) .IsModified)
-            ? throw new InvalidOperationException("Email is immutable after creation.")
-            : base.SaveChangesAsync(ct);
+            .Any(e => e.State == EntityState.Modified && e.Property(u => u.Email).IsModified)
+            ? throw new InvalidOperationException("Email is immutable after creation.") : base.SaveChangesAsync(ct);
     }
 }

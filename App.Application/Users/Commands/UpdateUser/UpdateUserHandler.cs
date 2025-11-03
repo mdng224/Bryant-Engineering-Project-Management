@@ -40,7 +40,7 @@ public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWr
     private static void ApplyStatusChange(User user, UpdateUserCommand cmd)
     {
         if (cmd.Status is not { } status) return;
-        user.SetStatus(status); // domain encapsulates all transition rules + Touch()
+        user.SetStatus(status);
     }
     
     private static void ApplyRoleChange(User user, Intent intent)

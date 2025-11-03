@@ -5,7 +5,9 @@ using App.Application.Abstractions.Security;
 using App.Infrastructure.Auth;
 using App.Infrastructure.Background;
 using App.Infrastructure.Email;
+using App.Infrastructure.Identity;
 using App.Infrastructure.Persistence;
+using App.Infrastructure.Persistence.Interceptors;
 using App.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -25,15 +27,20 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException(
                 "No connection string found. Set ConnectionStrings:appdb or Aspire:Npgsql:ConnectionString.");
 
-        // Build ONE shared pool/data source and reuse it everywhere
         var dataSource = new NpgsqlDataSourceBuilder(connectionString).Build();
+        
         services.AddSingleton(dataSource);
 
+        // --- Current user + audit interceptor (per-request) ---
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+        services.AddScoped<AuditSaveChangesInterceptor>();
+        
         // --- DbContext (single registration) ---
-        services.AddDbContextPool<AppDbContext>(o =>
+        services.AddDbContext<AppDbContext>((sp, o) =>
         {
             o.UseNpgsql(dataSource, npgsql => npgsql.EnableRetryOnFailure());
-            // Optional: o.UseSnakeCaseNamingConvention();
+            o.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
         });
 
         // --- Repositories / Data access ---

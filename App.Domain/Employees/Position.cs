@@ -1,16 +1,27 @@
 ﻿using App.Domain.Common;
+using App.Domain.Common.Abstractions;
 
 namespace App.Domain.Employees;
 
-public sealed class Position
+public sealed class Position : IAuditableEntity, ISoftDeletable
 {
     // --- Key ----------------------------------------------------------------
-    public Guid Id { get; private set; }
+    public Guid Id                     { get; private set; }
     
     // --- Data --------------------------------------------------------------
-    public string Name { get; private set; } = null!;
-    public string? Code { get; private set; }
-    public bool RequiresLicense { get; private set; }
+    public string Name                 { get; private set; } = null!;
+    public string? Code                { get; private set; }
+    public bool RequiresLicense        { get; private set; }
+    
+    // --- Auditing ----------------------------------------------------------
+    public DateTimeOffset CreatedAtUtc  { get; private set; }
+    public DateTimeOffset UpdatedAtUtc  { get; private set; }
+    public DateTimeOffset? DeletedAtUtc { get; private set; }
+
+    public Guid? CreatedById            { get; private set; }
+    public Guid? UpdatedById            { get; private set; }
+    public Guid? DeletedById            { get; private set; }
+    public bool IsDeleted => DeletedAtUtc.HasValue;
     
     // --- Constructors -------------------------------------------------------
     private Position() { }
@@ -23,33 +34,28 @@ public sealed class Position
 
     // --- Seeding helper -----------------------------------------------------
     public static Position CreateSeed(Guid id, string name, string? code = null, bool requiresLicense = false)
-    {
-        var position = new Position(name, code, requiresLicense)
-        {
-            Id = id
-        };
-        return position;
-    }
+        => new(name, code, requiresLicense) { Id = id };
 
     // --- Single intent method ----------------------------------------------
     /// <summary>Updates all fields at once. Returns true if anything changed.</summary>
-    public bool Update(string name, string? code, bool requiresLicense)
-        => SetCore(name, code, requiresLicense);
+    public void Update(string name, string? code, bool requiresLicense)
+    {
+        EnsureNotDeleted();
+        SetCore(name, code, requiresLicense);
+    }
 
     // --- Core logic (single source of truth) --------------------------------
-    private bool SetCore(string name, string? code, bool requiresLicense)
+    private void SetCore(string name, string? code, bool requiresLicense)
     {
-        var newName = Guard.AgainstNullOrWhiteSpace(name, nameof(name)).ToNormalizedName();
-        // If you have a dedicated normalizer for codes, use it here:
-        // var newCode = string.IsNullOrWhiteSpace(code) ? null : code.ToNormalizedCode();
-        var newCode = string.IsNullOrWhiteSpace(code) ? null : code.ToNormalizedName();
+        Name = Guard.AgainstNullOrWhiteSpace(name, nameof(name)).ToNormalizedName();
+        Code = string.IsNullOrWhiteSpace(code) ? null : code.Trim().ToUpperInvariant();
+        RequiresLicense = requiresLicense;
+    }
 
-        var changed = false;
-
-        if (newName != Name) { Name = newName; changed = true; }
-        if (newCode != Code) { Code = newCode; changed = true; }
-        if (requiresLicense != RequiresLicense) { RequiresLicense = requiresLicense; changed = true; }
-
-        return changed;
+    // --- Helpers --------------------------------------------------------------
+    private void EnsureNotDeleted()
+    {
+        if (DeletedAtUtc is not null)
+            throw new InvalidOperationException("Cannot mutate a soft-deleted position.");
     }
 }

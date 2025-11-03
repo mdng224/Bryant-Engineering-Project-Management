@@ -4,13 +4,13 @@ using App.Domain.Common.Abstractions;
 namespace App.Domain.Employees;
 
 /// <summary>Represents a company employee linked (optionally) 1:1 to a User.</summary>
-public sealed class Employee : IAuditableEntity
+public sealed class Employee : IAuditableEntity, ISoftDeletable
 {
     // --- Key ----------------------------------------------------------------
     public Guid Id { get; private set; } 
     
     // --- Link to User -------------------------------------------------------
-    public Users.User? User { get; private set; } = null!;
+    public Users.User? User { get; private set; }
     public Guid? UserId { get; private set; }
     
     // --- Identity -----------------------------------------------------------
@@ -18,40 +18,40 @@ public sealed class Employee : IAuditableEntity
     public string LastName { get; private set; } = null!;
     public string? PreferredName { get; private set; }
     
-    // --- Employment ---------------------------------------------------------
-    public EmploymentType? EmploymentType { get; private set; }     // FullTime / PartTime
-    public SalaryType? SalaryType { get; private set; }             // Salary / Hourly
-    public DateTimeOffset? HireDate { get; private set; }
-    public DateTimeOffset? EndDate { get; private set; }            // null => active
+    // --- Employment --------------------------------------------------------
+    public EmploymentType? EmploymentType { get; private set; }   // FullTime / PartTime
+    public SalaryType?     SalaryType     { get; private set; }   // Salary / Hourly
+    public DateTimeOffset? HireDate       { get; private set; }
+    public DateTimeOffset? EndDate        { get; private set; }   // null => active
     
     // --- Organization -------------------------------------------------------
     public DepartmentType? Department { get; private set; }
     private readonly List<EmployeePosition> _positions = [];
     public IReadOnlyCollection<EmployeePosition> Positions => _positions.AsReadOnly();
     
-    // --- Contact / Misc -----------------------------------------------------
-    public Address? Address { get; private set; }
-    public string? CompanyEmail { get; private set; }               // optional, used to auto-link at registration
-    public string? WorkLocation { get; private set; }               // or OfficeId if you add Office
-    public string? Notes { get; private set; }
-    
-    /// <summary>
-    /// Recommended role to apply to the new User created for this employee.
-    /// Nullable: you can be preapproved without changing default role, or recommend without preapproval.
-    /// </summary>
+
+    // --- Contact / Misc ----------------------------------------------------
+    public Address?  Address       { get; private set; }
+    public string?   CompanyEmail  { get; private set; } // may auto-link at registration
+    public string?   WorkLocation  { get; private set; }
+    public string?   Notes         { get; private set; }
+
+    /// <summary>Role to apply if/when a User is created for this employee.</summary>
     public Guid? RecommendedRoleId { get; private set; }
 
-    /// <summary>
-    /// If true, after email verification a registering user with matching CompanyEmail can be activated immediately.
-    /// </summary>
-    public bool IsPreapproved { get; private set; }
+    /// <summary>If true, a registering user with matching CompanyEmail can be auto-activated.</summary>
+    public bool IsPreapproved      { get; private set; }
     
-    /* TODO: figure out rates later with Andy */
-    
-    // --- Auditing ------------------------------------------------------------
-    public DateTimeOffset CreatedAtUtc { get; }
-    public DateTimeOffset UpdatedAtUtc { get; private set; }
+    // --- Auditing ----------------------------------------------------------
+    public DateTimeOffset CreatedAtUtc  { get; private set; }
+    public DateTimeOffset UpdatedAtUtc  { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
+
+    public Guid? CreatedById            { get; private set; }
+    public Guid? UpdatedById            { get; private set; }
+    public Guid? DeletedById            { get; private set; }
+
+    public bool IsDeleted => DeletedAtUtc.HasValue;
 
     // --- Constructors -------------------------------------------------------
     private Employee() { }
@@ -66,9 +66,6 @@ public sealed class Employee : IAuditableEntity
             UserId = Guard.AgainstDefault(userId.Value, nameof(userId));
 
         HireDate = hireDate;
-        var now = DateTimeOffset.UtcNow;
-        CreatedAtUtc = now;
-        UpdatedAtUtc = now;
     }
     
     // inside App.Domain.Employees.Employee
@@ -78,21 +75,19 @@ public sealed class Employee : IAuditableEntity
         Id = id; // overwrite the v7 with your deterministic seed id
     }
     
-    // --- Mutators (guarded, touch) -----------------------------------------
+    // --- Mutators -----------------------------------------
     public void SetName(string first, string last, string? preferred = null)
     {
         EnsureNotDeleted();
         FirstName = Guard.AgainstNullOrWhiteSpace(first, nameof(first)).ToNormalizedName();
         LastName = Guard.AgainstNullOrWhiteSpace(last, nameof(last)).ToNormalizedName();
         PreferredName = string.IsNullOrWhiteSpace(preferred) ? null : preferred.ToNormalizedName();
-        Touch();
     }
 
     public void SetPreferredName(string? preferred)
     {
         EnsureNotDeleted();
         PreferredName = string.IsNullOrWhiteSpace(preferred) ? null : preferred.ToNormalizedName();
-        Touch();
     }
     
     public EmployeePosition AddPosition(Guid positionId)
@@ -106,7 +101,7 @@ public sealed class Employee : IAuditableEntity
 
         var ep = new EmployeePosition(Id, validPositionId);
         _positions.Add(ep);
-        Touch();
+
         return ep;
     }
 
@@ -118,7 +113,6 @@ public sealed class Employee : IAuditableEntity
         if (ep is null) return;
 
         _positions.Remove(ep);
-        Touch();
     }
 
     public void LinkUser(Guid userId)
@@ -127,7 +121,6 @@ public sealed class Employee : IAuditableEntity
         var valid = Guard.AgainstDefault(userId, nameof(userId));
         if (UserId == valid) return;
         UserId = valid;
-        Touch();
     }
 
     public void UnlinkUser()
@@ -135,7 +128,6 @@ public sealed class Employee : IAuditableEntity
         EnsureNotDeleted();
         if (UserId is null) return;
         UserId = null;
-        Touch();
     }
     
     public void RecommendRole(Guid? roleId)
@@ -143,7 +135,6 @@ public sealed class Employee : IAuditableEntity
         EnsureNotDeleted();
         if (roleId is { } r) Guard.AgainstDefault(r, nameof(roleId));
         RecommendedRoleId = roleId;
-        Touch();
     }
 
     public void SetAddress(Address? address)
@@ -157,7 +148,7 @@ public sealed class Employee : IAuditableEntity
                 return;
             case null when Address is not null:
                 Address = null;
-                Touch();
+        
                 return;
         }
 
@@ -176,7 +167,6 @@ public sealed class Employee : IAuditableEntity
             return;
 
         Address = newAddress;
-        Touch();
     }
     
     public void SetPreapproved(bool isPreapproved)
@@ -185,28 +175,24 @@ public sealed class Employee : IAuditableEntity
         if (isPreapproved && string.IsNullOrWhiteSpace(CompanyEmail))
             throw new InvalidOperationException("Cannot preapprove an employee without a company email.");
         IsPreapproved = isPreapproved;
-        Touch();
     }
 
     public void SetEmployment(EmploymentType? type, SalaryType? pay)
     {
         EnsureNotDeleted();
         (EmploymentType, SalaryType) = (type, pay);
-        Touch();
     }
 
     public void SetDates(DateTimeOffset? hire, DateTimeOffset? end)
     {
         EnsureNotDeleted();
         (HireDate, EndDate) = (hire, end);
-        Touch();
     }
 
     public void SetDepartment(DepartmentType? dept)
     {
         EnsureNotDeleted();
         Department = dept;
-        Touch();
     }
 
     public void SetCompanyEmail(string? email)
@@ -221,22 +207,18 @@ public sealed class Employee : IAuditableEntity
         {
             IsPreapproved = false;
         }
-
-        Touch();
     }
 
     public void SetWorkLocation(string? location)
     {
         EnsureNotDeleted();
         WorkLocation = location.ToNormalizedAddressLine();
-        Touch();
     }
 
     public void SetNotes(string? notes)
     {
         EnsureNotDeleted();
         Notes = notes.ToNormalizedNote();
-        Touch();
     }
 
     // --- Lifecycle ----------------------------------------------------------
@@ -251,7 +233,6 @@ public sealed class Employee : IAuditableEntity
     {
         if (DeletedAtUtc is null) return;
         DeletedAtUtc = null;
-        Touch();
     }
 
     // --- Helpers ------------------------------------------------------------
@@ -260,6 +241,4 @@ public sealed class Employee : IAuditableEntity
         if (DeletedAtUtc is not null)
             throw new InvalidOperationException("Cannot mutate a soft-deleted employee.");
     }
-
-    private void Touch() => UpdatedAtUtc = DateTimeOffset.UtcNow;
 }

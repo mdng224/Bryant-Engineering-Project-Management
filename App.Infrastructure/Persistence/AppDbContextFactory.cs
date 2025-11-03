@@ -29,10 +29,9 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
             dir = Directory.GetParent(dir)?.FullName;
         }
 
-        if (dir is null)
-            throw new InvalidOperationException("Could not locate solution root containing 'App.Api'.");
-
-        return Path.Combine(dir, "App.Api");
+        return dir is null
+            ? throw new InvalidOperationException("Could not locate solution root containing 'App.Api'.")
+            : Path.Combine(dir, "App.Api");
     }
 
     private static IConfiguration BuildConfiguration(string apiPath)

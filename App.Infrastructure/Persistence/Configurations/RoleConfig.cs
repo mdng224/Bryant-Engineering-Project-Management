@@ -29,8 +29,5 @@ public sealed class RoleConfig : IEntityTypeConfiguration<Role>
         b.HasIndex(r => r.Name)
             .IsUnique()
             .HasDatabaseName("ux_roles_name");
-        
-        // --- Design-time seed ------------------------------------------
-        b.HasData(RoleSeedFactory.All);
     }
 }

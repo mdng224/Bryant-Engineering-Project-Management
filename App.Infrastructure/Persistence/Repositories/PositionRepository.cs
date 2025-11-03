@@ -1,5 +1,4 @@
-﻿using App.Application.Abstractions;
-using App.Application.Abstractions.Persistence;
+﻿using App.Application.Abstractions.Persistence;
 using App.Domain.Employees;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -8,12 +7,9 @@ namespace App.Infrastructure.Persistence.Repositories;
 
 public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWriter
 {
-    private const int MaxPageSize = 200;
-    
     // -------------------- Readers --------------------
     public async Task<IReadOnlyList<Position>> GetAllAsync(CancellationToken ct = default)
     {
-        // Stable, no-tracking read for listing and mapping
         var positions = await db.Positions
             .AsNoTracking()
             .OrderBy(p => p.Name)

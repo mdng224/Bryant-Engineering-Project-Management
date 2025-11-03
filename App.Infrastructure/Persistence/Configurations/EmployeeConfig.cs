@@ -65,7 +65,9 @@ public sealed class EmployeeConfig : IEntityTypeConfiguration<Employee>
         b.Property(e => e.HireDate).HasColumnName("hire_date").HasColumnType("timestamptz");
         b.Property(e => e.EndDate).HasColumnName("end_date").HasColumnType("timestamptz");
         b.Property(e => e.Department).HasColumnName("department");
+        
         b.ConfigureAuditable();
+        b.ConfigureSoftDeletable();
         
         // --- Relationships --------------------------------------------------
         b.OwnsAddress();

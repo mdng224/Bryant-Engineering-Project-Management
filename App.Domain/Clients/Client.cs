@@ -3,57 +3,53 @@ using App.Domain.Common.Abstractions;
 
 namespace App.Domain.Clients;
 
-public sealed class Client : IAuditableEntity
+public sealed class Client : IAuditableEntity, ISoftDeletable
 {
     // --- Key ------------------------------------------------------------------
     public Guid Id { get; private set; }
 
     // --- Core Fields ----------------------------------------------------------
     
-    // Company name is required, if First Name and Last Name are left blank
-    public string? CompanyName { get; private set; }   
-    public string? FirstName { get; private set; }
-    public string? MiddleName { get; private set; }
-    public string? LastName { get; private set; }
-    public string? Email { get; private set; }
-    public string? Phone { get; private set; }
-    public Address? Address { get; private set; }
-    public string? Note { get; private set; }
+    // Company name is required if FirstName and LastName are both blank
+    public string? CompanyName { get; private set; }
+    public string? FirstName   { get; private set; }
+    public string? MiddleName  { get; private set; }
+    public string? LastName    { get; private set; }
+    public string? Email       { get; private set; }
+    public string? Phone       { get; private set; }
+    public Address? Address    { get; private set; }
+    public string? Note        { get; private set; }
 
-    // --- Auditing ------------------------------------------------------------
-    public DateTimeOffset CreatedAtUtc { get; }
-    public DateTimeOffset UpdatedAtUtc { get; private set; }
+    // --- Auditing ----------------------------------------------------------
+    public DateTimeOffset CreatedAtUtc  { get; private set; }
+    public DateTimeOffset UpdatedAtUtc  { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
 
-    // TODO: add projects when that domain is ready
-    // public ICollection<Project> Projects { get; } = new List<Project>();
-    private readonly bool _suppressTouch;
+    public Guid? CreatedById            { get; private set; }
+    public Guid? UpdatedById            { get; private set; }
+    public Guid? DeletedById            { get; private set; }
+
+    public bool IsDeleted => DeletedAtUtc.HasValue;
     
     // --- Constructors --------------------------------------------------------
     private Client() { } // EF
+
     public Client(
-        string? email = null,
+        string? email       = null,
         string? companyName = null,
-        string? firstName = null,
-        string? lastName = null,
-        string? middleName = null,
-        string? phone = null,
-        Address? address = null,
-        string? note = null)
+        string? firstName   = null,
+        string? lastName    = null,
+        string? middleName  = null,
+        string? phone       = null,
+        Address? address    = null,
+        string? note        = null)
     {
         Id = Guid.CreateVersion7();
 
-        _suppressTouch = true;
-
+        // normalize + apply rule via core setters
         SetContactInfoInternal(companyName, firstName, lastName, middleName, email, phone);
         SetAddressInternal(address);
         SetNoteInternal(note);
-
-        var now = DateTimeOffset.UtcNow;
-        CreatedAtUtc = now;
-        UpdatedAtUtc = now;
-
-        _suppressTouch = false;
     }
 
     // --- Public Mutators ------------------------------------------------------
@@ -66,40 +62,23 @@ public sealed class Client : IAuditableEntity
         string? phone)
     {
         EnsureNotDeleted();
-        var changed = SetContactInfoInternal(companyName, firstName, lastName, middleName, email, phone);
-        if (changed) Touch();
+        SetContactInfoInternal(companyName, firstName, lastName, middleName, email, phone);
     }
 
     public void SetAddress(Address? address)
     {
         EnsureNotDeleted();
-        var changed = SetAddressInternal(address);
-        if (changed) Touch();
+        SetAddressInternal(address);
     }
 
     public void SetNote(string? note)
     {
         EnsureNotDeleted();
-        var changed = SetNoteInternal(note);
-        if (changed) Touch();
-    }
-
-    public void SoftDelete()
-    {
-        if (DeletedAtUtc is not null) return;
-        DeletedAtUtc = DateTimeOffset.UtcNow;
-        UpdatedAtUtc = DeletedAtUtc.Value;
-    }
-
-    public void Restore()
-    {
-        if (DeletedAtUtc is null) return;
-        DeletedAtUtc = null;
-        Touch();
+        SetNoteInternal(note);
     }
 
     // --- Core Setters ---------------------------------------------------------
-    private bool SetContactInfoInternal(
+    private void SetContactInfoInternal(
         string? companyName,
         string? firstName,
         string? lastName,
@@ -107,7 +86,7 @@ public sealed class Client : IAuditableEntity
         string? email,
         string? phone)
     {
-        var newEmail   = string.IsNullOrWhiteSpace(email) ? null : email.ToNormalizedEmail();
+        var newEmail   = string.IsNullOrWhiteSpace(email)       ? null : email.ToNormalizedEmail();
         var newCompany = string.IsNullOrWhiteSpace(companyName) ? null : companyName.ToNormalizedName();
         var newFirst   = string.IsNullOrWhiteSpace(firstName)   ? null : firstName.ToNormalizedName();
         var newLast    = string.IsNullOrWhiteSpace(lastName)    ? null : lastName.ToNormalizedName();
@@ -118,48 +97,39 @@ public sealed class Client : IAuditableEntity
         if (newFirst is null && newLast is null && newCompany is null)
             throw new InvalidOperationException("CompanyName is required when both FirstName and LastName are blank.");
 
-        var changed = false;
-
-        if (newCompany != CompanyName) { CompanyName = newCompany; changed = true; }
-        if (newFirst   != FirstName)   { FirstName   = newFirst;   changed = true; }
-        if (newLast    != LastName)    { LastName    = newLast;    changed = true; }
-        if (newMiddle  != MiddleName)  { MiddleName  = newMiddle;  changed = true; }
-        if (newEmail   != Email)       { Email       = newEmail;   changed = true; }
-        if (newPhone   != Phone)       { Phone       = newPhone;   changed = true; }
-
-        return changed;
+        if (newCompany != CompanyName) CompanyName = newCompany;
+        if (newFirst   != FirstName)   FirstName   = newFirst;
+        if (newLast    != LastName)    LastName    = newLast;
+        if (newMiddle  != MiddleName)  MiddleName  = newMiddle;
+        if (newEmail   != Email)       Email       = newEmail;
+        if (newPhone   != Phone)       Phone       = newPhone;
     }
 
-    private bool SetAddressInternal(Address? address)
+    private void SetAddressInternal(Address? address)
     {
         if (address is null)
         {
-            if (Address is null) return false;
+            if (Address is null) return;
             Address = null;
-            return true;
+            return;
         }
 
-        var line1 = address.Line1.ToNormalizedAddressLine();
-        var line2 = address.Line2.ToNormalizedAddressLine();
-        var city = address.City.ToNormalizedCity();
-        var state = address.State.ToNormalizedState();
+        var line1      = address.Line1.ToNormalizedAddressLine();
+        var line2      = address.Line2.ToNormalizedAddressLine();
+        var city       = address.City.ToNormalizedCity();
+        var state      = address.State.ToNormalizedState();
         var postalCode = address.PostalCode.ToNormalizedPostal();
 
         var newAddress = new Address(line1, line2, city, state, postalCode);
-
-        if (Address == newAddress) return false;
-
+        if (Address == newAddress) return;
         Address = newAddress;
-        return true;
     }
 
-    private bool SetNoteInternal(string? note)
+    private void SetNoteInternal(string? note)
     {
         var normalized = note.ToNormalizedNote();
-        if (normalized == Note) return false;
-
+        if (normalized == Note) return;
         Note = normalized;
-        return true;
     }
 
     // --- Helpers --------------------------------------------------------------
@@ -167,11 +137,5 @@ public sealed class Client : IAuditableEntity
     {
         if (DeletedAtUtc is not null)
             throw new InvalidOperationException("Cannot mutate a soft-deleted client.");
-    }
-
-    private void Touch()
-    {
-        if (_suppressTouch) return;
-        UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 }

@@ -3,9 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
-namespace App.Infrastructure.Data.Migrations
+namespace App.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -30,9 +28,12 @@ namespace App.Infrastructure.Data.Migrations
                     Address_State = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     Address_PostalCode = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
                     note = table.Column<string>(type: "text", nullable: true),
-                    created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
-                    deleted_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true)
+                    DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    created_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    updated_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    DeletedById = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -79,7 +80,13 @@ namespace App.Infrastructure.Data.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     code = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: true),
-                    requires_license = table.Column<bool>(type: "boolean", nullable: false)
+                    requires_license = table.Column<bool>(type: "boolean", nullable: false),
+                    created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    deleted_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    created_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    updated_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    deleted_by_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -108,9 +115,12 @@ namespace App.Infrastructure.Data.Migrations
                     role_id = table.Column<Guid>(type: "uuid", nullable: false),
                     email_verified_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
                     status = table.Column<string>(type: "text", nullable: false),
-                    created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
-                    deleted_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true)
+                    deleted_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    created_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    updated_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    deleted_by_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -147,9 +157,12 @@ namespace App.Infrastructure.Data.Migrations
                     notes = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     recommended_role_id = table.Column<Guid>(type: "uuid", nullable: true),
                     is_preapproved = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
-                    deleted_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true)
+                    deleted_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    created_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    updated_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    deleted_by_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -196,36 +209,6 @@ namespace App.Infrastructure.Data.Migrations
                         principalTable: "positions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.InsertData(
-                table: "positions",
-                columns: new[] { "id", "code", "name", "requires_license" },
-                values: new object[,]
-                {
-                    { new Guid("11111111-1111-1111-1111-111111111111"), "PIC", "Principal-In-Charge", true },
-                    { new Guid("22222222-2222-2222-2222-222222222222"), "PE", "Project Engineer", true },
-                    { new Guid("33333333-3333-3333-3333-333333333333"), "PLS", "Professional Land Surveyor", true },
-                    { new Guid("44444444-4444-4444-4444-444444444444"), "LSIT", "Land Surveyor In Training", true },
-                    { new Guid("55555555-5555-5555-5555-555555555555"), "SPC", "Survey Party Chief", false },
-                    { new Guid("66666666-6666-6666-6666-666666666666"), "Eng Intern", "Engineering Intern", false },
-                    { new Guid("77777777-7777-7777-7777-777777777777"), "Rodman", "Rodman", false },
-                    { new Guid("88888888-8888-8888-8888-888888888888"), "OfficeMgr", "Office Manager", false },
-                    { new Guid("99999999-9999-9999-9999-999999999999"), "Draft Tech", "Drafting Technician", false },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), "Eng Tech", "Engineering Technician", false },
-                    { new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), "Sr Draft Tech", "Senior Drafting Technician", false },
-                    { new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"), "EIT", "Engineer-In-Training", false },
-                    { new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"), "Remote PIC", "Remote Pilot In Command", false }
-                });
-
-            migrationBuilder.InsertData(
-                table: "roles",
-                columns: new[] { "id", "name" },
-                values: new object[,]
-                {
-                    { new Guid("11111111-1111-1111-1111-111111111111"), "Administrator" },
-                    { new Guid("22222222-2222-2222-2222-222222222222"), "Manager" },
-                    { new Guid("33333333-3333-3333-3333-333333333333"), "User" }
                 });
 
             migrationBuilder.CreateIndex(

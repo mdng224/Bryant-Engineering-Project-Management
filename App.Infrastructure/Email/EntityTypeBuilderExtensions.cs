@@ -24,6 +24,9 @@ public static class EntityTypeBuilderExtensions
             });
     }
     
+    /// <summary>
+    /// Configures audit columns for entities implementing <see cref="IAuditableEntity"/>.
+    /// </summary>
     public static void ConfigureAuditable<TEntity>(this EntityTypeBuilder<TEntity> builder)
         where TEntity : class, IAuditableEntity
     {
@@ -31,15 +34,38 @@ public static class EntityTypeBuilderExtensions
             .HasColumnName("created_at_utc")
             .IsRequired()
             .HasColumnType("timestamptz")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            .ValueGeneratedNever();
 
         builder.Property(u => u.UpdatedAtUtc)
             .HasColumnName("updated_at_utc")
             .IsRequired()
-            .HasColumnType("timestamptz");
+            .HasColumnType("timestamptz")
+            .ValueGeneratedNever();
 
-        builder.Property(u => u.DeletedAtUtc)
+        builder.Property(u => u.CreatedById)
+            .HasColumnName("created_by_id")
+            .HasColumnType("uuid")
+            .IsRequired(false);
+
+        builder.Property(u => u.UpdatedById)
+            .HasColumnName("updated_by_id")
+            .HasColumnType("uuid")
+            .IsRequired(false);
+    }
+    
+    /// <summary>
+    /// Configures soft-deletion columns for entities implementing <see cref="ISoftDeletable"/>.
+    /// </summary>
+    public static void ConfigureSoftDeletable<TEntity>(this EntityTypeBuilder<TEntity> builder)
+        where TEntity : class, ISoftDeletable
+    {
+        builder.Property(e => e.DeletedAtUtc)
             .HasColumnName("deleted_at_utc")
             .HasColumnType("timestamptz");
+
+        builder.Property(e => e.DeletedById)
+            .HasColumnName("deleted_by_id")
+            .HasColumnType("uuid")
+            .IsRequired(false);
     }
 }

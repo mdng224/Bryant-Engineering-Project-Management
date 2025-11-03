@@ -1,4 +1,5 @@
 ﻿using App.Domain.Employees;
+using App.Infrastructure.Email;
 using App.Infrastructure.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -31,6 +32,9 @@ public sealed class PositionConfig : IEntityTypeConfiguration<Position>
             .HasColumnName("requires_license")
             .IsRequired();
         
+        b.ConfigureAuditable();
+        b.ConfigureSoftDeletable();
+        
         // --- Indexes / Uniqueness ------------------------------------------
         b.HasIndex(p => p.Name)
             .IsUnique()
@@ -39,8 +43,5 @@ public sealed class PositionConfig : IEntityTypeConfiguration<Position>
         b.HasIndex(p => p.Code)
             .IsUnique()
             .HasDatabaseName("ix_positions_code");
-        
-        // --- Design-time seed ------------------------------------------
-        b.HasData(PositionSeedFactory.All);
     }
 }
