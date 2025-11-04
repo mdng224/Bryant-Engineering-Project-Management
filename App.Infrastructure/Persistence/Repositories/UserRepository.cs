@@ -1,5 +1,6 @@
 ﻿using App.Application.Abstractions;
 using App.Application.Abstractions.Persistence;
+using App.Domain.Common.Abstractions;
 using App.Domain.Security;
 using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,25 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
     {
         await db.Users.AddAsync(user, ct);
         await db.SaveChangesAsync(ct);
+    }
+
+    public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken ct)
+    {
+        var user = await db.Users.FindAsync([id], ct);
+
+        return user switch
+        {
+            null => false,
+            ISoftDeletable { DeletedAtUtc: not null } => true,
+            _ => await HandleSoftDeleteAsync(user, ct)
+        };
+        
+        async Task<bool> HandleSoftDeleteAsync(User entity, CancellationToken token)
+        {
+            db.Users.Remove(entity);      // interceptor flips to soft-delete
+            await SaveChangesAsync(token);
+            return true;
+        }
     }
 
     public Task<User?> GetForUpdateAsync(Guid id, CancellationToken ct) =>

@@ -68,9 +68,9 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
         tombstone.ReviveAndUpdate(position.Name, position.Code, position.RequiresLicense);
     }
 
-    public async Task<bool> SoftDeleteAsync(Guid positionId, CancellationToken ct = default)
+    public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken ct = default)
     {
-        var position = await db.Positions.FindAsync([positionId], ct);
+        var position = await db.Positions.FindAsync([id], ct);
 
         return position switch
         {
@@ -87,8 +87,8 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
         }
     }
     
-    public async Task<Position?> GetForUpdateAsync(Guid positionId, CancellationToken ct) =>
-        await db.Positions.FirstOrDefaultAsync(p => p.Id == positionId, ct);
+    public async Task<Position?> GetForUpdateAsync(Guid id, CancellationToken ct) =>
+        await db.Positions.FirstOrDefaultAsync(p => p.Id == id, ct);
 
     public Task<int> SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 }

@@ -3,12 +3,11 @@ using App.Application.Abstractions.Persistence;
 using App.Application.Common.Results;
 using static App.Application.Common.R;
 
-namespace App.Application.Positions.Commands.DeletePosition;
+namespace App.Application.Users.Commands.DeleteUser;
 
-public class DeletePositionHandler(IPositionWriter writer)
-    : ICommandHandler<DeletePositionCommand, Result<Unit>>
+public sealed class DeleteUserHandler(IUserWriter writer) : ICommandHandler<DeleteUserCommand, Result<Unit>>
 {
-    public async Task<Result<Unit>> Handle(DeletePositionCommand command, CancellationToken ct)
+    public async Task<Result<Unit>> Handle(DeleteUserCommand command, CancellationToken ct)
     {
         var deleted = await writer.SoftDeleteAsync(command.Id, ct);
         
