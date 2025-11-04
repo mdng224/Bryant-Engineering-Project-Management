@@ -370,10 +370,6 @@ namespace App.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasDatabaseName("ix_positions_code");
-
                     b.HasIndex("Name")
                         .IsUnique()
                         .HasDatabaseName("ix_positions_name");

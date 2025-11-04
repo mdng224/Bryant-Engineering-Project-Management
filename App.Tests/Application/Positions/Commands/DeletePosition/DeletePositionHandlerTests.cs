@@ -14,7 +14,7 @@ public class DeletePositionHandlerTests
             var writer = new Mock<IPositionWriter>();
             var id = Guid.NewGuid();
 
-            writer.Setup(w => w.DeleteAsync(id, It.IsAny<CancellationToken>()))
+            writer.Setup(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()))
                   .ReturnsAsync(true);
 
             var handler = new DeletePositionHandler(writer.Object);
@@ -27,7 +27,7 @@ public class DeletePositionHandlerTests
             result.IsSuccess.Should().BeTrue();
             result.Value.Should().NotBeNull();
 
-            writer.Verify(w => w.DeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+            writer.Verify(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
             writer.VerifyNoOtherCalls();
         }
 
@@ -38,7 +38,7 @@ public class DeletePositionHandlerTests
             var writer = new Mock<IPositionWriter>();
             var id = Guid.NewGuid();
 
-            writer.Setup(w => w.DeleteAsync(id, It.IsAny<CancellationToken>()))
+            writer.Setup(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()))
                   .ReturnsAsync(false);
 
             var handler = new DeletePositionHandler(writer.Object);
@@ -52,7 +52,7 @@ public class DeletePositionHandlerTests
             result.Error.Should().NotBeNull();
             result.Error!.Value.Code.Should().Be("not_found");
 
-            writer.Verify(w => w.DeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+            writer.Verify(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
             writer.VerifyNoOtherCalls();
         }
 
@@ -63,7 +63,7 @@ public class DeletePositionHandlerTests
             var writer = new Mock<IPositionWriter>();
             var id = Guid.NewGuid();
 
-            writer.Setup(w => w.DeleteAsync(id, It.IsAny<CancellationToken>()))
+            writer.Setup(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()))
                   .ThrowsAsync(new InvalidOperationException("boom"));
 
             var handler = new DeletePositionHandler(writer.Object);
@@ -76,6 +76,6 @@ public class DeletePositionHandlerTests
             await act.Should().ThrowAsync<InvalidOperationException>()
                      .WithMessage("*boom*");
 
-            writer.Verify(w => w.DeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+            writer.Verify(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
         }
 }

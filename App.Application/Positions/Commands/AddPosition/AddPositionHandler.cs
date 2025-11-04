@@ -16,11 +16,12 @@ public class AddPositionHandler(IPositionWriter writer)
     public async Task<Result<PositionDto>> Handle(AddPositionCommand command, CancellationToken ct)
     {
         var position = command.ToDomain();
-        await writer.AddAsync(position, ct);
         
         try
         {
+            await writer.AddAsync(position, ct);
             await writer.SaveChangesAsync(ct);
+            return Ok(position.ToDto());
         }
         catch (DbUpdateException)
         {
@@ -29,8 +30,5 @@ public class AddPositionHandler(IPositionWriter writer)
                 message: "A position with the same name or code already exists.");
         }
 
-        var positionDto = position.ToDto();
-        
-        return Ok(positionDto);
     }
 }

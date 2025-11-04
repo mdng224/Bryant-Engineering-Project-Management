@@ -268,12 +268,6 @@ namespace App.Infrastructure.Persistence.Migrations
                 column: "processed_at_utc");
 
             migrationBuilder.CreateIndex(
-                name: "ix_positions_code",
-                table: "positions",
-                column: "code",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "ix_positions_name",
                 table: "positions",
                 column: "name",

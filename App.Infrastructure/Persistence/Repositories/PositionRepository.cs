@@ -1,4 +1,6 @@
-﻿using App.Application.Abstractions.Persistence;
+﻿using System.Reflection.Metadata;
+using App.Application.Abstractions.Persistence;
+using App.Domain.Common.Abstractions;
 using App.Domain.Employees;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -25,10 +27,10 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
         CancellationToken ct = default)
     {
         var query = db.Positions.AsNoTracking();
-        // check last, first, and nickname
+        
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {
-            var pattern = $"%{normalizedNameFilter.Trim()}%";
+            var pattern = $"%{normalizedNameFilter}%";
             query = query.Where(p => EF.Functions.ILike(p.Name, pattern));
         }
         
@@ -47,31 +49,46 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
     
     // -------------------- Writers --------------------
     public async Task AddAsync(Position position, CancellationToken ct = default)
-        => await db.Positions.AddAsync(position, ct);
+    {
+        var nameExists = await db.Positions.AnyAsync(p => p.Name == position.Name, ct);
+        
+        if (nameExists)
+            throw new InvalidOperationException("conflict: A position with the same Name exists.");
 
-    public async Task<bool> DeleteAsync(Guid positionId, CancellationToken ct = default)
+        var tombstone = await db.Positions
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(p => p.Name == position.Name && p.DeletedAtUtc != null, ct);
+
+        if (tombstone is null)
+        {
+            await db.Positions.AddAsync(position, ct);
+            return;
+        }
+
+        tombstone.ReviveAndUpdate(position.Name, position.Code, position.RequiresLicense);
+    }
+
+    public async Task<bool> SoftDeleteAsync(Guid positionId, CancellationToken ct = default)
     {
         var position = await db.Positions.FindAsync([positionId], ct);
-        if (position is null)
-            return false;
+
+        return position switch
+        {
+            null => false,
+            ISoftDeletable { DeletedAtUtc: not null } => true,
+            _ => await HandleSoftDeleteAsync(position, ct)
+        };
         
-        db.Positions.Remove(position);
-        try
+        async Task<bool> HandleSoftDeleteAsync(Position entity, CancellationToken token)
         {
-            await SaveChangesAsync(ct);
+            db.Positions.Remove(entity);      // interceptor flips to soft-delete
+            await SaveChangesAsync(token);
             return true;
-        }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23503" })
-        {
-            // Position is referenced elsewhere (e.g., by Employees)
-            // Decide how you want to surface this (throw custom, return false, etc.)
-            // Here I’ll throw so the API can map to 409 Conflict.
-            throw new InvalidOperationException("position_in_use: Position is referenced and cannot be deleted.", ex);
         }
     }
     
-    public Task<Position?> GetForUpdateAsync(Guid positionId, CancellationToken ct) =>
-        db.Positions.FindAsync([positionId], ct).AsTask(); // tracked
-    
+    public async Task<Position?> GetForUpdateAsync(Guid positionId, CancellationToken ct) =>
+        await db.Positions.FirstOrDefaultAsync(p => p.Id == positionId, ct);
+
     public Task<int> SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 }

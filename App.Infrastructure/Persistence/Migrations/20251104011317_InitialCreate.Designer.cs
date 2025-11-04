@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251103224517_InitialCreate")]
+    [Migration("20251104011317_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -372,10 +372,6 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasColumnName("updated_by_id");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasDatabaseName("ix_positions_code");
 
                     b.HasIndex("Name")
                         .IsUnique()

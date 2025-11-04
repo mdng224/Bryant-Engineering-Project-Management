@@ -12,7 +12,7 @@ public class DeletePositionHandler(IPositionWriter writer)
 {
     public async Task<Result<Unit>> Handle(DeletePositionCommand command, CancellationToken ct)
     {
-        var deleted = await writer.DeleteAsync(command.Id, ct);
+        var deleted = await writer.SoftDeleteAsync(command.Id, ct);
         
         return deleted
             ? Ok(Unit.Value)

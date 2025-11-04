@@ -44,6 +44,17 @@ public sealed class Position : IAuditableEntity, ISoftDeletable
         SetCore(name, code, requiresLicense);
     }
 
+    public void ReviveAndUpdate(string name, string? code, bool requiresLicense)
+    {
+        if (IsDeleted)
+        {
+            DeletedAtUtc = null;
+            DeletedById  = null;
+        }
+
+        Update(name, code, requiresLicense);
+    }
+
     // --- Core logic (single source of truth) --------------------------------
     private void SetCore(string name, string? code, bool requiresLicense)
     {

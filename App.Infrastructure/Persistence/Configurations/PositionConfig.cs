@@ -40,8 +40,6 @@ public sealed class PositionConfig : IEntityTypeConfiguration<Position>
             .IsUnique()
             .HasDatabaseName("ix_positions_name");
         
-        b.HasIndex(p => p.Code)
-            .IsUnique()
-            .HasDatabaseName("ix_positions_code");
+        b.HasQueryFilter(p => p.DeletedAtUtc == null);
     }
 }
