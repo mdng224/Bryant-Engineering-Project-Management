@@ -82,6 +82,7 @@
 </template>
 
 <script setup lang="ts">
+  import { extractApiError } from '@/api/error';
   import { userService } from '@/api/users';
   import type {
     RoleName,
@@ -89,7 +90,6 @@
     UserResponse,
     UserStatus,
   } from '@/api/users/contracts';
-  import type { AxiosError } from 'axios';
   import { AlertTriangle, Save, X } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
@@ -181,15 +181,15 @@
 
       await userService.update(props.selectedUser.id, request);
       emit('close');
-    } catch (error) {
-      const err = error as AxiosError<{ message?: string; error?: string }>;
-      const status = err.response?.status;
-      const serverMsg = err.response?.data?.message ?? err.response?.data?.error;
+    } catch (e: unknown) {
+      console.log(e);
+      let msg = extractApiError(e, 'name');
 
-      errorMessage.value =
-        status === 403
-          ? (serverMsg ?? 'You are not allowed to perform this action.')
-          : (serverMsg ?? err.message ?? 'Failed to update user.');
+      if (!msg || msg === 'An unexpected error occurred.') {
+        msg = extractApiError(e, 'code');
+      }
+
+      errorMessage.value = msg;
     } finally {
       saving.value = false;
     }

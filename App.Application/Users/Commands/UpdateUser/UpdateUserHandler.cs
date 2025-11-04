@@ -109,7 +109,7 @@ public sealed class UpdateUserHandler(IUserReader reader, IUnitOfWork uow)
         var activeAdminCount = await reader.CountActiveAdminsAsync(ct);
 
         return activeAdminCount == 1
-            ? Result.Fail("forbidden", "Cannot remove or deactivate the last active administrator.")
+            ? Result.Fail(code: "forbidden", message: "Cannot remove or deactivate the last active administrator.")
             : Result.Success();
     }
     

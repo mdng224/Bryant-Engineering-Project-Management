@@ -44,8 +44,6 @@ const get = async (params: GetUsersRequest): Promise<GetUsersResponse> => {
 };
 
 const update = async (id: string, body: UpdateUserRequest): Promise<void> => {
-  console.log('PATCH', UsersRoutes.byId(id), JSON.stringify(body, null, 2));
-
   await api.patch<void>(UsersRoutes.byId(id), body);
 };
 

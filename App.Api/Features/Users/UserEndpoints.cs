@@ -38,9 +38,10 @@ public static class UserEndpoints
             .AddEndpointFilter<Validate<UpdateUserRequest>>()
             .WithSummary("Update a user's role and/or status")
             .Produces(StatusCodes.Status204NoContent)
-            .Produces(StatusCodes.Status404NotFound)
-            .ProducesValidationProblem()
-            .Produces(StatusCodes.Status403Forbidden);
+            .Produces(StatusCodes.Status400BadRequest)      // validation
+            .Produces(StatusCodes.Status403Forbidden)       // last-admin guard, authz policy
+            .Produces(StatusCodes.Status404NotFound)        // user not found
+            .Produces(StatusCodes.Status409Conflict);       // uniqueness / concurrency
     }
     
     private static async Task<IResult> HandleDeleteUser(
@@ -88,7 +89,7 @@ public static class UserEndpoints
     
     private static async Task<IResult> HandleUpdateUser(
         [FromRoute] Guid userId,
-        UpdateUserRequest request,
+        [FromBody] UpdateUserRequest request,
         ICommandHandler<UpdateUserCommand, Result<UpdateUserResult>> handler,
         CancellationToken ct)
     {
@@ -102,10 +103,9 @@ public static class UserEndpoints
         value switch
         {
             UpdateUserResult.Ok                 => NoContent(),
-            UpdateUserResult.UserNotFound       => NotFound(new { message = "User not found." }),
-            UpdateUserResult.RoleNotFound       => NotFound(new { message = "Role not found." }),
             UpdateUserResult.NoChangesSpecified => ValidationProblem(
-                new Dictionary<string, string[]> { ["body"] = ["Provide roleName and/or status."] }), // <- was isActive
+                errors: new Dictionary<string, string[]> { ["body"] = ["Provide roleName and/or status."] }
+            ),
             _ => Problem("Unknown result.")
         };
 
@@ -113,9 +113,9 @@ public static class UserEndpoints
         error.Code switch
         {
             "not_found"  => NotFound(new { message = error.Message }),
-            "forbidden"  => Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden), // ok
+            "forbidden"  => Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
             "conflict"   => Conflict(new { message = error.Message }),
-            "validation" => ValidationProblem(new Dictionary<string, string[]> { ["body"] = [error.Message ?? "Validation failed."] }),
+            "validation" => ValidationProblem(new Dictionary<string, string[]> { ["body"] = [error.Message] }),
             _            => Problem(error.Message)
         };
 }

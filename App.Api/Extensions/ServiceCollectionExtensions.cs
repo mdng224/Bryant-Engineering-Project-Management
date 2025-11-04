@@ -1,6 +1,4 @@
-﻿// App.Infrastructure/Auth/JwtTokenService.cs
-
-using App.Api.Contracts.Auth;
+﻿using App.Api.Contracts.Auth;
 using App.Application;
 using App.Domain.Security;
 using App.Infrastructure;
@@ -12,6 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using App.Api.Contracts.Positions;
+using App.Api.Contracts.Users;
 
 namespace App.Api.Extensions;
 
@@ -94,6 +93,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
         services.AddScoped<IValidator<AddPositionRequest>, AddPositionRequestValidator>();
         services.AddScoped<IValidator<UpdatePositionRequest>, UpdatePositionRequestValidator>();
+        services.AddScoped<IValidator<UpdateUserRequest>, UpdateUserRequestValidator>();
 
         return services;
     }
