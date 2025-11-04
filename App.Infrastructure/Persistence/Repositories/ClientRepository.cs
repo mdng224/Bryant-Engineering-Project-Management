@@ -1,6 +1,5 @@
-﻿using App.Application.Abstractions.Persistence;
+﻿using App.Application.Abstractions.Persistence.Readers;
 using App.Domain.Clients;
-using App.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Infrastructure.Persistence.Repositories;
@@ -18,11 +17,11 @@ public sealed class ClientRepository(AppDbContext db) : IClientReader
         // Filter by first/middle/last/company (ILIKE %term%)
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {
-            var pattern = $"%{normalizedNameFilter.Trim()}%";
+            var pattern = $"%{normalizedNameFilter}%";
             query = query.Where(c =>
-                EF.Functions.ILike(c.FirstName!,   pattern) ||
-                EF.Functions.ILike(c.MiddleName!,  pattern) ||
-                EF.Functions.ILike(c.LastName!,    pattern) ||
+                EF.Functions.ILike(c.FirstName!, pattern) ||
+                EF.Functions.ILike(c.MiddleName!, pattern) ||
+                EF.Functions.ILike(c.LastName!, pattern) ||
                 EF.Functions.ILike(c.CompanyName!, pattern)
             );
         }

@@ -7,17 +7,8 @@ internal static class RoleSeedFactory
 {
     public static IEnumerable<Role> All =>
     [
-        new Role(
-            id:   RoleIds.Administrator,
-            name: RoleNames.Administrator
-        ),
-        new Role(
-            id:   RoleIds.Manager,
-            name: RoleNames.Manager
-        ),
-        new Role(
-            id:   RoleIds.User,
-            name: RoleNames.User
-        )
+        new(id: RoleIds.Administrator, name: RoleNames.Administrator),
+        new(id: RoleIds.Manager,       name: RoleNames.Manager),
+        new(id: RoleIds.User,          name: RoleNames.User)
     ];
 }

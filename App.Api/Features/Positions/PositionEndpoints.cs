@@ -1,9 +1,7 @@
 ﻿using App.Api.Contracts.Positions;
 using App.Api.Features.Positions.Mappers;
 using App.Api.Filters;
-using App.Application.Abstractions;
 using App.Application.Abstractions.Handlers;
-using App.Application.Common;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Common.Results;

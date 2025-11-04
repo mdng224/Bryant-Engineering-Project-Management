@@ -268,10 +268,17 @@ namespace App.Infrastructure.Persistence.Migrations
                 column: "processed_at_utc");
 
             migrationBuilder.CreateIndex(
-                name: "ix_positions_name",
+                name: "ix_positions_code_active",
+                table: "positions",
+                column: "code",
+                filter: "\"deleted_at_utc\" IS NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "ux_positions_name_active",
                 table: "positions",
                 column: "name",
-                unique: true);
+                unique: true,
+                filter: "\"deleted_at_utc\" IS NULL");
 
             migrationBuilder.CreateIndex(
                 name: "ux_roles_name",

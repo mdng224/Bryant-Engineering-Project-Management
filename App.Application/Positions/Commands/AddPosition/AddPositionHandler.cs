@@ -1,7 +1,6 @@
-﻿using App.Application.Abstractions;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
-using App.Application.Common;
+using App.Application.Abstractions.Persistence.Writers;
 using App.Application.Common.Dtos;
 using App.Application.Common.Results;
 using App.Application.Positions.Mappers;
@@ -10,7 +9,7 @@ using static App.Application.Common.R;
 
 namespace App.Application.Positions.Commands.AddPosition;
 
-public class AddPositionHandler(IPositionWriter writer)
+public class AddPositionHandler(IPositionWriter writer, IUnitOfWork uow)
     : ICommandHandler<AddPositionCommand, Result<PositionDto>>
 {
     public async Task<Result<PositionDto>> Handle(AddPositionCommand command, CancellationToken ct)
@@ -20,7 +19,7 @@ public class AddPositionHandler(IPositionWriter writer)
         try
         {
             await writer.AddAsync(position, ct);
-            await writer.SaveChangesAsync(ct);
+            await uow.SaveChangesAsync(ct);
             return Ok(position.ToDto());
         }
         catch (DbUpdateException)

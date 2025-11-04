@@ -1,5 +1,6 @@
 ﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
+using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Clients.Mappers;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;

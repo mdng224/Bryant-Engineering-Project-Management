@@ -1,7 +1,6 @@
 ﻿using App.Domain.Auth;
 using App.Domain.Clients;
 using App.Domain.Common;
-using App.Domain.Common.Abstractions;
 using App.Domain.Employees;
 using App.Domain.Users;
 using App.Infrastructure.Persistence.Configurations;

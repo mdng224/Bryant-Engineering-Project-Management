@@ -1,6 +1,7 @@
 ﻿using App.Application.Abstractions;
 using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
+using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Abstractions.Security;
 using App.Application.Common;
 using App.Application.Common.Results;

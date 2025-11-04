@@ -1,6 +1,6 @@
 ﻿using App.Domain.Employees;
 
-namespace App.Application.Abstractions.Persistence;
+namespace App.Application.Abstractions.Persistence.Readers;
 
 public interface IEmployeeReader
 {

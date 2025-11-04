@@ -15,30 +15,24 @@ public sealed class PositionConfig : IEntityTypeConfiguration<Position>
         b.HasKey(p => p.Id);
         
         // --- Properties -----------------------------------------------------
-        b.Property(p => p.Id)
-            .HasColumnName("id")
-            .ValueGeneratedNever();
-        
-        b.Property(p => p.Name)
-            .HasColumnName("name")
-            .IsRequired()
-            .HasMaxLength(128);
-        
-        b.Property(p => p.Code)
-            .HasColumnName("code")
-            .HasMaxLength(16);
-        
-        b.Property(p => p.RequiresLicense)
-            .HasColumnName("requires_license")
-            .IsRequired();
-        
+        b.Property(p => p.Id).HasColumnName("id").ValueGeneratedNever();
+        b.Property(p => p.Name).HasColumnName("name").IsRequired().HasMaxLength(128);
+        b.Property(p => p.Code).HasColumnName("code").HasMaxLength(16);
+        b.Property(p => p.RequiresLicense).HasColumnName("requires_license").IsRequired();
         b.ConfigureAuditable();
         b.ConfigureSoftDeletable();
         
         // --- Indexes / Uniqueness ------------------------------------------
+        // Unique among ACTIVE rows only (deleted_at_utc IS NULL)
         b.HasIndex(p => p.Name)
             .IsUnique()
-            .HasDatabaseName("ix_positions_name");
+            .HasDatabaseName("ux_positions_name_active")
+            .HasFilter("\"deleted_at_utc\" IS NULL");
+
+        // Optional: fast lookups by code among active rows (non-unique)
+        b.HasIndex(p => p.Code)
+            .HasDatabaseName("ix_positions_code_active")
+            .HasFilter("\"deleted_at_utc\" IS NULL");
         
         b.HasQueryFilter(p => p.DeletedAtUtc == null);
     }

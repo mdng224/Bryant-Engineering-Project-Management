@@ -1,6 +1,7 @@
-﻿using App.Application.Abstractions;
-using App.Application.Abstractions.Messaging;
+﻿using App.Application.Abstractions.Messaging;
 using App.Application.Abstractions.Persistence;
+using App.Application.Abstractions.Persistence.Readers;
+using App.Application.Abstractions.Persistence.Writers;
 using App.Application.Abstractions.Security;
 using App.Infrastructure.Auth;
 using App.Infrastructure.Background;
@@ -52,6 +53,7 @@ public static class DependencyInjection
         services.AddScoped<IPositionWriter, PositionRepository>();
         services.AddScoped<IEmployeePositionReader, EmployeePositionRepository>();
         services.AddScoped<IClientReader, ClientRepository>();
+        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         
         // --- Auth helpers (hashing + token creation) ---
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();

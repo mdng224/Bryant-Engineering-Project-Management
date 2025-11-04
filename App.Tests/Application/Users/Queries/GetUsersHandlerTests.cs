@@ -1,5 +1,6 @@
 ﻿using App.Application.Abstractions;
 using App.Application.Abstractions.Persistence;
+using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Pagination;
 using App.Application.Users.Queries;
 using App.Domain.Security;

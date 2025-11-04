@@ -1,9 +1,8 @@
-﻿using System.Reflection.Metadata;
-using App.Application.Abstractions.Persistence;
+﻿using App.Application.Abstractions.Persistence.Readers;
+using App.Application.Abstractions.Persistence.Writers;
 using App.Domain.Common.Abstractions;
 using App.Domain.Employees;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace App.Infrastructure.Persistence.Repositories;
 
@@ -48,24 +47,26 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
     }
     
     // -------------------- Writers --------------------
+    // TODO: Move logic to handler
     public async Task AddAsync(Position position, CancellationToken ct = default)
     {
-        var nameExists = await db.Positions.AnyAsync(p => p.Name == position.Name, ct);
-        
-        if (nameExists)
-            throw new InvalidOperationException("conflict: A position with the same Name exists.");
-
-        var tombstone = await db.Positions
+        var matches = await db.Positions
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(p => p.Name == position.Name && p.DeletedAtUtc != null, ct);
+            .Where(p => p.Name == position.Name)
+            .ToListAsync(ct);
+        
+        var activePosition = matches.FirstOrDefault(p => p.DeletedAtUtc == null);
+        if (activePosition is not null)
+            throw new InvalidOperationException("conflict: A position with the same name exists.");
 
-        if (tombstone is null)
+        var tombstonePosition = matches.FirstOrDefault(p => p.DeletedAtUtc != null);
+        if (tombstonePosition is not null)
         {
-            await db.Positions.AddAsync(position, ct);
+            tombstonePosition.ReviveAndUpdate(position.Name, position.Code, position.RequiresLicense);
             return;
         }
 
-        tombstone.ReviveAndUpdate(position.Name, position.Code, position.RequiresLicense);
+        await db.Positions.AddAsync(position, ct);
     }
 
     public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken ct = default)
@@ -76,19 +77,16 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
         {
             null => false,
             ISoftDeletable { DeletedAtUtc: not null } => true,
-            _ => await HandleSoftDeleteAsync(position, ct)
+            _ => HandleSoftDelete(position)
         };
-        
-        async Task<bool> HandleSoftDeleteAsync(Position entity, CancellationToken token)
+
+        bool HandleSoftDelete(Position entity)
         {
-            db.Positions.Remove(entity);      // interceptor flips to soft-delete
-            await SaveChangesAsync(token);
+            db.Positions.Remove(entity); // interceptor flips to soft-delete
             return true;
         }
     }
     
     public async Task<Position?> GetForUpdateAsync(Guid id, CancellationToken ct) =>
         await db.Positions.FirstOrDefaultAsync(p => p.Id == id, ct);
-
-    public Task<int> SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
 }

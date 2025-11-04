@@ -1,7 +1,7 @@
-﻿using App.Application.Abstractions;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
-using App.Application.Common;
+using App.Application.Abstractions.Persistence.Readers;
+using App.Application.Abstractions.Persistence.Writers;
 using App.Application.Common.Results;
 using App.Domain.Security;
 using App.Domain.Users;
@@ -9,29 +9,33 @@ using static App.Application.Common.R;
 
 namespace App.Application.Users.Commands.UpdateUser;
 
-public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWriter)
+public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWriter, IUnitOfWork uow)
     : ICommandHandler<UpdateUserCommand, Result<UpdateUserResult>>
 {
     public async Task<Result<UpdateUserResult>> Handle(UpdateUserCommand command, CancellationToken ct)
     {
-        if (IsNoOp(command)) return Ok(UpdateUserResult.NoChangesSpecified);
+        if (IsNoOp(command))
+            return Ok(UpdateUserResult.NoChangesSpecified);
 
         var user = await userWriter.GetForUpdateAsync(command.UserId, ct);
-        if (user is null) return Fail<UpdateUserResult>("not_found", "User not found.");
+        if (user is null)
+            return Fail<UpdateUserResult>("not_found", "User not found.");
         
         // Figure out intended change
         var intent = ComputeIntent(user, command);
-        if (!intent.Success) return Fail<UpdateUserResult>("not_found", "Role not found.");
+        if (!intent.Success)
+            return Fail<UpdateUserResult>("not_found", "Role not found.");
 
         // Guard: don’t remove/deactivate the last active admin
         var guard = await EnsureNotRemovingLastAdminAsync(user, intent, ct);
-        if (!guard.IsSuccess) return Fail<UpdateUserResult>(guard.Error!.Value.Code, guard.Error.Value.Message);
+        if (!guard.IsSuccess)
+            return Fail<UpdateUserResult>(guard.Error!.Value.Code, guard.Error.Value.Message);
 
         // Apply changes
         ApplyRoleChange(user, intent);
         ApplyStatusChange(user, command);
 
-        await userWriter.SaveChangesAsync(ct);
+        await uow.SaveChangesAsync(ct);
 
         return Ok(UpdateUserResult.Ok);
     }

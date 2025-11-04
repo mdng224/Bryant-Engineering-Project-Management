@@ -1,6 +1,7 @@
-﻿using App.Application.Abstractions;
-using App.Application.Abstractions.Messaging;
+﻿using App.Application.Abstractions.Messaging;
 using App.Application.Abstractions.Persistence;
+using App.Application.Abstractions.Persistence.Readers;
+using App.Application.Abstractions.Persistence.Writers;
 using App.Application.Abstractions.Security;
 using App.Application.Auth.Commands.Register;
 using App.Domain.Security;
@@ -13,15 +14,22 @@ namespace App.Tests.Application.Auth.Commands.Register;
 
 public sealed class RegisterHandlerTests
 {
-    private readonly Mock<IUserReader> _reader = new();
+     private readonly Mock<IUserReader> _reader = new();
     private readonly Mock<IUserWriter> _writer = new();
     private readonly Mock<IOutboxWriter> _outbox = new();
     private readonly Mock<IPasswordHasher> _hasher = new();
+    private readonly Mock<IUnitOfWork> _uow = new();
+
     private readonly RegisterHandler _handler;
 
     public RegisterHandlerTests()
     {
-        _handler = new RegisterHandler(_reader.Object, _writer.Object,  _outbox.Object, _hasher.Object);
+        _handler = new RegisterHandler(
+            _reader.Object,
+            _writer.Object,
+            _outbox.Object,
+            _hasher.Object,
+            _uow.Object);
     }
 
     [Fact]
@@ -43,9 +51,9 @@ public sealed class RegisterHandlerTests
         result.Error.Value.Message.Should().Be("Email already registered.");
 
         _hasher.Verify(h => h.Hash(It.IsAny<string>()), Times.Never);
-        _writer.Verify(w => w.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
-        _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
-        _outbox.Verify(o => o.AddAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
+        _writer.Verify(w => w.Add(It.IsAny<User>()), Times.Never);
+        _outbox.Verify(o => o.Add(It.IsAny<object>()), Times.Never);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -64,16 +72,14 @@ public sealed class RegisterHandlerTests
         User? capturedUser = null;
         object? publishedEvent = null;
 
-        _writer.Setup(w => w.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
-               .Callback<User, CancellationToken>((u, _) => capturedUser = u)
-               .Returns(Task.CompletedTask);
+        _writer.Setup(w => w.Add(It.IsAny<User>()))
+               .Callback<User>(u => capturedUser = u);
 
-        _writer.Setup(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()))
-               .Returns(Task.CompletedTask);
+        _outbox.Setup(o => o.Add(It.IsAny<object>()))
+               .Callback<object>(e => publishedEvent = e);
 
-        _outbox.Setup(o => o.AddAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
-               .Callback<object, CancellationToken>((e, _) => publishedEvent = e)
-               .Returns(Task.CompletedTask);
+        _uow.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(0));
 
         var command = new RegisterCommand(rawEmail, password);
 
@@ -86,23 +92,21 @@ public sealed class RegisterHandlerTests
         result.Value!.UserId.Should().NotBe(Guid.Empty);
 
         _hasher.Verify(h => h.Hash(password), Times.Once);
-        _writer.Verify(w => w.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Once);
-        _writer.Verify(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _outbox.Verify(o => o.AddAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Once);
+        _writer.Verify(w => w.Add(It.IsAny<User>()), Times.Once);
+        _outbox.Verify(o => o.Add(It.IsAny<object>()), Times.Once);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
 
         capturedUser.Should().NotBeNull();
         capturedUser!.Email.Should().Be(normalizedEmail);
         capturedUser.PasswordHash.Should().Be(hash);
         capturedUser.RoleId.Should().Be(RoleIds.User);
 
-        // Assert the published outbox event
         publishedEvent.Should().BeOfType<UserRegistered>();
         var userRegistered = (UserRegistered)publishedEvent!;
         userRegistered.UserId.Should().Be(capturedUser.Id);
         userRegistered.Email.Should().Be(capturedUser.Email);
         userRegistered.Status.Should().Be(capturedUser.Status);
     }
-
 
     [Fact]
     public async Task Uses_Exact_Email_Normalization_As_Lookup_Key_And_Writes_Outbox()
@@ -118,11 +122,11 @@ public sealed class RegisterHandlerTests
                .Setup(r => r.ExistsByEmailAsync(normalizedEmail, It.IsAny<CancellationToken>()))
                .ReturnsAsync(false);
 
-        _hasher.Setup(h => h.Hash(password)).Returns(hash);
-        _writer.Setup(w => w.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
-               .Returns(Task.CompletedTask);
-        _writer.Setup(w => w.SaveChangesAsync(It.IsAny<CancellationToken>()))
-               .Returns(Task.CompletedTask);
+        _hasher.Setup(ph => ph.Hash(password)).Returns(hash);
+        _writer.Setup(uw => uw.Add(It.IsAny<User>()));
+        _outbox.Setup(ow => ow.Add(It.Is<object>(e => e is UserRegistered)));
+        _uow.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(0));
 
         var command = new RegisterCommand(rawEmail, password);
 
@@ -131,7 +135,8 @@ public sealed class RegisterHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        _reader.Verify(r => r.ExistsByEmailAsync(normalizedEmail, It.IsAny<CancellationToken>()), Times.Once);
-        _outbox.Verify(o => o.AddAsync(It.Is<object>(e => e is UserRegistered), It.IsAny<CancellationToken>()), Times.Once);
+        _reader.Verify(ur => ur.ExistsByEmailAsync(normalizedEmail, It.IsAny<CancellationToken>()), Times.Once);
+        _outbox.Verify(ow => ow.Add(It.Is<object>(e => e is UserRegistered)), Times.Once);
+        _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

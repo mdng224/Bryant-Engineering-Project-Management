@@ -1,4 +1,5 @@
 ﻿using App.Application.Abstractions.Persistence;
+using App.Application.Abstractions.Persistence.Writers;
 using App.Application.Positions.Commands.DeletePosition;
 using FluentAssertions;
 using Moq;
@@ -7,75 +8,88 @@ namespace App.Tests.Application.Positions.Commands.DeletePosition;
 
 public class DeletePositionHandlerTests
 {
-     [Fact]
-        public async Task Handle_Should_Return_Ok_When_Delete_Succeeds()
-        {
-            // Arrange
-            var writer = new Mock<IPositionWriter>();
-            var id = Guid.NewGuid();
+[Fact]
+    public async Task Handle_Should_Return_Ok_When_Delete_Succeeds()
+    {
+        // Arrange
+        var writer     = new Mock<IPositionWriter>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+        var id         = Guid.NewGuid();
 
-            writer.Setup(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()))
-                  .ReturnsAsync(true);
+        writer.Setup(pw => pw.SoftDeleteAsync(id, It.IsAny<CancellationToken>()))
+              .ReturnsAsync(true);
 
-            var handler = new DeletePositionHandler(writer.Object);
-            var command = new DeletePositionCommand(id);
+        unitOfWork.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+           .ReturnsAsync(1);
 
-            // Act
-            var result = await handler.Handle(command, CancellationToken.None);
+        var handler = new DeletePositionHandler(writer.Object, unitOfWork.Object);
+        var command = new DeletePositionCommand(id);
 
-            // Assert
-            result.IsSuccess.Should().BeTrue();
-            result.Value.Should().NotBeNull();
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
 
-            writer.Verify(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
-            writer.VerifyNoOtherCalls();
-        }
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
 
-        [Fact]
-        public async Task Handle_Should_Return_NotFound_When_Delete_Fails()
-        {
-            // Arrange
-            var writer = new Mock<IPositionWriter>();
-            var id = Guid.NewGuid();
+        writer.Verify(pw => pw.SoftDeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        writer.VerifyNoOtherCalls();
+        unitOfWork.VerifyNoOtherCalls();
+    }
 
-            writer.Setup(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()))
-                  .ReturnsAsync(false);
+    [Fact]
+    public async Task Handle_Should_Return_NotFound_When_Delete_Fails()
+    {
+        // Arrange
+        var writer     = new Mock<IPositionWriter>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+        var id         = Guid.NewGuid();
 
-            var handler = new DeletePositionHandler(writer.Object);
-            var command = new DeletePositionCommand(id);
+        writer.Setup(pw => pw.SoftDeleteAsync(id, It.IsAny<CancellationToken>()))
+              .ReturnsAsync(false);
 
-            // Act
-            var result = await handler.Handle(command, CancellationToken.None);
+        var handler = new DeletePositionHandler(writer.Object, unitOfWork.Object);
+        var command = new DeletePositionCommand(id);
 
-            // Assert
-            result.IsSuccess.Should().BeFalse();
-            result.Error.Should().NotBeNull();
-            result.Error!.Value.Code.Should().Be("not_found");
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
 
-            writer.Verify(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
-            writer.VerifyNoOtherCalls();
-        }
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().NotBeNull();
+        result.Error!.Value.Code.Should().Be("not_found");
 
-        [Fact]
-        public async Task Handle_Should_Bubble_Exception_From_DeleteAsync()
-        {
-            // Arrange
-            var writer = new Mock<IPositionWriter>();
-            var id = Guid.NewGuid();
+        writer.Verify(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWork.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        writer.VerifyNoOtherCalls();
+        unitOfWork.VerifyNoOtherCalls();
+    }
 
-            writer.Setup(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()))
-                  .ThrowsAsync(new InvalidOperationException("boom"));
+    [Fact]
+    public async Task Handle_Should_Bubble_Exception_From_DeleteAsync()
+    {
+        // Arrange
+        var writer     = new Mock<IPositionWriter>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+        var id         = Guid.NewGuid();
 
-            var handler = new DeletePositionHandler(writer.Object);
-            var command = new DeletePositionCommand(id);
+        writer.Setup(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()))
+              .ThrowsAsync(new InvalidOperationException("boom"));
 
-            // Act
-            var act = async () => await handler.Handle(command, CancellationToken.None);
+        var handler = new DeletePositionHandler(writer.Object, unitOfWork.Object);
+        var command = new DeletePositionCommand(id);
 
-            // Assert
-            await act.Should().ThrowAsync<InvalidOperationException>()
-                     .WithMessage("*boom*");
+        // Act
+        var act = async () => await handler.Handle(command, CancellationToken.None);
 
-            writer.Verify(w => w.SoftDeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
-        }
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+                 .WithMessage("*boom*");
+
+        writer.Verify(pw => pw.SoftDeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        writer.VerifyNoOtherCalls();
+        unitOfWork.VerifyNoOtherCalls();
+    }
 }

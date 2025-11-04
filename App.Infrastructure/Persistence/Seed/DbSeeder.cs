@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using App.Domain.Common.Abstractions;
 
 namespace App.Infrastructure.Persistence.Seed;
 

@@ -5,7 +5,6 @@ using App.Application.Clients.Queries;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Common.Results;
-using static Microsoft.AspNetCore.Http.Results;
 
 namespace App.Api.Features.Clients;
 

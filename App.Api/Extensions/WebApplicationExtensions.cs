@@ -56,7 +56,7 @@ public static class WebApplicationExtensions
     }
 
     // Ensure database is created/migrated
-    public static async Task<WebApplication> MigrateDatabaseAsync<TContext>(this WebApplication app)
+    public static async Task MigrateDatabaseAsync<TContext>(this WebApplication app)
         where TContext : DbContext
     {
         await using var scope = app.Services.CreateAsyncScope();
@@ -67,10 +67,7 @@ public static class WebApplicationExtensions
             await db.Database.MigrateAsync();
 
             if (db is AppDbContext appDb)
-            {
-                // Only dynamic/env data here. Roles/Positions via HasData+migrations.
                 await DbSeeder.SeedAsync(appDb);
-            }
         }
         catch (Exception ex)
         {
@@ -79,7 +76,5 @@ public static class WebApplicationExtensions
             logger.LogError(ex, "Database migration/seed failed");
             throw; // fail fast on schema/seed errors
         }
-
-        return app;
     }
 }

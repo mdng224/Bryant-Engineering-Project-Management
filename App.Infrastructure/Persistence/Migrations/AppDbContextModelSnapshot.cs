@@ -370,9 +370,14 @@ namespace App.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Code")
+                        .HasDatabaseName("ix_positions_code_active")
+                        .HasFilter("\"deleted_at_utc\" IS NULL");
+
                     b.HasIndex("Name")
                         .IsUnique()
-                        .HasDatabaseName("ix_positions_name");
+                        .HasDatabaseName("ux_positions_name_active")
+                        .HasFilter("\"deleted_at_utc\" IS NULL");
 
                     b.ToTable("positions", (string)null);
                 });

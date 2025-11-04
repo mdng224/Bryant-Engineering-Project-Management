@@ -1,17 +1,15 @@
-﻿using App.Application.Abstractions;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
-using App.Application.Common;
+using App.Application.Abstractions.Persistence.Writers;
 using App.Application.Common.Dtos;
 using App.Application.Common.Results;
 using App.Application.Positions.Mappers;
-using App.Domain.Employees;
 using Microsoft.EntityFrameworkCore;
 using static App.Application.Common.R;
 
 namespace App.Application.Positions.Commands.UpdatePosition;
 
-public sealed class UpdatePositionHandler(IPositionWriter writer)
+public sealed class UpdatePositionHandler(IPositionWriter writer, IUnitOfWork uow)
     : ICommandHandler<UpdatePositionCommand, Result<PositionDto>>
 {
     public async Task<Result<PositionDto>> Handle(UpdatePositionCommand command, CancellationToken ct)
@@ -25,13 +23,19 @@ public sealed class UpdatePositionHandler(IPositionWriter writer)
         
         try
         {
-            await writer.SaveChangesAsync(ct);
+            await uow.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Fail<PositionDto>(
+                code: "concurrency",
+                message: "The position was modified by another process.");
         }
         catch (DbUpdateException)
         {
             return Fail<PositionDto>(
-                code: "duplicate",
-                message: "A position with the same unique field (e.g., code) already exists.");
+                code: "conflict",
+                message: "A position with the same unique field (name/code) already exists.");
         }
 
         return Ok(position.ToDto());

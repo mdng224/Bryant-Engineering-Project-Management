@@ -1,9 +1,6 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using App.Application.Abstractions;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
-using App.Application.Common;
+using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Results;
 using App.Domain.Auth;
 using App.Domain.Common;
@@ -14,10 +11,9 @@ namespace App.Application.Auth.Commands.VerifyEmail;
 
 public sealed class VerifyEmailHandler(
     IEmailVerificationReader emailVerificationReader,
-    IEmailVerificationWriter emailVerificationWriter,
+    IEmployeeReader employeeReader,
     IUserReader userReader,
-    IUserWriter userWriter,
-    IEmployeeReader employeeReader) : ICommandHandler<VerifyEmailCommand, Result<VerifyEmailResult>>
+    IUnitOfWork uow) : ICommandHandler<VerifyEmailCommand, Result<VerifyEmailResult>>
 {
     public async Task<Result<VerifyEmailResult>> Handle(VerifyEmailCommand command, CancellationToken ct)
     {
@@ -44,15 +40,11 @@ public sealed class VerifyEmailHandler(
         // ✅ Step 2: mark the token as used
         verification.MarkUsed();
 
-        // TODO: Implement unit of work to ensure atomic user+verification updates
-        await userWriter.UpdateAsync(user, ct);
-        await emailVerificationWriter.UpdateAsync(verification, ct);
-
+        await uow.SaveChangesAsync(ct);
         return Ok(new VerifyEmailResult(VerifyEmailOutcome.Ok));
     }
     
     // ------------------- Helpers -------------------
-    
     private static VerifyEmailOutcome DetermineOutcome(EmailVerification? verification, DateTime nowUtc)
     {
         return verification switch

@@ -1,5 +1,4 @@
-﻿using App.Application.Abstractions;
-using App.Application.Abstractions.Persistence;
+﻿using App.Application.Abstractions.Persistence.Readers;
 using App.Domain.Employees;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,11 +7,15 @@ namespace App.Infrastructure.Persistence.Repositories;
 public sealed class EmployeeRepository(AppDbContext db) : IEmployeeReader
 {
     // --- Readers --------------------------------------------------------
-    public async Task<Employee?> GetByCompanyEmailAsync(string normalizedEmail, CancellationToken ct = default) =>
-        await db.Employees
+    public async Task<Employee?> GetByCompanyEmailAsync(string normalizedEmail, CancellationToken ct = default)
+    {
+        var employees = await db.Employees
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.CompanyEmail == normalizedEmail, ct);
-    
+
+        return employees;
+    }
+
     public async Task<(IReadOnlyList<Employee> employees, int totalCount)> GetPagedAsync(
         int skip,
         int take,
@@ -21,10 +24,9 @@ public sealed class EmployeeRepository(AppDbContext db) : IEmployeeReader
     {
         var query = db.Employees.AsNoTracking();
 
-        // check last, first, and nickname
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {
-            var pattern = $"%{normalizedNameFilter.Trim()}%";
+            var pattern = $"%{normalizedNameFilter}%";
             query = query.Where(e =>
                 EF.Functions.ILike(e.LastName, pattern) ||
                 EF.Functions.ILike(e.FirstName, pattern) ||

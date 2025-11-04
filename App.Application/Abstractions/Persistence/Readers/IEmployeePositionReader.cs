@@ -1,6 +1,6 @@
 ﻿using App.Application.Common.Dtos;
 
-namespace App.Application.Abstractions.Persistence;
+namespace App.Application.Abstractions.Persistence.Readers;
 
 public interface IEmployeePositionReader
 {

@@ -2,5 +2,5 @@
 
 public interface IOutboxWriter
 {
-    Task AddAsync(object domainEvent, CancellationToken ct = default);
+    void Add(object domainEvent);
 }

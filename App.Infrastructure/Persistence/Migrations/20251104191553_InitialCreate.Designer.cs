@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251104011317_InitialCreate")]
+    [Migration("20251104191553_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -373,9 +373,14 @@ namespace App.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Code")
+                        .HasDatabaseName("ix_positions_code_active")
+                        .HasFilter("\"deleted_at_utc\" IS NULL");
+
                     b.HasIndex("Name")
                         .IsUnique()
-                        .HasDatabaseName("ix_positions_name");
+                        .HasDatabaseName("ux_positions_name_active")
+                        .HasFilter("\"deleted_at_utc\" IS NULL");
 
                     b.ToTable("positions", (string)null);
                 });

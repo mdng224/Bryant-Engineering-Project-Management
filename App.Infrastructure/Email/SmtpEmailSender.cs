@@ -1,5 +1,4 @@
-﻿using App.Application.Abstractions;
-using App.Application.Abstractions.Messaging;
+﻿using App.Application.Abstractions.Messaging;
 using MailKit.Security;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

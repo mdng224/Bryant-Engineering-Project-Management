@@ -1,4 +1,4 @@
-﻿using App.Application.Abstractions.Persistence;
+﻿using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Dtos;
 using Microsoft.EntityFrameworkCore;
 
