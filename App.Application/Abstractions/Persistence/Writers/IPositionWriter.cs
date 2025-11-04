@@ -4,7 +4,7 @@ namespace App.Application.Abstractions.Persistence.Writers;
 
 public interface IPositionWriter
 {
-    Task AddAsync(Position position, CancellationToken ct = default);
+    void Add(Position position);
     Task<bool> SoftDeleteAsync(Guid positionId, CancellationToken ct = default);
-    Task<Position?> GetForUpdateAsync(Guid positionId, CancellationToken ct);
+    void Update(Position position);
 }

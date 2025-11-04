@@ -5,11 +5,12 @@ using App.Application.Abstractions.Persistence.Writers;
 using App.Application.Common.Results;
 using App.Domain.Security;
 using App.Domain.Users;
+using Microsoft.EntityFrameworkCore;
 using static App.Application.Common.R;
 
 namespace App.Application.Users.Commands.UpdateUser;
 
-public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWriter, IUnitOfWork uow)
+public sealed class UpdateUserHandler(IUserReader reader, IUnitOfWork uow)
     : ICommandHandler<UpdateUserCommand, Result<UpdateUserResult>>
 {
     public async Task<Result<UpdateUserResult>> Handle(UpdateUserCommand command, CancellationToken ct)
@@ -17,7 +18,7 @@ public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWr
         if (IsNoOp(command))
             return Ok(UpdateUserResult.NoChangesSpecified);
 
-        var user = await userWriter.GetForUpdateAsync(command.UserId, ct);
+        var user = await reader.GetForUpdateAsync(command.UserId, ct);
         if (user is null)
             return Fail<UpdateUserResult>("not_found", "User not found.");
         
@@ -35,7 +36,22 @@ public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWr
         ApplyRoleChange(user, intent);
         ApplyStatusChange(user, command);
 
-        await uow.SaveChangesAsync(ct);
+        try
+        {
+            await uow.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Fail<UpdateUserResult>(
+                code: "concurrency",
+                message: "The user was modified by another process.");
+        }
+        catch (DbUpdateException)
+        {
+            return Fail<UpdateUserResult>(
+                code: "conflict",
+                message: "A user with the same unique field already exists.");
+        }
 
         return Ok(UpdateUserResult.Ok);
     }
@@ -90,7 +106,7 @@ public sealed class UpdateUserHandler(IUserReader userReader, IUserWriter userWr
         if (!IsCurrentlyActiveAdmin(user) || !(intent.IsDeactivation || intent.IsRoleDemotion))
             return Result.Success();
 
-        var activeAdminCount = await userReader.CountActiveAdminsAsync(ct);
+        var activeAdminCount = await reader.CountActiveAdminsAsync(ct);
 
         return activeAdminCount == 1
             ? Result.Fail("forbidden", "Cannot remove or deactivate the last active administrator.")

@@ -6,7 +6,6 @@ namespace App.Application.Users;
 
 public static class UserMappers
 {
-    public static IEnumerable<UserDto> ToDto(this IEnumerable<User> users) => users.Select(ToDto);
     public static UserDto ToDto(this User user) =>
         new(
             Id: user.Id,

@@ -49,6 +49,13 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
 
         return user;
     }
+    
+    public Task<User?> GetForUpdateAsync(Guid id, CancellationToken ct)
+    {
+        var user = db.Users.AsTracking().FirstOrDefaultAsync(u => u.Id == id, ct);
+
+        return user;
+    }
 
     public async Task<(IReadOnlyList<User> users, int totalCount)> GetPagedAsync(
         int skip,
@@ -58,15 +65,9 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
     {
         var query = db.Users.AsNoTracking();
 
-        // Optional partial email match (case-insensitive, Postgres)
         if (!string.IsNullOrWhiteSpace(email))
         {
-            var term = email.Trim();
-
-            // Optional: escape user-provided wildcards so search is literal
-            term = term.Replace("\\", @"\\").Replace("%", "\\%").Replace("_", "\\_");
-
-            var pattern = $"%{term}%";
+            var pattern = $"%{email.Trim()}%";
             query = query.Where(u => EF.Functions.ILike(u.Email, pattern));
         }
 
@@ -76,7 +77,7 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
 
         var users = await query
             .OrderBy(u => u.Email)
-            .ThenBy(u => u.Id) // stable
+            .ThenBy(u => u.Id)
             .Skip(skip)
             .Take(take)
             .ToListAsync(ct);
@@ -103,6 +104,5 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
         }
     }
 
-    public Task<User?> GetForUpdateAsync(Guid id, CancellationToken ct) =>
-        db.Users.FirstOrDefaultAsync(u => u.Id == id, ct); // tracked
+
 }

@@ -11,14 +11,13 @@ namespace App.Tests.Application.Users.Commands.UpdateUser;
 
 public class UpdateUserHandlerTests
 {
-     private readonly Mock<IUserWriter> _writer = new(MockBehavior.Strict);
     private readonly Mock<IUserReader> _reader = new(MockBehavior.Strict);
     private readonly Mock<IUnitOfWork> _uow = new(MockBehavior.Strict);
     private readonly UpdateUserHandler _handler;
 
     public UpdateUserHandlerTests()
     {
-        _handler = new UpdateUserHandler(_reader.Object, _writer.Object, _uow.Object);
+        _handler = new UpdateUserHandler(_reader.Object, _uow.Object);
     }
 
     [Fact]
@@ -31,10 +30,10 @@ public class UpdateUserHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(UpdateUserResult.NoChangesSpecified);
 
-        _writer.Verify(uw => uw.GetForUpdateAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        _reader.Verify(uw => uw.GetForUpdateAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never); // or CommitAsync
         _reader.VerifyNoOtherCalls();
-        _writer.VerifyNoOtherCalls();
+        _reader.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 
@@ -42,7 +41,7 @@ public class UpdateUserHandlerTests
     public async Task Returns_NotFound_When_User_Missing()
     {
         var id = Guid.NewGuid();
-        _writer.Setup(w => w.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
+        _reader.Setup(w => w.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
                .ReturnsAsync((User?)null);
 
         var cmd = new UpdateUserCommand(id, RoleNames.User, UserStatus.Active);
@@ -52,10 +51,10 @@ public class UpdateUserHandlerTests
         result.IsSuccess.Should().BeFalse();
         result.Error!.Value.Code.Should().Be("not_found");
 
-        _writer.Verify(uw => uw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        _reader.Verify(uw => uw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
         _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never); // or CommitAsync
         _reader.VerifyNoOtherCalls();
-        _writer.VerifyNoOtherCalls();
+        _reader.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 
@@ -63,7 +62,7 @@ public class UpdateUserHandlerTests
     public async Task Updates_Role_Only()
     {
         var user = new User("user@example.com", "hash", RoleIds.Manager);
-        _writer.Setup(uw => uw.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
+        _reader.Setup(uw => uw.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()))
                .ReturnsAsync(user);
 
         _uow.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
@@ -76,10 +75,10 @@ public class UpdateUserHandlerTests
         result.Value.Should().Be(UpdateUserResult.Ok);
         user.RoleId.Should().Be(RoleIds.User);
 
-        _writer.Verify(uw => uw.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()), Times.Once);
+        _reader.Verify(uw => uw.GetForUpdateAsync(user.Id, It.IsAny<CancellationToken>()), Times.Once);
         _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once); // or CommitAsync
         _reader.VerifyNoOtherCalls();
-        _writer.VerifyNoOtherCalls();
+        _reader.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 }

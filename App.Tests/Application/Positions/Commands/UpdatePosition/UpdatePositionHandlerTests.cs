@@ -1,5 +1,5 @@
 ﻿using App.Application.Abstractions.Persistence;
-using App.Application.Abstractions.Persistence.Writers;
+using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Positions.Commands.UpdatePosition;
 using App.Domain.Employees;
 using FluentAssertions;
@@ -10,10 +10,10 @@ namespace App.Tests.Application.Positions.Commands.UpdatePosition;
 
 public class UpdatePositionHandlerTests
 {
-    private readonly Mock<IPositionWriter> _writer = new(MockBehavior.Strict);
+    private readonly Mock<IPositionReader> _reader = new(MockBehavior.Strict);
     private readonly Mock<IUnitOfWork> _uow = new(MockBehavior.Strict);
 
-    private UpdatePositionHandler CreateHandler() => new(_writer.Object, _uow.Object);
+    private UpdatePositionHandler CreateHandler() => new(_reader.Object, _uow.Object);
 
     [Fact]
     public async Task Handle_Should_Update_And_Return_PositionDto()
@@ -22,7 +22,7 @@ public class UpdatePositionHandlerTests
         var existing = new Position("Old Name", "OLD", requiresLicense: false);
         var id = existing.Id;
 
-        _writer.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
+        _reader.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
                .ReturnsAsync(existing);
 
         // If SaveChangesAsync returns Task<int>:
@@ -55,9 +55,9 @@ public class UpdatePositionHandlerTests
         existing.Code.Should().Be("NEW");
         existing.RequiresLicense.Should().BeTrue();
 
-        _writer.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        _reader.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
         _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _writer.VerifyNoOtherCalls();
+        _reader.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 
@@ -66,7 +66,7 @@ public class UpdatePositionHandlerTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        _writer.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
+        _reader.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
                .ReturnsAsync((Position?)null);
 
         var handler = CreateHandler();
@@ -86,9 +86,9 @@ public class UpdatePositionHandlerTests
         result.Error!.Value.Code.Should().Be("not_found");
         result.Error.Value.Message.Should().Be("Position not found.");
 
-        _writer.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        _reader.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
         _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
-        _writer.VerifyNoOtherCalls();
+        _reader.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 
@@ -99,7 +99,7 @@ public class UpdatePositionHandlerTests
         var existing = new Position("Old Name", "OLD", false);
         var id = existing.Id;
 
-        _writer.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
+        _reader.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
                .ReturnsAsync(existing);
 
         _uow.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -117,9 +117,9 @@ public class UpdatePositionHandlerTests
         result.Error!.Value.Code.Should().Be("concurrency");
         result.Error.Value.Message.Should().Contain("modified by another process");
 
-        _writer.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        _reader.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
         _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _writer.VerifyNoOtherCalls();
+        _reader.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 
@@ -130,7 +130,7 @@ public class UpdatePositionHandlerTests
         var existing = new Position("Old Name", "OLD", false);
         var id = existing.Id;
 
-        _writer.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
+        _reader.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
                .ReturnsAsync(existing);
 
         _uow.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -148,9 +148,9 @@ public class UpdatePositionHandlerTests
         result.Error!.Value.Code.Should().Be("conflict");
         result.Error.Value.Message.Should().Contain("already exists");
 
-        _writer.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        _reader.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
         _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _writer.VerifyNoOtherCalls();
+        _reader.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 
@@ -161,7 +161,7 @@ public class UpdatePositionHandlerTests
         var existing = new Position("Old Name", "OLD", false);
         var id = existing.Id;
 
-        _writer.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
+        _reader.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
                .ReturnsAsync(existing);
 
         _uow.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -177,9 +177,9 @@ public class UpdatePositionHandlerTests
         await act.Should().ThrowAsync<InvalidOperationException>()
                  .WithMessage("*weird*");
 
-        _writer.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        _reader.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
         _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _writer.VerifyNoOtherCalls();
+        _reader.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 }

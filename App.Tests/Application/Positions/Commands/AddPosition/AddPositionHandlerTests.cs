@@ -1,4 +1,5 @@
 ﻿using App.Application.Abstractions.Persistence;
+using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Abstractions.Persistence.Writers;
 using App.Application.Positions.Commands.AddPosition;
 using App.Domain.Employees;
@@ -9,20 +10,24 @@ namespace App.Tests.Application.Positions.Commands.AddPosition;
 
 public class AddPositionHandlerTests
 {
-[Fact]
+    [Fact]
     public async Task Handle_ReturnsOk_WithResultMappedFromDomain()
     {
         // Arrange
-        var writer     = new Mock<IPositionWriter>(MockBehavior.Strict);
+        var reader    = new Mock<IPositionReader>(MockBehavior.Strict);
+        var writer    = new Mock<IPositionWriter>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
-        writer.Setup(pw => pw.AddAsync(It.IsAny<Position>(), It.IsAny<CancellationToken>()))
-              .Returns(Task.CompletedTask);
+        // No existing matches -> create path
+        reader.Setup(pr => pr.GetByNameIncludingDeletedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+              .ReturnsAsync([]);
 
+        writer.Setup(pw => pw.Add(It.IsAny<Position>()));
         unitOfWork.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
-           .ReturnsAsync(1);
+                  .ReturnsAsync(1);
 
-        var handler = new AddPositionHandler(writer.Object, unitOfWork.Object);
+        var handler = new AddPositionHandler(reader.Object, writer.Object, unitOfWork.Object);
+
         var cmd = new AddPositionCommand(
             Name: "Project Engineer",
             Code: "PE",
@@ -42,8 +47,11 @@ public class AddPositionHandlerTests
         value.Code.Should().Be("PE");
         value.RequiresLicense.Should().BeTrue();
 
-        writer.Verify(w => w.AddAsync(It.IsAny<Position>(), It.IsAny<CancellationToken>()), Times.Once);
-        unitOfWork.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        reader.Verify(pr => pr.GetByNameIncludingDeletedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        writer.Verify(pw => pw.Add(It.IsAny<Position>()), Times.Once);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+
+        reader.VerifyNoOtherCalls();
         writer.VerifyNoOtherCalls();
         unitOfWork.VerifyNoOtherCalls();
     }
@@ -54,17 +62,21 @@ public class AddPositionHandlerTests
         // Arrange
         Position? captured = null;
 
-        var writer = new Mock<IPositionWriter>(MockBehavior.Strict);
-        var unitOfWork    = new Mock<IUnitOfWork>(MockBehavior.Strict);
+        var reader     = new Mock<IPositionReader>(MockBehavior.Strict);
+        var writer     = new Mock<IPositionWriter>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
-        writer.Setup(pw => pw.AddAsync(It.IsAny<Position>(), It.IsAny<CancellationToken>()))
-              .Callback<Position, CancellationToken>((p, _) => captured = p)
-              .Returns(Task.CompletedTask);
+        reader.Setup(pr => pr.GetByNameIncludingDeletedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+              .ReturnsAsync(Array.Empty<Position>());
+
+        writer.Setup(pw => pw.Add(It.IsAny<Position>()))
+              .Callback<Position>(p => captured = p);
 
         unitOfWork.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
-           .ReturnsAsync(1);
+                  .ReturnsAsync(1);
 
-        var handler = new AddPositionHandler(writer.Object, unitOfWork.Object);
+        var handler = new AddPositionHandler(reader.Object, writer.Object, unitOfWork.Object);
+
         var cmd = new AddPositionCommand(
             Name: "Civil Designer",
             Code: "CD",
@@ -83,8 +95,11 @@ public class AddPositionHandlerTests
         captured.Code.Should().Be("CD");
         captured.RequiresLicense.Should().BeFalse();
 
-        writer.Verify(w => w.AddAsync(It.IsAny<Position>(), It.IsAny<CancellationToken>()), Times.Once);
+        reader.Verify(pr => pr.GetByNameIncludingDeletedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        writer.Verify(pw => pw.Add(It.IsAny<Position>()), Times.Once);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+
+        reader.VerifyNoOtherCalls();
         writer.VerifyNoOtherCalls();
         unitOfWork.VerifyNoOtherCalls();
     }

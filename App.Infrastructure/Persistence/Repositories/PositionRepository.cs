@@ -9,16 +9,26 @@ namespace App.Infrastructure.Persistence.Repositories;
 public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWriter
 {
     // -------------------- Readers --------------------
-    public async Task<IReadOnlyList<Position>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<Position>> GetByNameIncludingDeletedAsync(string normalizedName, CancellationToken ct = default)
     {
         var positions = await db.Positions
             .AsNoTracking()
-            .OrderBy(p => p.Name)
+            .IgnoreQueryFilters()
+            .Where(p => p.Name == normalizedName)
             .ToListAsync(ct);
 
         return positions;
     }
     
+    public async Task<Position?> GetForUpdateAsync(Guid id, CancellationToken ct)
+    {
+        var position = await db.Positions
+            .AsTracking()
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+
+        return position;
+    }
+
     public async Task<(IReadOnlyList<Position> positions, int totalCount)> GetPagedAsync(
         int skip,
         int take,
@@ -38,7 +48,8 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
             return ([], totalCount);
         
         var positions = await query
-            .OrderBy(u => u.Name)
+            .OrderBy(p => p.Name)
+            .ThenBy(p => p.Id)
             .Skip(skip)
             .Take(take)
             .ToListAsync(ct);
@@ -47,46 +58,23 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
     }
     
     // -------------------- Writers --------------------
-    // TODO: Move logic to handler
-    public async Task AddAsync(Position position, CancellationToken ct = default)
-    {
-        var matches = await db.Positions
-            .IgnoreQueryFilters()
-            .Where(p => p.Name == position.Name)
-            .ToListAsync(ct);
-        
-        var activePosition = matches.FirstOrDefault(p => p.DeletedAtUtc == null);
-        if (activePosition is not null)
-            throw new InvalidOperationException("conflict: A position with the same name exists.");
-
-        var tombstonePosition = matches.FirstOrDefault(p => p.DeletedAtUtc != null);
-        if (tombstonePosition is not null)
-        {
-            tombstonePosition.ReviveAndUpdate(position.Name, position.Code, position.RequiresLicense);
-            return;
-        }
-
-        await db.Positions.AddAsync(position, ct);
-    }
+    public void Add(Position position) => db.Positions.Add(position);
 
     public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken ct = default)
     {
         var position = await db.Positions.FindAsync([id], ct);
 
-        return position switch
+        switch (position)
         {
-            null => false,
-            ISoftDeletable { DeletedAtUtc: not null } => true,
-            _ => HandleSoftDelete(position)
-        };
-
-        bool HandleSoftDelete(Position entity)
-        {
-            db.Positions.Remove(entity); // interceptor flips to soft-delete
-            return true;
+            case null:
+                return false;
+            case ISoftDeletable { DeletedAtUtc: not null }:
+                return true;
+            default:
+                db.Positions.Remove(position); // interceptor flips to soft-delete
+                return true;
         }
     }
     
-    public async Task<Position?> GetForUpdateAsync(Guid id, CancellationToken ct) =>
-        await db.Positions.FirstOrDefaultAsync(p => p.Id == id, ct);
+    public void Update(Position position) => db.Positions.Update(position);
 }
