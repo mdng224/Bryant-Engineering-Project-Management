@@ -43,5 +43,6 @@ public static class PositionMappers
         new(Id: dto.Id,
             Name: dto.Name,
             Code: dto.Code,
-            RequiresLicense: dto.RequiresLicense);
+            RequiresLicense: dto.RequiresLicense,
+            DeletedAtUtc: dto.DeletedAtUtc);
 }

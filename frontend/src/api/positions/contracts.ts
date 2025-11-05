@@ -16,8 +16,8 @@ export type AddPositionResponse = PositionBase & {
 export type GetPositionsRequest = {
   page: number;
   pageSize: number;
-  nameFilter?: string;
-  isDeleted?: boolean | null;
+  nameFilter: string | null;
+  isDeleted: boolean | null;
 };
 
 export type GetPositionsResponse = {
@@ -26,6 +26,7 @@ export type GetPositionsResponse = {
   page: number;
   pageSize: number;
   totalPages: number;
+  deletedAtUtc: string | null;
 };
 
 // Response for each individual position (used in table)

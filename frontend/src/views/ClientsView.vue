@@ -1,10 +1,19 @@
 <template>
-  <div class="pb-4">
-    <TableSearch
-      v-model="nameFilter"
-      placeholder="Search by client name..."
-      @commit="commitNameNow"
-    />
+  <h2 class="pb-4 text-xl font-semibold text-slate-100">Clients</h2>
+
+  <div class="flex items-center justify-between pb-4">
+    <div class="flex gap-4">
+      <TableSearch v-model="nameFilter" placeholder="Search client name..." @commit="commit" />
+      <DeletedFilter v-model="deletedFilter" @change="handleDeletedFilterChange" />
+    </div>
+
+    <button
+      class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
+      @click="addDialogIsOpen = true"
+    >
+      <CirclePlus class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+      <span class="text-white">Add Client</span>
+    </button>
   </div>
 
   <DataTable :table :loading :total-count empty-text="No clients found.">
@@ -56,7 +65,7 @@
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { Eye } from 'lucide-vue-next';
+  import { CirclePlus, Eye } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
   /* ------------------------------- Constants ------------------------------ */
@@ -92,17 +101,27 @@
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
   ];
 
+  /* ---------------------------- Deleted Filter State ---------------------------- */
+  const deletedFilter = ref<boolean | null>(false); // default: Active Only
+
+  const handleDeletedFilterChange = () => {
+    setQuery({
+      name: name.value || undefined,
+      isDeleted: deletedFilter.value, // keep null when "Active + Deleted"
+    });
+  };
+
   /* ------------------------------- Searching ------------------------------ */
   const {
     input: nameFilter, // bound to v-model
     debounced: name, // used in fetch
-    setNow: commitNameNow, // call on Enter
+    setNow: commit, // call on Enter
     cancel: cancelNameDebounce, // cleanup on unmount
   } = useDebouncedRef('', 500);
   onBeforeUnmount(cancelNameDebounce);
 
   /* ------------------------------- Fetching ------------------------------- */
-  type ClientQuery = { name?: string };
+  type ClientQuery = { name?: string; isDeleted?: boolean | null };
 
   const clientDetails = ref<ClientResponse[]>([]);
   const clientDetailsById = computed(() => new Map(clientDetails.value.map(e => [e.id, e])));
@@ -129,12 +148,12 @@
   // Update query when search changes
   watch(name, () => setQuery({ name: name.value || undefined }));
 
-  /* ------------------------------- Dialogs/UX ----------------------------- */
+  /* -------------------------------- Handlers ------------------------------ */
+  const addDialogIsOpen = ref(false);
   const viewClientDialogIsOpen = ref(false);
   const selectedClient = ref<ClientResponse | null>(null);
   const editClientDialogIsOpen = ref(false);
 
-  /* -------------------------------- Handlers ------------------------------ */
   const handleViewClient = (summary: ClientSummaryResponse): void => {
     const detail = clientDetailsById.value.get(summary.id) ?? null;
     selectedClient.value = detail;

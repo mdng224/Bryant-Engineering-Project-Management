@@ -5,4 +5,5 @@ public record PositionResponse(
     Guid Id,
     string Name,
     string? Code,
-    bool RequiresLicense);
+    bool RequiresLicense,
+    DateTimeOffset? DeletedAtUtc);

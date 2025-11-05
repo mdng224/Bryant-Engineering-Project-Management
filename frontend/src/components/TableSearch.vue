@@ -1,15 +1,21 @@
 <!-- components/TableSearch.vue -->
 <template>
-  <input
-    v-model="model"
-    :placeholder="placeholder ?? 'Search…'"
-    class="h-9 min-w-[260px] rounded-md border border-slate-700 bg-slate-900/70 px-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 sm:w-1/2 lg:w-1/3"
-    @keydown.enter="commitNow()"
-  />
+  <div
+    class="flex h-9 min-w-[260px] items-center gap-2 rounded-md border border-slate-700 bg-slate-900/70 px-3 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/30 sm:w-1/2 lg:w-1/3"
+  >
+    <Search class="h-4 w-4 text-slate-400" aria-hidden="true" />
+    <input
+      v-model="model"
+      :placeholder="placeholder ?? 'Search…'"
+      class="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+      @keydown.enter="commitNow()"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
+  import { Search } from 'lucide-vue-next';
   import { watch } from 'vue';
 
   const props = defineProps<{

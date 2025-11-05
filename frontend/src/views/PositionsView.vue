@@ -1,20 +1,21 @@
 <template>
-  <div class="flex gap-4 pb-4">
-    <TableSearch v-model="nameFilter" placeholder="Search position name..." @commit="commit" />
-    <DeletedFilter v-model="deletedFilter" @change="handleDeletedFilterChange" />
-  </div>
+  <h2 class="pb-4 text-xl font-semibold text-slate-100">Positions</h2>
 
   <div class="flex items-center justify-between pb-4">
-    <h2 class="text-xl font-semibold text-slate-100">Positions</h2>
+    <div class="flex gap-4">
+      <TableSearch v-model="nameFilter" placeholder="Search position name..." @commit="commit" />
+      <DeletedFilter v-model="deletedFilter" @change="handleDeletedFilterChange" />
+    </div>
+
     <button
       class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
       @click="addDialogIsOpen = true"
     >
       <CirclePlus class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
-
       <span class="text-white">Add Position</span>
     </button>
   </div>
+
   <p
     v-if="errorMessage"
     ref="errorEl"
@@ -36,8 +37,10 @@
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
       <template v-if="(cell.column.columnDef.meta as any)?.kind === 'actions'">
+        <!-- Edit button -->
         <template class="flex gap-2">
           <button
+            v-if="!cell.row.original.deletedAtUtc"
             :class="actionButtonClass"
             aria-label="Edit position"
             @click="handleEditPosition(cell.row.original as PositionResponse)"
@@ -45,12 +48,25 @@
             <Pencil class="h-4 w-4" />
           </button>
 
+          <!-- Delete button -->
           <button
+            v-if="!cell.row.original.deletedAtUtc"
             class="rounded-md bg-indigo-600 p-1.5 transition hover:bg-rose-200"
             aria-label="delete position"
             @click="handleOpenDeleteDialog(cell.row.original as PositionResponse)"
           >
+            {{ cell.row.original.deletedAtUtc }}
             <Trash2 class="h-4 w-4 text-rose-500 hover:text-rose-400" />
+          </button>
+
+          <!-- Reactivate button -->
+          <button
+            v-else
+            class="rounded-md bg-indigo-600 p-1.5 text-emerald-200 transition hover:bg-green-200"
+            aria-label="reactivate position"
+            @click="handleOpenReactivateDialog(cell.row.original as PositionResponse)"
+          >
+            <RotateCcw class="h-4 w-4 hover:text-green-400" />
           </button>
         </template>
       </template>
@@ -98,12 +114,11 @@
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { AlertTriangle, CirclePlus, Pencil, Trash2 } from 'lucide-vue-next';
+  import { AlertTriangle, CirclePlus, Pencil, RotateCcw, Trash2 } from 'lucide-vue-next';
   import { onBeforeUnmount, ref, watch } from 'vue';
 
   const errorMessage = ref<string | null>(null);
-  const actionButtonClass =
-    'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
+  const actionButtonClass = 'rounded-md bg-indigo-600 p-1.5  transition hover:bg-indigo-500';
 
   /* -------------------------------- Columns ------------------------------- */
   const col: ColumnHelper<PositionResponse> = createColumnHelper<PositionResponse>();
@@ -155,7 +170,7 @@
     const params: GetPositionsRequest = {
       page,
       pageSize,
-      nameFilter: query?.position || undefined,
+      nameFilter: query?.position || null,
       isDeleted: query?.isDeleted ?? null,
     };
     const response: GetPositionsResponse = await positionService.get(params);
@@ -193,6 +208,7 @@
   const addDialogIsOpen = ref(false);
   const deleteDialogIsOpen = ref(false);
   const editPositionDialogIsOpen = ref(false);
+  const reactivateDialogIsOpen = ref(false);
 
   const handleDelete = async (): Promise<void> => {
     const id = selectedPosition.value?.id;
@@ -218,5 +234,9 @@
   const handleEditPosition = (position: PositionResponse): void => {
     selectedPosition.value = position;
     editPositionDialogIsOpen.value = true;
+  };
+
+  const handleOpenReactivateDialog = (position: PositionResponse): void => {
+    // TODO: Call reactivate service
   };
 </script>

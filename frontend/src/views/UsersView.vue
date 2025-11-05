@@ -1,4 +1,6 @@
 <template>
+  <h2 class="pb-4 text-xl font-semibold text-slate-100">Users</h2>
+
   <div class="flex gap-4 pb-4">
     <TableSearch v-model="emailFilter" placeholder="Search email…" @commit="commit" />
     <DeletedFilter v-model="deletedFilter" @change="handleDeletedFilterChange" />
@@ -27,6 +29,7 @@
       <template v-if="(cell.column.columnDef.meta as any)?.kind === 'actions'">
         <template class="flex gap-2">
           <button
+            v-if="!cell.row.original.deletedAtUtc"
             class="rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500"
             aria-label="Edit user"
             @click="handleEditUser(cell.row.original as UserResponse)"
@@ -34,14 +37,25 @@
             <Pencil class="h-4 w-4" />
           </button>
 
-          <!-- TODO: TOGGLE TO REVIVE -->
+          <!-- Delete button -->
           <button
+            v-if="!cell.row.original.deletedAtUtc"
             class="rounded-md bg-indigo-600 p-1.5 transition hover:bg-rose-200"
-            aria-label="delete user"
-            v-if="canDeleteUser((cell.row.original as UserResponse).id)"
+            aria-label="delete position"
             @click="handleOpenDeleteDialog(cell.row.original as UserResponse)"
           >
+            {{ cell.row.original.deletedAtUtc }}
             <Trash2 class="h-4 w-4 text-rose-500 hover:text-rose-400" />
+          </button>
+
+          <!-- Reactivate button -->
+          <button
+            v-else
+            class="rounded-md bg-indigo-600 p-1.5 text-emerald-200 transition hover:bg-green-200"
+            aria-label="reactivate position"
+            @click="handleOpenReactivateDialog(cell.row.original as UserResponse)"
+          >
+            <RotateCcw class="h-4 w-4 hover:text-green-400" />
           </button>
         </template>
       </template>
@@ -81,7 +95,7 @@
   import { useAuth } from '@/composables/useAuth';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { AlertTriangle, Pencil, Trash2 } from 'lucide-vue-next';
+  import { AlertTriangle, Pencil, RotateCcw, Trash2 } from 'lucide-vue-next';
   import { onBeforeUnmount, ref, watch } from 'vue';
   import type { GetUsersRequest, GetUsersResponse, UserResponse, UserStatus } from '../api/users';
   import { useDebouncedRef } from '../composables/useDebouncedRef';
@@ -210,8 +224,9 @@
 
   /* ------------------------------ Handlers ------------------------------- */
   const deleteDialogIsOpen = ref(false);
-  const selectedUser = ref<UserResponse | null>(null);
   const editUserDialogIsOpen = ref(false);
+  const selectedUser = ref<UserResponse | null>(null);
+  const reactivateDialogIsOpen = ref(false);
 
   const handleDelete = async (): Promise<void> => {
     const id = selectedUser.value?.id;
@@ -238,5 +253,10 @@
   const handleEditUser = (user: UserResponse): void => {
     selectedUser.value = user;
     editUserDialogIsOpen.value = true;
+  };
+
+  const handleOpenReactivateDialog = (user: UserResponse): void => {
+    selectedUser.value = user;
+    //  reactivateDialogIsOpen.value = true;
   };
 </script>

@@ -16,6 +16,7 @@ public static class PositionMappers
             Id: position.Id,
             Name: position.Name,
             Code:  position.Code,
-            RequiresLicense: position.RequiresLicense
+            RequiresLicense: position.RequiresLicense,
+            DeletedAtUtc: position.DeletedAtUtc
         );
 }

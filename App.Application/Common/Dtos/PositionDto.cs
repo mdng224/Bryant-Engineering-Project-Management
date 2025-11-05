@@ -4,5 +4,6 @@ public sealed record PositionDto(
     Guid Id,
     string Name,
     string? Code,
-    bool RequiresLicense
+    bool RequiresLicense,
+    DateTimeOffset? DeletedAtUtc
 );
