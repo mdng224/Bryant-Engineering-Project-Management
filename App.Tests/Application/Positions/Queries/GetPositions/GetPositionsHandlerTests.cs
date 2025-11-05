@@ -1,5 +1,4 @@
-﻿using App.Application.Abstractions.Persistence;
-using App.Application.Abstractions.Persistence.Readers;
+﻿using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Pagination;
 using App.Application.Positions.Queries.GetPositions;
 using App.Domain.Employees;
@@ -16,7 +15,7 @@ public class GetPositionsHandlerTests
         // Arrange
         // Query asks for page 2 with pageSize 1 -> skip should be 1, take 1
         var pagedQuery = new PagedQuery(page: 2, pageSize: 1);
-        var query = new GetPositionsQuery(pagedQuery, NameFilter: null);
+        var query = new GetPositionsQuery(pagedQuery, NameFilter: null, IsDeleted: null);
 
         var pageItems = new List<Position>
         {
@@ -29,6 +28,7 @@ public class GetPositionsHandlerTests
                 It.Is<int>(skip => skip == 1),
                 It.Is<int>(take => take == 1),
                 It.Is<string?>(filter => filter == null),
+                It.Is<bool?>(isDeleted => isDeleted == null),
                 It.IsAny<CancellationToken>()))
             // total = 2 to yield TotalPages = 2 with pageSize 1
             .ReturnsAsync((pageItems, totalCount: 2));
@@ -62,6 +62,7 @@ public class GetPositionsHandlerTests
                 It.Is<int>(s => s == 1),
                 It.Is<int>(t => t == 1),
                 It.Is<string?>(filter => filter == null),
+                It.Is<bool?>(d => d == null),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -71,7 +72,7 @@ public class GetPositionsHandlerTests
     {
         // Arrange
         var pagedQuery = new PagedQuery(page: 1, pageSize: 10);
-        var query = new GetPositionsQuery(pagedQuery, NameFilter: null);
+        var query = new GetPositionsQuery(pagedQuery, NameFilter: null, IsDeleted: false);
 
         var mockReader = new Mock<IPositionReader>();
         mockReader
@@ -79,6 +80,7 @@ public class GetPositionsHandlerTests
                 It.Is<int>(skip => skip == 0),
                 It.Is<int>(take => take == 10),
                 It.Is<string?>(filter => filter == null),
+                It.Is<bool?>(isDeleted => isDeleted == false),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Position>(), totalCount: 0));
 
@@ -103,6 +105,7 @@ public class GetPositionsHandlerTests
                 It.Is<int>(s => s == 0),
                 It.Is<int>(t => t == 10),
                 It.Is<string?>(filter => filter == null),
+                It.Is<bool?>(d => d == false),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -112,7 +115,7 @@ public class GetPositionsHandlerTests
     {
         // Arrange
         var pagedQuery = new PagedQuery(page: 1, pageSize: 5);
-        var query = new GetPositionsQuery(pagedQuery, NameFilter: "  ProjEcT EnG  ");
+        var query = new GetPositionsQuery(pagedQuery, NameFilter: "  ProjEcT EnG  ", IsDeleted: true);
 
         var mockReader = new Mock<IPositionReader>();
         mockReader
@@ -120,6 +123,7 @@ public class GetPositionsHandlerTests
                 It.Is<int>(skip => skip == 0),
                 It.Is<int>(take => take == 5),
                 It.Is<string?>(filter => filter != null && filter.Contains("project", StringComparison.OrdinalIgnoreCase)),
+                It.Is<bool?>(isDeleted => isDeleted == true),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<Position>(), totalCount: 0));
 

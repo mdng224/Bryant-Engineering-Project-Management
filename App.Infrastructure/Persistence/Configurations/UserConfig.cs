@@ -51,5 +51,7 @@ public sealed class UserConfig : IEntityTypeConfiguration<User>
             .IsUnique()
             .HasDatabaseName("ux_users_email")
             .HasFilter("deleted_at_utc IS NULL");
+        
+        b.HasQueryFilter(u => u.DeletedAtUtc == null);
     }
 }

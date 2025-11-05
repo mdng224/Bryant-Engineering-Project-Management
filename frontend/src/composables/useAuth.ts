@@ -1,8 +1,14 @@
 // src/composables/useAuth.ts
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { authService, AuthStorage } from '@/api/auth';
+
+type AuthUser = {
+  id: string;
+  email: string;
+  roleName?: string;
+};
 
 /* -------------------------------------------------------------------------- */
 /*                                State / Cache                               */
@@ -14,7 +20,7 @@ import { authService, AuthStorage } from '@/api/auth';
  *  - `null`  → unknown (not yet resolved)
  */
 const isAuthed = ref<boolean | null>(null);
-
+const currentUser = ref<AuthUser | null>(null);
 /**
  * Tracks any in-progress `authService.me()` request to prevent duplicate API calls.
  */
@@ -24,6 +30,18 @@ let inFlight: Promise<void> | null = null;
 /*                               Helper Functions                             */
 /* -------------------------------------------------------------------------- */
 const tokenExpired = (): boolean => AuthStorage.isExpired();
+
+const decodeJwtSub = (token: string | null): string | null => {
+  if (!token) return null;
+  try {
+    const [, payload] = token.split('.');
+    const json = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    const sub = json?.sub ?? json?.nameid ?? json?.uid; // common claim names
+    return typeof sub === 'string' ? sub : null;
+  } catch {
+    return null;
+  }
+};
 
 /* -------------------------------------------------------------------------- */
 /*                               Auth Management                              */
@@ -87,6 +105,19 @@ export const ensureAuthState = async (force = false): Promise<boolean> => {
 export const useAuth = () => {
   const router = useRouter();
 
+  const currentUserId = computed<string | null>(() => {
+    if (currentUser.value?.id) return currentUser.value.id;
+    // Fallback to JWT sub if we haven't loaded /me yet
+    return decodeJwtSub(AuthStorage.getToken());
+  });
+
+  const canDeleteUser = (userId: string | null | undefined): boolean => {
+    const me = currentUserId.value;
+    if (!userId) return false; // nothing to delete
+    if (!me) return true; // unknown me → allow UI but backend will auth check
+    return userId !== me; // prevent self-delete
+  };
+
   /**
    * Logs out the current user.
    *
@@ -101,5 +132,17 @@ export const useAuth = () => {
     await router.push('/login');
   };
 
-  return { isAuthed, ensureAuthState, logout };
+  return {
+    // state
+    isAuthed,
+    currentUser,
+    currentUserId,
+
+    // guards
+    canDeleteUser,
+
+    // actions
+    ensureAuthState,
+    logout,
+  };
 };

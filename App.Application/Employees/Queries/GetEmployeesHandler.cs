@@ -22,6 +22,7 @@ public sealed class GetEmployeesHandler(IEmployeeReader reader)
         var (employees, total) = await reader.GetPagedAsync(skip,
             pageSize,
             normalizedNameFilter,
+            query.IsDeleted,
             ct);
 
         var pagedResult = new PagedResult<Employee>(employees, total, page, pageSize)

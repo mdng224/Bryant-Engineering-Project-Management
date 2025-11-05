@@ -20,10 +20,17 @@ public sealed class EmployeeRepository(AppDbContext db) : IEmployeeReader
         int skip,
         int take,
         string? normalizedNameFilter = null,
+        bool? isDeleted = null,
         CancellationToken ct = default)
     {
-        var query = db.Employees.AsNoTracking();
-
+        var query = db.Employees
+            .IgnoreQueryFilters()
+            .AsNoTracking();
+        
+        query = isDeleted is true
+            ? query.Where(e => e.DeletedAtUtc != null)
+            : query.Where(e => e.DeletedAtUtc == null);
+        
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {
             var pattern = $"%{normalizedNameFilter}%";

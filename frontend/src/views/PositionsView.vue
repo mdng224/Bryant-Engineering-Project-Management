@@ -1,10 +1,7 @@
 <template>
-  <div class="pb-4">
-    <TableSearch
-      v-model="positionNameFilter"
-      placeholder="Search by position name..."
-      @commit="commitPositionNameNow"
-    />
+  <div class="flex gap-4 pb-4">
+    <TableSearch v-model="nameFilter" placeholder="Search position name..." @commit="commit" />
+    <DeletedFilter v-model="deletedFilter" @change="handleDeletedFilterChange" />
   </div>
 
   <div class="flex items-center justify-between pb-4">
@@ -70,7 +67,7 @@
     :open="deleteDialogIsOpen"
     title="Delete position"
     message="This action cannot be undone. This will permanently delete the selected position."
-    @confirm="handleDeletePosition"
+    @confirm="handleDelete"
     @close="deleteDialogIsOpen = false"
   />
 
@@ -90,6 +87,7 @@
     PositionResponse,
   } from '@/api/positions/contracts';
   import { positionService } from '@/api/positions/services';
+  import DeletedFilter from '@/components/DeletedFilter.vue';
   import AddPositionDialog from '@/components/dialogs/AddPositionDialog.vue';
   import DeleteDialog from '@/components/dialogs/DeleteDialog.vue';
   import EditPositionDialog from '@/components/dialogs/EditPositionDialog.vue';
@@ -131,23 +129,34 @@
     },
   ];
 
+  /* ---------------------------- Deleted Filter State ---------------------------- */
+  const deletedFilter = ref<boolean | null>(false); // default: Active Only
+
+  const handleDeletedFilterChange = () => {
+    setQuery({
+      position: position.value || undefined,
+      isDeleted: deletedFilter.value, // keep null when "Active + Deleted"
+    });
+  };
+
   /* ------------------------------- Searching ------------------------------ */
   const {
-    input: positionNameFilter, // bound to v-model
+    input: nameFilter, // bound to v-model
     debounced: position, // used in fetch
-    setNow: commitPositionNameNow, // call on Enter
+    setNow: commit, // call on Enter
     cancel: cancelNameDebounce, // cleanup on unmount
   } = useDebouncedRef('', 500);
   onBeforeUnmount(cancelNameDebounce);
 
   /* ------------------------------ Fetching ------------------------------- */
-  type PosQuery = { position?: string };
+  type PosQuery = { position?: string; isDeleted?: boolean | null };
 
   const fetchPositions = async ({ page, pageSize, query }: FetchParams<PosQuery>) => {
     const params: GetPositionsRequest = {
       page,
       pageSize,
       nameFilter: query?.position || undefined,
+      isDeleted: query?.isDeleted ?? null,
     };
     const response: GetPositionsResponse = await positionService.get(params);
 
@@ -171,7 +180,13 @@
     fetchNow: refetch,
   } = useDataTable<PositionResponse, PosQuery>(columns, fetchPositions, { position: undefined });
 
-  watch(position, () => setQuery({ position: position.value || undefined }));
+  watch(position, () =>
+    setQuery({
+      position: position.value || undefined,
+
+      isDeleted: deletedFilter.value,
+    }),
+  );
 
   /* ------------------------------ Handlers ------------------------------- */
   const selectedPosition = ref<PositionResponse | null>(null);
@@ -179,13 +194,12 @@
   const deleteDialogIsOpen = ref(false);
   const editPositionDialogIsOpen = ref(false);
 
-  const handleDeletePosition = async (): Promise<void> => {
+  const handleDelete = async (): Promise<void> => {
     const id = selectedPosition.value?.id;
     if (!id) return;
 
     try {
       await positionService.deletePosition(id);
-
       await refetch();
     } catch (err: unknown) {
       const msg = extractApiError(err, 'position');

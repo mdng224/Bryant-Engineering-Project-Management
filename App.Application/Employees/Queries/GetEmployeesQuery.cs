@@ -2,4 +2,4 @@
 
 namespace App.Application.Employees.Queries;
 
-public record GetEmployeesQuery(PagedQuery PagedQuery, string? NameFilter);
+public record GetEmployeesQuery(PagedQuery PagedQuery, string? NameFilter, bool? IsDeleted);

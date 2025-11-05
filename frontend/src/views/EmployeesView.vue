@@ -1,6 +1,7 @@
 <template>
-  <div class="pb-4">
+  <div class="flex gap-4 pb-4">
     <TableSearch v-model="nameFilter" placeholder="Search by name..." @commit="commitNameNow" />
+    <DeletedFilter v-model="deletedFilter" @change="handleDeletedFilterChange" />
   </div>
 
   <DataTable :table :loading :total-count empty-text="No employees found.">
@@ -55,6 +56,7 @@
     GetEmployeesRequest,
     GetEmployeesResponse,
   } from '@/api/employees/contracts';
+  import DeletedFilter from '@/components/DeletedFilter.vue';
   import EditEmployeeDialog from '@/components/dialogs/EditEmployeeDialog.vue';
   import ViewEmployeeDialog from '@/components/dialogs/ViewEmployeeDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
@@ -100,6 +102,16 @@
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
   ];
 
+  /* ---------------------------- Deleted Filter State ---------------------------- */
+  const deletedFilter = ref<boolean | null>(false); // default: Active Only
+
+  const handleDeletedFilterChange = () => {
+    setQuery({
+      name: name.value || undefined,
+      isDeleted: deletedFilter.value, // keep null when "Active + Deleted"
+    });
+  };
+
   /* ------------------------------- Searching ------------------------------ */
   const {
     input: nameFilter, // bound to v-model
@@ -110,13 +122,18 @@
   onBeforeUnmount(cancelNameDebounce);
 
   /* ------------------------------- Fetching ------------------------------- */
-  type EmpQuery = { name?: string };
+  type EmpQuery = { name?: string; isDeleted?: boolean | null };
 
   const employeeDetails = ref<EmployeeResponse[]>([]);
   const employeeDetailsById = computed(() => new Map(employeeDetails.value.map(e => [e.id, e])));
 
   const fetchEmployees = async ({ page, pageSize, query }: FetchParams<EmpQuery>) => {
-    const params: GetEmployeesRequest = { page, pageSize, name: query?.name || undefined };
+    const params: GetEmployeesRequest = {
+      page,
+      pageSize,
+      name: query?.name || undefined,
+      isDeleted: query?.isDeleted ?? null,
+    };
     const response: GetEmployeesResponse = await employeeService.get(params);
 
     // Cache details for action dialogs
@@ -135,7 +152,12 @@
     useDataTable<EmployeeSummaryResponse, EmpQuery>(columns, fetchEmployees, { name: undefined });
 
   // Update query when search changes
-  watch(name, () => setQuery({ name: name.value || undefined }));
+  watch(name, () =>
+    setQuery({
+      name: name.value || undefined,
+      isDeleted: deletedFilter.value,
+    }),
+  );
 
   /* ------------------------------- Dialogs/UX ----------------------------- */
   const viewEmployeeDialogIsOpen = ref(false);

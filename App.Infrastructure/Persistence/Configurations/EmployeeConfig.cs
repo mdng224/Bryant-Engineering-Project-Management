@@ -97,5 +97,7 @@ public sealed class EmployeeConfig : IEntityTypeConfiguration<Employee>
         b.HasIndex(e => new { e.LastName, e.FirstName })
             .HasDatabaseName("ix_employees_last_first")
             .HasFilter("deleted_at_utc IS NULL");
+        
+        b.HasQueryFilter(e => e.DeletedAtUtc == null);
     }
 }

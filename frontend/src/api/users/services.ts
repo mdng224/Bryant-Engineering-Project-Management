@@ -3,6 +3,11 @@ import type { GetUsersRequest, GetUsersResponse, UpdateUserRequest } from '@/api
 import type { AxiosError } from 'axios';
 import { UsersRoutes } from './routes';
 
+/* ------------------------------ POST (delete) ------------------------------ */
+const deleteUser = async (id: string): Promise<void> => {
+  await api.delete<string>(UsersRoutes.delete(id));
+};
+
 /**
  * Fetches a paginated list of users from the admin API.
  *
@@ -47,4 +52,4 @@ const update = async (id: string, body: UpdateUserRequest): Promise<void> => {
   await api.patch<void>(UsersRoutes.byId(id), body);
 };
 
-export const userService = { get, update };
+export const userService = { deleteUser, get, update };

@@ -33,7 +33,7 @@ internal static class EmployeeMappers
     {
         var normalizedNameFilter = (request.NameFilter ?? string.Empty).ToNormalizedName();
         var pagedQuery = new PagedQuery(request.Page, request.PageSize);
-         var getEmployeesQuery = new GetEmployeesQuery(pagedQuery, normalizedNameFilter);
+         var getEmployeesQuery = new GetEmployeesQuery(pagedQuery, normalizedNameFilter, request.IsDeleted);
          
          return getEmployeesQuery;
     }

@@ -23,6 +23,7 @@ public sealed class GetPositionsHandler(IPositionReader reader)
         var (positions, total) = await reader.GetPagedAsync(skip,
             pageSize,
             normalizedNameFilter,
+            query.IsDeleted,
             ct);
 
         var pagedResult = new PagedResult<Position>(positions, total, page, pageSize)

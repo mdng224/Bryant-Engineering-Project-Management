@@ -13,5 +13,6 @@ public interface IUserReader
         int skip,
         int take,
         string? email = null,
+        bool? isDeleted = null,
         CancellationToken ct = default);
 }

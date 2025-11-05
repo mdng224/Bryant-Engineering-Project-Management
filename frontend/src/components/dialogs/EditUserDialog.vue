@@ -109,6 +109,7 @@
 
   const emit = defineEmits<{
     (e: 'close'): void;
+    (e: 'save'): void;
   }>();
 
   const errorMessage = ref<string | null>(null);
@@ -180,6 +181,7 @@
       if (form.value.status !== props.selectedUser.status) request.status = form.value.status;
 
       await userService.update(props.selectedUser.id, request);
+      emit('save');
       emit('close');
     } catch (e: unknown) {
       console.log(e);

@@ -19,6 +19,7 @@ public sealed class GetUsersHandler(IUserReader reader) : IQueryHandler<GetUsers
         var (users, total) = await reader.GetPagedAsync(skip,
             pageSize,
             normalizedEmailFilter,
+            query.IsDeleted,
             ct);
 
         var pagedResult = new PagedResult<User>(users, total, page, pageSize)

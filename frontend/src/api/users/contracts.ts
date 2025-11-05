@@ -7,6 +7,7 @@ export type GetUsersRequest = {
   page: number;
   pageSize: number;
   email?: string;
+  isDeleted?: boolean | null;
 };
 
 export type GetUsersResponse = {

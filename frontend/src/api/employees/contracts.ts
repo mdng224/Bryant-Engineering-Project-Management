@@ -14,6 +14,7 @@ export type GetEmployeesRequest = {
   page: number;
   pageSize: number;
   name?: string;
+  isDeleted?: boolean | null;
 };
 
 export type GetEmployeesResponse = {

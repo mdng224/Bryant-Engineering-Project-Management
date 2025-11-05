@@ -1,7 +1,20 @@
 <template>
-  <div class="pb-4">
-    <TableSearch v-model="emailSearch" placeholder="Search email…" @commit="commitEmailNow" />
+  <div class="flex gap-4 pb-4">
+    <TableSearch v-model="emailFilter" placeholder="Search email…" @commit="commit" />
+    <DeletedFilter v-model="deletedFilter" @change="handleDeletedFilterChange" />
   </div>
+
+  <p
+    v-if="errorMessage"
+    ref="errorEl"
+    class="flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
+    role="alert"
+    aria-live="assertive"
+    tabindex="-1"
+  >
+    <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+    <span>{{ errorMessage }}</span>
+  </p>
 
   <DataTable
     :table="table as unknown as import('@tanstack/vue-table').Table<unknown>"
@@ -12,19 +25,40 @@
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
       <template v-if="(cell.column.columnDef.meta as any)?.kind === 'actions'">
-        <button
-          class="rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500"
-          aria-label="Edit user"
-          @click="handleEditUser(cell.row.original as UserResponse)"
-        >
-          <Pencil class="h-4 w-4" />
-        </button>
+        <template class="flex gap-2">
+          <button
+            class="rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500"
+            aria-label="Edit user"
+            @click="handleEditUser(cell.row.original as UserResponse)"
+          >
+            <Pencil class="h-4 w-4" />
+          </button>
+
+          <!-- TODO: TOGGLE TO REVIVE -->
+          <button
+            class="rounded-md bg-indigo-600 p-1.5 transition hover:bg-rose-200"
+            aria-label="delete user"
+            v-if="canDeleteUser((cell.row.original as UserResponse).id)"
+            @click="handleOpenDeleteDialog(cell.row.original as UserResponse)"
+          >
+            <Trash2 class="h-4 w-4 text-rose-500 hover:text-rose-400" />
+          </button>
+        </template>
       </template>
       <CellRenderer :cell="cell" />
     </template>
   </DataTable>
 
   <TableFooter :table :total-count :total-pages :pagination :set-page-size />
+
+  <!-- Dialogs -->
+  <DeleteDialog
+    :open="deleteDialogIsOpen"
+    title="Delete user"
+    message="This action cannot be undone. This will permanently delete the selected user."
+    @confirm="handleDelete"
+    @close="deleteDialogIsOpen = false"
+  />
 
   <EditUserDialog
     :open="editUserDialogIsOpen"
@@ -35,21 +69,33 @@
 </template>
 
 <script setup lang="ts">
+  import { extractApiError } from '@/api/error';
   import { userService } from '@/api/users';
+  import DeletedFilter from '@/components/DeletedFilter.vue';
+  import DeleteDialog from '@/components/dialogs/DeleteDialog.vue';
   import EditUserDialog from '@/components/dialogs/EditUserDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
   import TableSearch from '@/components/TableSearch.vue';
+  import { useAuth } from '@/composables/useAuth';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { Pencil } from 'lucide-vue-next';
+  import { AlertTriangle, Pencil, Trash2 } from 'lucide-vue-next';
   import { onBeforeUnmount, ref, watch } from 'vue';
   import type { GetUsersRequest, GetUsersResponse, UserResponse, UserStatus } from '../api/users';
   import { useDebouncedRef } from '../composables/useDebouncedRef';
 
-  /* ------------------------------ Status ------------------------------- */
+  const errorMessage = ref<string | null>(null);
 
+  /* ------------------------------ Auth ------------------------------- */
+  const { currentUserId, canDeleteUser } = useAuth();
+
+  // helper so we can reuse it in template/handlers
+  const canDelete = (u: UserResponse) =>
+    currentUserId.value == null || u.id !== currentUserId.value;
+
+  /* ------------------------------ Status ------------------------------- */
   const statusClasses: Record<UserStatus, string> = {
     Active: 'bg-emerald-700 text-emerald-100',
     PendingEmail: 'bg-amber-600/90 text-amber-100',
@@ -100,21 +146,36 @@
     },
   ];
 
+  /* ---------------------------- Deleted Filter State ---------------------------- */
+  const deletedFilter = ref<boolean | null>(false); // default: Active Only
+
+  const handleDeletedFilterChange = () => {
+    setQuery({
+      email: email.value || undefined,
+      isDeleted: deletedFilter.value, // keep null when "Active + Deleted"
+    });
+  };
+
   /* ---------------------------- Search ---------------------------- */
   const {
-    input: emailSearch, // bind to v-model
+    input: emailFilter, // bind to v-model
     debounced: email, // use in fetch
-    setNow: commitEmailNow, // optional: commit immediately on Enter
+    setNow: commit, // optional: commit immediately on Enter
     cancel: cancelEmailDebounce, // optional
   } = useDebouncedRef('', 500);
 
   onBeforeUnmount(cancelEmailDebounce);
 
   /* ------------------------------ Fetching ------------------------------- */
-  type UserQuery = { email?: string };
+  type UserQuery = { email?: string; isDeleted?: boolean | null };
 
   const fetchUsers = async ({ page, pageSize, query }: FetchParams<UserQuery>) => {
-    const params: GetUsersRequest = { page, pageSize, email: query?.email || undefined };
+    const params: GetUsersRequest = {
+      page,
+      pageSize,
+      email: query?.email || undefined,
+      isDeleted: query?.isDeleted ?? null,
+    };
     const response: GetUsersResponse = await userService.get(params);
 
     return {
@@ -135,14 +196,44 @@
     setQuery,
     setPageSize,
     fetchNow: refetch,
-  } = useDataTable<UserResponse, UserQuery>(columns, fetchUsers, { email: undefined });
+  } = useDataTable<UserResponse, UserQuery>(columns, fetchUsers, {
+    email: undefined,
+    isDeleted: deletedFilter.value,
+  });
 
-  // keep page at 1 when search changes
-  watch(email, () => setQuery({ email: email.value || undefined }));
+  watch(email, () =>
+    setQuery({
+      email: email.value || undefined,
+      isDeleted: deletedFilter.value,
+    }),
+  );
 
   /* ------------------------------ Handlers ------------------------------- */
+  const deleteDialogIsOpen = ref(false);
   const selectedUser = ref<UserResponse | null>(null);
   const editUserDialogIsOpen = ref(false);
+
+  const handleDelete = async (): Promise<void> => {
+    const id = selectedUser.value?.id;
+    if (!id || id === currentUserId.value) return; // double guard
+
+    try {
+      await userService.deleteUser(id);
+      await refetch();
+    } catch (err: unknown) {
+      const msg = extractApiError(err, 'user');
+      errorMessage.value = msg;
+    } finally {
+      deleteDialogIsOpen.value = false;
+      selectedUser.value = null;
+    }
+  };
+
+  const handleOpenDeleteDialog = (user: UserResponse): void => {
+    if (!canDeleteUser(user.id)) return; // no self-delete
+    selectedUser.value = user;
+    deleteDialogIsOpen.value = true;
+  };
 
   const handleEditUser = (user: UserResponse): void => {
     selectedUser.value = user;

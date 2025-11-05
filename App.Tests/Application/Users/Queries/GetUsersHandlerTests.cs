@@ -1,6 +1,4 @@
-﻿using App.Application.Abstractions;
-using App.Application.Abstractions.Persistence;
-using App.Application.Abstractions.Persistence.Readers;
+﻿using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Pagination;
 using App.Application.Users.Queries;
 using App.Domain.Security;
@@ -36,13 +34,14 @@ public sealed class GetUsersHandlerTests
     {
         // Arrange: page < 1 -> normalized to 1; pageSize < 1 -> default to 25
         var pagedQuery = new PagedQuery(page: 0, pageSize: 0);
-        var query = new GetUsersQuery(pagedQuery, EmailFilter: null);
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: null, IsDeleted: null);
 
-        // Expect skip = (1 - 1) * 25 = 0; take = 25; email = null
+        // Expect skip = 0; take = 25; email = null; isDeleted = null
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),
                 It.Is<int>(t => t == 25),
                 It.Is<string?>(e => e == null),
+                It.Is<bool?>(d => d == null),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((MakeUsers(10), 42));
 
@@ -64,13 +63,14 @@ public sealed class GetUsersHandlerTests
     {
         // Arrange: page=3, requested pageSize=500 -> capped at 100
         var pagedQuery = new PagedQuery(page: 3, pageSize: 500);
-        var query = new GetUsersQuery(pagedQuery, EmailFilter: null);
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: null, IsDeleted: null);
 
-        // Expect skip = (3 - 1) * 100 = 200; take = 100; email = null
+        // Expect skip = 200; take = 100; email = null; isDeleted = null
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 200),
                 It.Is<int>(t => t == 100),
                 It.Is<string?>(e => e == null),
+                It.Is<bool?>(d => d == null),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((MakeUsers(100), 1_234));
 
@@ -92,13 +92,14 @@ public sealed class GetUsersHandlerTests
     {
         // Arrange: page=2, pageSize=50 (valid)
         var pagedQuery = new PagedQuery(page: 2, pageSize: 50);
-        var query = new GetUsersQuery(pagedQuery, EmailFilter: null);
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: null, IsDeleted: null);
 
-        // Expect skip = (2 - 1) * 50 = 50; take = 50; email = null
+        // Expect skip = 50; take = 50; email = null; isDeleted = null
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 50),
                 It.Is<int>(t => t == 50),
                 It.Is<string?>(e => e == null),
+                It.Is<bool?>(d => d == null),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((MakeUsers(50), 120));
 
@@ -118,12 +119,13 @@ public sealed class GetUsersHandlerTests
     public async Task TotalPages_Is_Zero_When_Total_Is_Zero()
     {
         var pagedQuery = new PagedQuery(page: 5, pageSize: 25);
-        var query = new GetUsersQuery(pagedQuery, EmailFilter: null);
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: null, IsDeleted: false);
 
         _reader.Setup(r => r.GetPagedAsync(
                 It.IsAny<int>(),
                 It.IsAny<int>(),
                 It.Is<string?>(e => e == null),
+                It.Is<bool?>(d => d == false),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((new List<User>(), 0));
 
@@ -142,12 +144,13 @@ public sealed class GetUsersHandlerTests
     public async Task Normalizes_Negative_Page_To_1_And_Defaults_PageSize_To_25()
     {
         var pagedQuery = new PagedQuery(page: -10, pageSize: -3);
-        var query = new GetUsersQuery(pagedQuery, EmailFilter: null);
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: null, IsDeleted: null);
 
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),   // (1-1)*25
                 It.Is<int>(t => t == 25),
                 It.Is<string?>(e => e == null),
+                It.Is<bool?>(d => d == null),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((MakeUsers(3), 3));
 
@@ -161,18 +164,19 @@ public sealed class GetUsersHandlerTests
         payload.Items.Count.Should().Be(3);
     }
 
-    // ---------- New tests for email search ----------
+    // ---------- Email search ----------
 
     [Fact]
     public async Task Applies_Email_Filter_When_Provided()
     {
         var pagedQuery = new PagedQuery(page: 1, pageSize: 25);
-        var query = new GetUsersQuery(pagedQuery, EmailFilter: "dan");
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: "dan", IsDeleted: null);
 
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),
                 It.Is<int>(t => t == 25),
                 It.Is<string?>(e => e == "dan"),
+                It.Is<bool?>(d => d == null),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((MakeUsers(2), 2));
 
@@ -191,22 +195,29 @@ public sealed class GetUsersHandlerTests
     public async Task Trims_Email_Filter_Before_Passing_To_Reader()
     {
         var pagedQuery = new PagedQuery(page: 1, pageSize: 25);
-        var query = new GetUsersQuery(pagedQuery, EmailFilter: "  dan  ");
+        var query = new GetUsersQuery(pagedQuery, EmailFilter: "  dan  ", IsDeleted: true);
 
         string? passedEmail = null;
+        bool? passedDeleted = null;
 
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),
                 It.Is<int>(t => t == 25),
                 It.IsAny<string?>(),
+                It.IsAny<bool?>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<int, int, string?, CancellationToken>((s, t, e, ct) => passedEmail = e)
+            .Callback<int, int, string?, bool?, CancellationToken>((s, t, e, d, ct) =>
+            {
+                passedEmail = e;
+                passedDeleted = d;
+            })
             .ReturnsAsync((MakeUsers(1), 1));
 
         var res = await _handler.Handle(query, CancellationToken.None);
 
         res.IsSuccess.Should().BeTrue();
-        passedEmail.Should().Be("dan"); // verify the trimming actually happened
+        passedEmail.Should().Be("dan");   // trimming verified
+        passedDeleted.Should().BeTrue();  // isDeleted passthrough verified
 
         var payload = res.Value!;
         payload.Items.Should().NotBeNull();

@@ -24,7 +24,7 @@ public static class PositionMappers
     public static GetPositionsQuery ToQuery(this GetPositionsRequest request)
     {
         var pagedQuery = new PagedQuery(request.Page, request.PageSize);
-        var getPositionsQuery = new GetPositionsQuery(pagedQuery, request.NameFilter);
+        var getPositionsQuery = new GetPositionsQuery(pagedQuery, request.NameFilter, request.IsDeleted);
         
         return getPositionsQuery;
     }

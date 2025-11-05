@@ -25,7 +25,7 @@ internal static class UserMappers
         var pagedQuery = new PagedQuery(request.Page, request.PageSize);
         var normalizedEmail = request.EmailFilter?.ToNormalizedEmail();
 
-        return new GetUsersQuery(pagedQuery, normalizedEmail);
+        return new GetUsersQuery(pagedQuery, normalizedEmail, request.IsDeleted);
     }
 
     public static UpdateUserCommand ToCommand(this UpdateUserRequest request, Guid userId)

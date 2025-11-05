@@ -33,9 +33,16 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
         int skip,
         int take,
         string? normalizedNameFilter = null,
+        bool? isDeleted = null,
         CancellationToken ct = default)
     {
-        var query = db.Positions.AsNoTracking();
+        var query = db.Positions
+            .IgnoreQueryFilters()
+            .AsNoTracking();
+        
+        query = isDeleted is true
+            ? query.Where(p => p.DeletedAtUtc != null)
+            : query.Where(p => p.DeletedAtUtc == null);
         
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {

@@ -9,5 +9,6 @@ public interface IEmployeeReader
         int skip,
         int take,
         string? normalizedNameFilter = null,
+        bool? isDeleted = null,
         CancellationToken ct = default);
 }

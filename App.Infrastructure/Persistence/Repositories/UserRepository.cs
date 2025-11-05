@@ -52,7 +52,9 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
     
     public Task<User?> GetForUpdateAsync(Guid id, CancellationToken ct)
     {
-        var user = db.Users.AsTracking().FirstOrDefaultAsync(u => u.Id == id, ct);
+        var user = db.Users
+            .AsTracking()
+            .FirstOrDefaultAsync(u => u.Id == id, ct);
 
         return user;
     }
@@ -61,10 +63,17 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
         int skip,
         int take,
         string? email = null,
+        bool? isDeleted = null,
         CancellationToken ct = default)
     {
-        var query = db.Users.AsNoTracking();
+        var query = db.Users
+            .IgnoreQueryFilters()
+            .AsNoTracking();
 
+        query = isDeleted is true
+            ? query.Where(u => u.DeletedAtUtc != null)
+            : query.Where(u => u.DeletedAtUtc == null);
+        
         if (!string.IsNullOrWhiteSpace(email))
         {
             var pattern = $"%{email.Trim()}%";

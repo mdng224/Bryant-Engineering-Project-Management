@@ -36,5 +36,8 @@ public sealed class ClientConfig : IEntityTypeConfiguration<Client>
 
         // --- Relationships --------------------------------------------------
         b.OwnsAddress();
+        
+        
+        b.HasQueryFilter(c => c.DeletedAtUtc == null);
     }
 }

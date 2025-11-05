@@ -1,9 +1,8 @@
-﻿using App.Application.Abstractions.Persistence;
-using App.Application.Abstractions.Persistence.Readers;
+﻿using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Pagination;
 using App.Application.Employees.Queries;
+using App.Domain.Employees;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Moq;
 
 namespace App.Tests.Application.Employees.Queries;
@@ -16,14 +15,18 @@ namespace App.Tests.Application.Employees.Queries;
         // Arrange
         var mockReader = new Mock<IEmployeeReader>();
 
-        // Return an empty list with 0 total
         mockReader
-            .Setup(r => r.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetPagedAsync(
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(([], 0));
 
         var handler = new GetEmployeesHandler(mockReader.Object);
         var pagedQuery = new PagedQuery(page: 1, pageSize: 10);
-        var query = new GetEmployeesQuery(pagedQuery, NameFilter: null);
+        var query = new GetEmployeesQuery(pagedQuery, NameFilter: null, IsDeleted: null);
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -31,9 +34,7 @@ namespace App.Tests.Application.Employees.Queries;
         // Assert
         result.IsSuccess.Should().BeTrue();
 
-        var payload = result.Value;
-        payload.Should().NotBeNull();
-
+        var payload = result.Value!;
         payload.Items.Should().BeEmpty();
         payload.TotalCount.Should().Be(0);
         payload.Page.Should().Be(1);
@@ -49,12 +50,17 @@ namespace App.Tests.Application.Employees.Queries;
 
         // total = 25 with empty current page list; pageSize=10 -> totalPages=3
         mockReader
-            .Setup(r => r.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetPagedAsync(
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(([], 25));
 
         var handler = new GetEmployeesHandler(mockReader.Object);
         var pagedQuery = new PagedQuery(page: 2, pageSize: 10);
-        var query = new GetEmployeesQuery(pagedQuery, NameFilter: null);
+        var query = new GetEmployeesQuery(pagedQuery, NameFilter: null, IsDeleted: null);
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -67,6 +73,14 @@ namespace App.Tests.Application.Employees.Queries;
         payload.Page.Should().Be(2);
         payload.PageSize.Should().Be(10);
         payload.TotalPages.Should().Be(3); // 25 / 10 => 3 pages
+
+        // Verify paging math and null isDeleted passthrough
+        mockReader.Verify(r => r.GetPagedAsync(10,
+                10,
+                null,
+                null,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -76,18 +90,25 @@ namespace App.Tests.Application.Employees.Queries;
         var mockReader = new Mock<IEmployeeReader>();
 
         mockReader
-            .Setup(r => r.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetPagedAsync(
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool?>(),
+                It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("boom"));
 
         var handler = new GetEmployeesHandler(mockReader.Object);
         var pagedQuery = new PagedQuery(page: 1, pageSize: 10);
-        var query = new GetEmployeesQuery(pagedQuery, NameFilter: "doe");
+        var query = new GetEmployeesQuery(pagedQuery, NameFilter: "doe", IsDeleted: false);
 
         // Act
         Func<Task> act = async () => await handler.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
             .WithMessage("*boom*");
     }
 }
