@@ -1,4 +1,5 @@
-﻿using App.Api.Contracts.Positions;
+﻿using App.Api.Contracts.Positions.Requests;
+using App.Api.Contracts.Positions.Responses;
 using App.Api.Features.Positions.Mappers;
 using App.Api.Filters;
 using App.Application.Abstractions.Handlers;
@@ -7,6 +8,7 @@ using App.Application.Common.Pagination;
 using App.Application.Common.Results;
 using App.Application.Positions.Commands.AddPosition;
 using App.Application.Positions.Commands.DeletePosition;
+using App.Application.Positions.Commands.RestorePosition;
 using App.Application.Positions.Commands.UpdatePosition;
 using App.Application.Positions.Queries.GetPositions;
 using Microsoft.AspNetCore.Mvc;
@@ -40,6 +42,14 @@ public static class PositionEndpoints
         positions.MapGet("", HandleGetPositions)
             .WithSummary("List positions (paginated)")
             .Produces<GetPositionsResponse>();
+        
+        // POST /positions/{id}/restore
+        positions.MapPost("/{id:guid}/restore", HandleRestorePosition)
+            .WithSummary("Restore a soft-deleted position")
+            .Produces<PositionResponse>()
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict);
         
         // PATCH /positions/{id}
         positions.MapPatch("/{id:guid}", HandleUpdatePosition)
@@ -109,6 +119,30 @@ public static class PositionEndpoints
 
         var response = result.Value!.ToResponse();
 
+        return Ok(response);
+    }
+    
+    private static async Task<IResult> HandleRestorePosition(
+        [FromRoute] Guid id,
+        ICommandHandler<RestorePositionCommand, Result<PositionDto>> handler,
+        CancellationToken ct)
+    {
+        var command = new RestorePositionCommand(id);
+        var result = await handler.Handle(command, ct);
+
+        if (!result.IsSuccess)
+        {
+            var error = result.Error!.Value;
+            return error.Code switch
+            {
+                "not_found" => NotFound(new { message = error.Message }),
+                "conflict"  => Conflict(new { message = error.Message }),   // unique-name/code taken
+                "forbidden" => TypedResults.Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
+                _           => Problem(error.Message)
+            };
+        }
+
+        var response = result.Value!.ToResponse();
         return Ok(response);
     }
     

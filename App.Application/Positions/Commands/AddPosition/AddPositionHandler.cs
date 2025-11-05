@@ -25,7 +25,7 @@ public class AddPositionHandler(IPositionReader reader, IPositionWriter writer, 
         
         if (tombstonePosition is not null)
         {
-            tombstonePosition.ReviveAndUpdate(command.Name, command.Code, command.RequiresLicense);
+            tombstonePosition.RestoreAndUpdate(command.Name, command.Code, command.RequiresLicense);
             writer.Update(tombstonePosition);
             await uow.SaveChangesAsync(ct);
             

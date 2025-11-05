@@ -229,10 +229,14 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
         UpdatedAtUtc = DeletedAtUtc.Value;
     }
 
-    public void Restore()
+    public bool Restore()
     {
-        if (DeletedAtUtc is null) return;
+        if (!IsDeleted)
+            return false;
+        
         DeletedAtUtc = null;
+        DeletedById = null;
+        return true;
     }
 
     // --- Helpers ------------------------------------------------------------

@@ -125,11 +125,14 @@ public sealed class User : IAuditableEntity, ISoftDeletable
     }
     
     // Optional convenience: undo soft-delete (interceptor will bump Updated*)
-    public void Restore()
+    public bool Restore()
     {
-        if (DeletedAtUtc is null && DeletedById is null) return;
+        if (!IsDeleted)
+            return false;
+        
         DeletedAtUtc = null;
         DeletedById = null;
+        return true;
     }
 
     // --- Helpers --------------------------------------------------------------

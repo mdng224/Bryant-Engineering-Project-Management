@@ -1,4 +1,6 @@
 ﻿using App.Api.Contracts.Users;
+using App.Api.Contracts.Users.Requests;
+using App.Api.Contracts.Users.Validators;
 using App.Domain.Users;
 using FluentAssertions;
 using FluentValidation.TestHelper;

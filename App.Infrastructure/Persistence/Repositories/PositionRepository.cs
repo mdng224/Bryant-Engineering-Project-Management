@@ -9,6 +9,15 @@ namespace App.Infrastructure.Persistence.Repositories;
 public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWriter
 {
     // -------------------- Readers --------------------
+    public async Task<Position?> GetByIdAsync(Guid id, CancellationToken ct)
+    {
+        var position = await db.Positions.AsTracking()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+        
+        return position;
+    }
+
     public async Task<IReadOnlyList<Position>> GetByNameIncludingDeletedAsync(string normalizedName, CancellationToken ct = default)
     {
         var positions = await db.Positions

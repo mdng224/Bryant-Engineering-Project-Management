@@ -9,8 +9,14 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using App.Api.Contracts.Auth.Requests;
+using App.Api.Contracts.Auth.Validators;
 using App.Api.Contracts.Positions;
+using App.Api.Contracts.Positions.Requests;
+using App.Api.Contracts.Positions.Validators;
 using App.Api.Contracts.Users;
+using App.Api.Contracts.Users.Requests;
+using App.Api.Contracts.Users.Validators;
 
 namespace App.Api.Extensions;
 

@@ -48,8 +48,13 @@ const get = async (params: GetUsersRequest): Promise<GetUsersResponse> => {
   }
 };
 
+/* ------------------------------ POST (restore) ------------------------------ */
+const restore = async (id: string): Promise<void> => {
+  await api.post<string>(UsersRoutes.restore(id));
+};
+
 const update = async (id: string, body: UpdateUserRequest): Promise<void> => {
   await api.patch<void>(UsersRoutes.byId(id), body);
 };
 
-export const userService = { deleteUser, get, update };
+export const userService = { deleteUser, get, restore, update };

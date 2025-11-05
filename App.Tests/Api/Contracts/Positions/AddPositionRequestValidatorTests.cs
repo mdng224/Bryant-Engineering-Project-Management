@@ -1,4 +1,6 @@
 ﻿using App.Api.Contracts.Positions;
+using App.Api.Contracts.Positions.Requests;
+using App.Api.Contracts.Positions.Validators;
 using FluentAssertions;
 using FluentValidation.TestHelper;
 

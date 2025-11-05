@@ -1,4 +1,6 @@
 ﻿using App.Api.Contracts.Users;
+using App.Api.Contracts.Users.Requests;
+using App.Api.Contracts.Users.Responses;
 using App.Application.Common;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
@@ -31,7 +33,7 @@ internal static class UserMappers
     public static UpdateUserCommand ToCommand(this UpdateUserRequest request, Guid userId)
         => new(userId, request.RoleName, request.Status);
     
-    private static UserResponse ToResponse(this UserDto dto) =>
+    public static UserResponse ToResponse(this UserDto dto) =>
         new(
             Id: dto.Id,
             Email: dto.Email,

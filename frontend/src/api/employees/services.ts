@@ -9,4 +9,9 @@ const get = async (params: GetEmployeesRequest): Promise<GetEmployeesResponse> =
   return data;
 };
 
-export const employeeService = { get };
+/* ------------------------------ POST (restore) ------------------------------ */
+const restore = async (id: string): Promise<void> => {
+  await api.post<string>(EmployeesRoutes.restore(id));
+};
+
+export const employeeService = { get, restore };

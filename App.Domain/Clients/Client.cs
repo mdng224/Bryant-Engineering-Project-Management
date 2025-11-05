@@ -131,6 +131,16 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         if (normalized == Note) return;
         Note = normalized;
     }
+    
+    public bool Restore()
+    {
+        if (!IsDeleted)
+            return false;
+        
+        DeletedAtUtc = null;
+        DeletedById = null;
+        return true;
+    }
 
     // --- Helpers --------------------------------------------------------------
     private void EnsureNotDeleted()

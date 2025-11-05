@@ -1,4 +1,6 @@
 ﻿using App.Api.Contracts.Employees;
+using App.Api.Contracts.Employees.Requests;
+using App.Api.Contracts.Employees.Responses;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Employees.Queries;
@@ -37,8 +39,8 @@ internal static class EmployeeMappers
          
          return getEmployeesQuery;
     }
-
-    private static EmployeeResponse
+    
+    public static EmployeeResponse
         ToEmployeeResponse(this EmployeeDto dto, IReadOnlyList<string> positionNames) =>
         new(dto.Id,
             dto.UserId,

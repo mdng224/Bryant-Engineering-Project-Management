@@ -9,4 +9,9 @@ const get = async (params: GetClientsRequest): Promise<GetClientsResponse> => {
   return data;
 };
 
-export const clientService = { get };
+/* ------------------------------ POST (restore) ------------------------------ */
+const restore = async (id: string): Promise<void> => {
+  await api.post<string>(ClientsRoutes.restore(id));
+};
+
+export const clientService = { get, restore };

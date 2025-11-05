@@ -3,6 +3,7 @@ using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Common.Results;
 using App.Application.Users.Commands.DeleteUser;
+using App.Application.Users.Commands.RestoreUser;
 using App.Application.Users.Commands.UpdateUser;
 using App.Application.Users.Queries;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,7 @@ public static class UsersModule
         // Commands
         services.AddScoped<ICommandHandler<DeleteUserCommand, Result<Unit>>, DeleteUserHandler>();
         services.AddScoped<ICommandHandler<UpdateUserCommand, Result<UpdateUserResult>>, UpdateUserHandler>();
+        services.AddScoped<ICommandHandler<RestoreUserCommand, Result<UserDto>>, RestoreUserHandler>();
 
         return services;
     }

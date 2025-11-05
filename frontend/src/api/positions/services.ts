@@ -22,9 +22,14 @@ const add = async (payload: AddPositionRequest): Promise<AddPositionResponse> =>
   return data;
 };
 
-/* ------------------------------ POST (delete) ------------------------------ */
+/* ------------------------------ DELETE (delete) ------------------------------ */
 const deletePosition = async (id: string): Promise<void> => {
   await api.delete<string>(PositionsRoutes.delete(id));
+};
+
+/* ------------------------------ POST (restore) ------------------------------ */
+const restore = async (id: string): Promise<void> => {
+  await api.post<string>(PositionsRoutes.restore(id));
 };
 
 /* ------------------------------ PATCH (update) ------------------------------ */
@@ -37,5 +42,6 @@ export const positionService = {
   add,
   deletePosition,
   get,
+  restore,
   update,
 };

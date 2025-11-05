@@ -15,6 +15,15 @@ public sealed class EmployeeRepository(AppDbContext db) : IEmployeeReader
 
         return employees;
     }
+    
+    public async Task<Employee?> GetByIdAsync(Guid id, CancellationToken ct)
+    {
+        var employee = await db.Employees.AsTracking()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+        
+        return employee;
+    }
 
     public async Task<(IReadOnlyList<Employee> employees, int totalCount)> GetPagedAsync(
         int skip,

@@ -1,9 +1,10 @@
-﻿using App.Api.Contracts.Auth;
-using App.Api.Filters;
+﻿using App.Api.Filters;
 using App.Application.Auth.Commands.Register;
 using App.Application.Auth.Queries.Login;
 using System.Security.Claims;
 using App.Api.Common.Mappers;
+using App.Api.Contracts.Auth.Requests;
+using App.Api.Contracts.Auth.Responses;
 using App.Api.Features.Auth.Mappers;
 using App.Application.Abstractions.Handlers;
 using App.Application.Common.Results;

@@ -1,6 +1,8 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using App.Api.Contracts.Auth;
+using App.Api.Contracts.Auth.Requests;
+using App.Api.Contracts.Auth.Responses;
 using App.Application.Auth.Commands.Register;
 using App.Application.Auth.Queries.Login;
 

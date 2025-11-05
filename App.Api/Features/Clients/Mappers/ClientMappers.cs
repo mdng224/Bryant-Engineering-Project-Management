@@ -1,5 +1,7 @@
-﻿using App.Api.Contracts.Clients;
+﻿using App.Api.Contracts.Clients.Requests;
+using App.Api.Contracts.Clients.Responses;
 using App.Application.Clients.Queries;
+using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Domain.Common;
 
@@ -15,4 +17,7 @@ public static class ClientMappers
 
         return getClientsQuery;
     }
+    
+    public static ClientResponse ToResponse(this ClientDto dto) =>
+        new();
 }
