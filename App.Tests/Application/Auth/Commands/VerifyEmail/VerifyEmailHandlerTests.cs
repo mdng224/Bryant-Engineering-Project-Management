@@ -118,7 +118,7 @@ public sealed class VerifyEmailHandlerTests
         _verReader.Setup(r => r.GetByTokenHashAsync("t", It.IsAny<CancellationToken>()))
                   .ReturnsAsync(ev);
 
-        _userReader.Setup(ur => ur.GetByIdAsync(userId, It.IsAny<CancellationToken>()))
+        _userReader.Setup(ur => ur.GetActiveByIdAsync(userId, It.IsAny<CancellationToken>()))
                    .ReturnsAsync(user);
 
         _employeeReader.Setup(er => er.GetByCompanyEmailAsync("alice@company.com", It.IsAny<CancellationToken>()))
@@ -146,7 +146,7 @@ public sealed class VerifyEmailHandlerTests
         _verReader.Setup(r => r.GetByTokenHashAsync("t", It.IsAny<CancellationToken>()))
                   .ReturnsAsync(ev);
 
-        _userReader.Setup(ur => ur.GetByIdAsync(userId, It.IsAny<CancellationToken>()))
+        _userReader.Setup(ur => ur.GetActiveByIdAsync(userId, It.IsAny<CancellationToken>()))
                    .ReturnsAsync(user);
 
         _employeeReader.Setup(er => er.GetByCompanyEmailAsync("bob@other.com", It.IsAny<CancellationToken>()))
@@ -176,7 +176,7 @@ public sealed class VerifyEmailHandlerTests
 
         _verReader.Setup(evr => evr.GetByTokenHashAsync("t", It.IsAny<CancellationToken>()))
                   .ReturnsAsync(ev);
-        _userReader.Setup(ur => ur.GetByIdAsync(userId, It.IsAny<CancellationToken>()))
+        _userReader.Setup(ur => ur.GetActiveByIdAsync(userId, It.IsAny<CancellationToken>()))
                    .ReturnsAsync(user);
 
         // Act

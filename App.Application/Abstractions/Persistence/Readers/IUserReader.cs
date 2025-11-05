@@ -7,7 +7,8 @@ public interface IUserReader
     Task<int> CountActiveAdminsAsync(CancellationToken ct = default);
     Task<bool> ExistsByEmailAsync(string normalizedEmail, CancellationToken ct = default);
     Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken ct = default);
-    Task<User?> GetByIdAsync(Guid userId, CancellationToken ct = default);
+    Task<User?> GetActiveByIdAsync(Guid userId, CancellationToken ct = default);
+    Task<User?> GetByIdIncludingDeletedAsync(Guid id, CancellationToken ct = default);
     Task<User?> GetForUpdateAsync(Guid id, CancellationToken ct);
     Task<(IReadOnlyList<User> users, int totalCount)> GetPagedAsync(
         int skip,

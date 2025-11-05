@@ -13,7 +13,7 @@ public class RestoreUserHandler(IUserReader reader, IUnitOfWork uow)
 {
     public async Task<Result<UserDto>> Handle(RestoreUserCommand cmd, CancellationToken ct)
     {
-        var user = await reader.GetByIdAsync(cmd.Id, ct);
+        var user = await reader.GetByIdIncludingDeletedAsync(cmd.Id, ct);
         if (user is null)
             return Fail<UserDto>(code: "not_found", message: "User not found.");
 

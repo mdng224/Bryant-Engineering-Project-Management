@@ -50,7 +50,8 @@ const get = async (params: GetUsersRequest): Promise<GetUsersResponse> => {
 
 /* ------------------------------ POST (restore) ------------------------------ */
 const restore = async (id: string): Promise<void> => {
-  await api.post<string>(UsersRoutes.restore(id));
+  console.log(id);
+  await api.post(UsersRoutes.restore(id));
 };
 
 const update = async (id: string, body: UpdateUserRequest): Promise<void> => {

@@ -1,6 +1,6 @@
 // src/api/employees/routes.ts
 
-export const EmployeesRoutes = {
+export const EmployeesRoutes = Object.freeze({
   list: '/employees',
   restore: (id: string) => `/employees/${id}/restore`, // POST - restore employee
-} as const;
+} as const);

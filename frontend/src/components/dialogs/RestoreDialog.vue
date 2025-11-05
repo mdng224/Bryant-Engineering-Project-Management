@@ -35,7 +35,7 @@
             <button
               ref="confirmBtn"
               type="button"
-              class="inline-flex h-9 items-center gap-2 rounded-md bg-red-600 px-3 text-sm font-medium text-white shadow hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+              class="inline-flex h-9 items-center gap-2 rounded-md bg-emerald-600 px-3 text-sm font-medium text-white shadow hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
               :disabled="loading"
               @click="emit('confirm', payload)"
             >
@@ -72,16 +72,14 @@
     message?: string;
     confirmLabel?: string;
     cancelLabel?: string;
-    /** Anything you want back on confirm (id, full row, etc.) */
     payload?: unknown;
-    /** Disable controls & show spinner while deleting */
     loading?: boolean;
   };
 
   const props = withDefaults(defineProps<Props>(), {
-    title: 'Delete item',
-    message: 'This action cannot be undone. This will permanently delete the selected item.',
-    confirmLabel: 'Delete',
+    title: 'Restore item',
+    message: 'This will restore the previously deleted item and make it active again.',
+    confirmLabel: 'Restore',
     cancelLabel: 'Cancel',
     loading: false,
   });
@@ -94,7 +92,6 @@
   const panelEl = ref<HTMLDivElement | null>(null);
   const confirmBtn = ref<HTMLButtonElement | null>(null);
 
-  /** Focus the confirm button when the dialog opens */
   async function focusDefault() {
     await nextTick();
     confirmBtn.value?.focus();
@@ -108,7 +105,6 @@
   );
 
   function onBackdropClick(e: MouseEvent) {
-    // Only close if clicked the backdrop (not the panel)
     if (props.loading) return;
     if (e.target === e.currentTarget) emit('close');
   }

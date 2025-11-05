@@ -26,7 +26,7 @@ public sealed class VerifyEmailHandler(
         if (outcome is not VerifyEmailOutcome.Ok)
             return Ok(new VerifyEmailResult(outcome));
         
-        var user = await userReader.GetByIdAsync(verification!.UserId, ct);
+        var user = await userReader.GetActiveByIdAsync(verification!.UserId, ct);
         if (user is null)
             return Ok(new VerifyEmailResult(VerifyEmailOutcome.Invalid));
 

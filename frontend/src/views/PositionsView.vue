@@ -16,17 +16,17 @@
     </button>
   </div>
 
-  <p
+  <span
     v-if="errorMessage"
     ref="errorEl"
-    class="flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
+    class="mb-4 flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
     role="alert"
     aria-live="assertive"
     tabindex="-1"
   >
     <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
     <span>{{ errorMessage }}</span>
-  </p>
+  </span>
 
   <DataTable
     :table="table as unknown as import('@tanstack/vue-table').Table<unknown>"
@@ -64,7 +64,7 @@
             v-else
             class="rounded-md bg-indigo-600 p-1.5 text-emerald-200 transition hover:bg-green-200"
             aria-label="reactivate position"
-            @click="handleOpenReactivateDialog(cell.row.original as PositionResponse)"
+            @click="handleOpenRestoreDialog(cell.row.original as PositionResponse)"
           >
             <RotateCcw class="h-4 w-4 hover:text-green-400" />
           </button>
@@ -77,12 +77,12 @@
   <TableFooter :table :total-count :total-pages :pagination :set-page-size />
 
   <!-- Dialogs -->
-  <AddPositionDialog :open="addDialogIsOpen" @close="addDialogIsOpen = false" @saved="refetch" />
+  <add-position-dialog :open="addDialogIsOpen" @close="addDialogIsOpen = false" @saved="refetch" />
 
   <DeleteDialog
     :open="deleteDialogIsOpen"
-    title="Delete position"
-    message="This action cannot be undone. This will permanently delete the selected position."
+    title="Soft delete position"
+    message="This action will soft delete a position."
     @confirm="handleDelete"
     @close="deleteDialogIsOpen = false"
   />
@@ -92,6 +92,14 @@
     :selected-position
     @close="editPositionDialogIsOpen = false"
     @save="refetch"
+  />
+
+  <RestoreDialog
+    :open="restoreDialogIsOpen"
+    title="Restore position"
+    message="This action will restore position."
+    @confirm="handleRestore"
+    @close="deleteDialogIsOpen = false"
   />
 </template>
 
@@ -107,6 +115,7 @@
   import AddPositionDialog from '@/components/dialogs/AddPositionDialog.vue';
   import DeleteDialog from '@/components/dialogs/DeleteDialog.vue';
   import EditPositionDialog from '@/components/dialogs/EditPositionDialog.vue';
+  import RestoreDialog from '@/components/dialogs/RestoreDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
@@ -208,7 +217,7 @@
   const addDialogIsOpen = ref(false);
   const deleteDialogIsOpen = ref(false);
   const editPositionDialogIsOpen = ref(false);
-  const reactivateDialogIsOpen = ref(false);
+  const restoreDialogIsOpen = ref(false);
 
   const handleDelete = async (): Promise<void> => {
     const id = selectedPosition.value?.id;
@@ -226,6 +235,22 @@
     }
   };
 
+  const handleRestore = async (): Promise<void> => {
+    const id = selectedPosition.value?.id;
+    if (!id) return;
+
+    try {
+      await positionService.restore(id);
+      await refetch();
+    } catch (err: unknown) {
+      const msg = extractApiError(err, 'position');
+      errorMessage.value = msg;
+    } finally {
+      restoreDialogIsOpen.value = false;
+      selectedPosition.value = null;
+    }
+  };
+
   const handleOpenDeleteDialog = (position: PositionResponse): void => {
     selectedPosition.value = position;
     deleteDialogIsOpen.value = true;
@@ -236,7 +261,8 @@
     editPositionDialogIsOpen.value = true;
   };
 
-  const handleOpenReactivateDialog = (position: PositionResponse): void => {
-    // TODO: Call reactivate service
+  const handleOpenRestoreDialog = (position: PositionResponse): void => {
+    restoreDialogIsOpen.value = true;
+    selectedPosition.value = position;
   };
 </script>

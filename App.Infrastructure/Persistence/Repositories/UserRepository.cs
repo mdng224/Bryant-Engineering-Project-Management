@@ -41,7 +41,7 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
         return user;
     }
 
-    public async Task<User?> GetByIdAsync(Guid userId, CancellationToken ct = default)
+    public async Task<User?> GetActiveByIdAsync(Guid userId, CancellationToken ct = default)
     {
         var user = await db.Users
             .AsNoTracking()
@@ -50,6 +50,16 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
         return user;
     }
     
+    public async Task<User?> GetByIdIncludingDeletedAsync(Guid id, CancellationToken ct = default)
+    {
+        var user = await db.Users
+            .IgnoreQueryFilters()
+            .AsTracking()
+            .FirstOrDefaultAsync(u => u.Id == id, ct);
+
+        return user;
+    }
+
     public Task<User?> GetForUpdateAsync(Guid id, CancellationToken ct)
     {
         var user = db.Users

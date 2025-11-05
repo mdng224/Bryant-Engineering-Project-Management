@@ -29,7 +29,8 @@ const deletePosition = async (id: string): Promise<void> => {
 
 /* ------------------------------ POST (restore) ------------------------------ */
 const restore = async (id: string): Promise<void> => {
-  await api.post<string>(PositionsRoutes.restore(id));
+  console.log(id);
+  await api.post(PositionsRoutes.restore(id));
 };
 
 /* ------------------------------ PATCH (update) ------------------------------ */

@@ -9,7 +9,7 @@
   <p
     v-if="errorMessage"
     ref="errorEl"
-    class="flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
+    class="mb-4 flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
     role="alert"
     aria-live="assertive"
     tabindex="-1"
@@ -39,21 +39,20 @@
 
           <!-- Delete button -->
           <button
-            v-if="!cell.row.original.deletedAtUtc"
+            v-if="!cell.row.original.deletedAtUtc && canDelete(cell.row.original)"
             class="rounded-md bg-indigo-600 p-1.5 transition hover:bg-rose-200"
-            aria-label="delete position"
+            aria-label="delete user"
             @click="handleOpenDeleteDialog(cell.row.original as UserResponse)"
           >
-            {{ cell.row.original.deletedAtUtc }}
             <Trash2 class="h-4 w-4 text-rose-500 hover:text-rose-400" />
           </button>
 
           <!-- Reactivate button -->
           <button
-            v-else
+            v-else-if="cell.row.original.deletedAtUtc"
             class="rounded-md bg-indigo-600 p-1.5 text-emerald-200 transition hover:bg-green-200"
             aria-label="reactivate position"
-            @click="handleOpenReactivateDialog(cell.row.original as UserResponse)"
+            @click="handleOpenRestoreDialog(cell.row.original as UserResponse)"
           >
             <RotateCcw class="h-4 w-4 hover:text-green-400" />
           </button>
@@ -80,6 +79,14 @@
     @close="editUserDialogIsOpen = false"
     @saved="refetch"
   />
+
+  <RestoreDialog
+    :open="restoreDialogIsOpen"
+    title="Restore position"
+    message="This action will restore position."
+    @confirm="handleRestore"
+    @close="deleteDialogIsOpen = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -88,6 +95,7 @@
   import DeletedFilter from '@/components/DeletedFilter.vue';
   import DeleteDialog from '@/components/dialogs/DeleteDialog.vue';
   import EditUserDialog from '@/components/dialogs/EditUserDialog.vue';
+  import RestoreDialog from '@/components/dialogs/RestoreDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
@@ -226,7 +234,7 @@
   const deleteDialogIsOpen = ref(false);
   const editUserDialogIsOpen = ref(false);
   const selectedUser = ref<UserResponse | null>(null);
-  const reactivateDialogIsOpen = ref(false);
+  const restoreDialogIsOpen = ref(false);
 
   const handleDelete = async (): Promise<void> => {
     const id = selectedUser.value?.id;
@@ -244,6 +252,22 @@
     }
   };
 
+  const handleRestore = async (): Promise<void> => {
+    const id = selectedUser.value?.id;
+    if (!id) return;
+
+    try {
+      await userService.restore(id);
+      await refetch();
+    } catch (err: unknown) {
+      const msg = extractApiError(err, 'user');
+      errorMessage.value = msg;
+    } finally {
+      restoreDialogIsOpen.value = false;
+      selectedUser.value = null;
+    }
+  };
+
   const handleOpenDeleteDialog = (user: UserResponse): void => {
     if (!canDeleteUser(user.id)) return; // no self-delete
     selectedUser.value = user;
@@ -255,8 +279,8 @@
     editUserDialogIsOpen.value = true;
   };
 
-  const handleOpenReactivateDialog = (user: UserResponse): void => {
+  const handleOpenRestoreDialog = (user: UserResponse): void => {
+    restoreDialogIsOpen.value = true;
     selectedUser.value = user;
-    //  reactivateDialogIsOpen.value = true;
   };
 </script>
