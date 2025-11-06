@@ -17,119 +17,149 @@ This solution demonstrates clean separation of concerns with four core projects:
 
 ```text
 src/
-├─ App.Api/              # Minimal API entry point
-│   └─ Features/         # Vertical slices (Auth, Weather, Health, etc.)
+├─ App.Api/ # Minimal API host (vertical slices)
+│ └─ Features/
+│ ├─ Auth/ # Register, Login, Me
+│ ├─ Users/ # CRUD + pagination
+│ ├─ Employees/ # CRUD + restore + soft delete
+│ └─ Positions/ # CRUD + restore + soft delete
 │
-├─ App.Application/      # Contracts, validators, interfaces
+├─ App.Application/ # CQRS handlers, DTOs, validators, interfaces
+│ ├─ Abstractions/ # ICommand, IQuery, IUnitOfWork, etc.
+│ ├─ Common/ # Results, paging, exceptions
+│ ├─ Employees/
+│ ├─ Positions/
+│ └─ Users/
 │
-├─ App.Domain/           # Entities, value objects, domain events
+├─ App.Domain/ # Entities, enums, events, value objects
+│ ├─ Users/
+│ ├─ Employees/
+│ ├─ Positions/
+│ └─ Common/
 │
-├─ App.Infrastructure/   # EF Core, Identity, repositories, JWT services
+├─ App.Infrastructure/ # EF Core, Identity, Persistence, Outbox
+│ ├─ Persistence/
+│ │ ├─ AppDbContext.cs
+│ │ ├─ Interceptors/ (AuditSaveChangesInterceptor, etc.)
+│ │ └─ Seed/
+│ ├─ Identity/
+│ └─ Services/ # JWT, Email, etc.
 │
-├─ App.AppHost/          # Aspire host orchestrating API + Postgres
-│
-└─ App.ServiceDefaults/  # Aspire defaults (logging, tracing, health)
+├─ App.AppHost/ # Aspire orchestration (API + Postgres)
+└─ App.ServiceDefaults/ # Health checks, logging, tracing
 ```
+
 
 ---
 
-## 🚀 Getting Started
+## 🧱 Architecture Highlights
+
+- **Vertical Slice Design** – each feature folder owns its endpoint, DTOs, and logic.  
+- **CQRS** – separates command and query responsibilities for clean scalability.  
+- **DDD Patterns** – domain events, aggregates, and value objects maintain business integrity.  
+- **Auditing & Soft Delete** – every entity tracks `CreatedAtUtc`, `UpdatedAtUtc`, `DeletedAtUtc`, and user IDs via EF Core interceptors.  
+- **Outbox Pattern** – guarantees reliable event publication after successful transactions.  
+- **Deterministic GUID v7** seeding ensures consistent IDs across environments.
+
+---
+
+## 🚀 Running Locally
 
 ### Prerequisites
-- [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)  
-- [Docker](https://www.docker.com/) (Aspire orchestrates Postgres inside Docker)  
+- [.NET 9 SDK](https://dotnet.microsoft.com/download)
+- [Docker Desktop](https://www.docker.com/)
 
-### Run with Aspire
-The `AppHost` project launches **Postgres** and the **Api** service:
+### Start with Aspire
+Run the full stack (API + Postgres + health checks):
 
 ```bash
 dotnet run --project App.AppHost
-```
 
-This will:
+This automatically:
 
-- Spin up a PostgreSQL container
-- Inject connection strings into App.Api
-- Wait for database health before starting the API
+* Spins up a PostgreSQL container
+* Injects connection strings into the API
+* Waits for DB health before starting services
 
-### Run API directly
-If you want to run just the API (assuming Postgres is already available):
+Run API Only
+(when a Postgres instance is already running)
+
 ```bash
 dotnet run --project App.Api
 ```
 
-## 🔑 Authentication
+---
 
-- Uses ASP.NET Identity + EF Core for user management
-- JWT tokens are generated in App.Infrastructure and used in App.Api
-- Endpoints are grouped by feature under Features/* (vertical slice style)
+## 🧑‍💻 Database & EF Core
 
-Example feature folder (Features/Auth/):
-```
-Register.cs
-Login.cs
-Me.cs
-```
+Migrations are located in App.Infrastructure/Migrations.
 
-## EF Core & Database
-
-- App.Infrastructure.AppDbContext extends IdentityDbContext<AppUser, ...>
-- Migrations live in App.Infrastructure/Migrations
-- Connection strings are managed via Aspire (appdb) or via dotnet user-secrets
-
-Create migrations:
+Create a migration:
 ```bash
-dotnet ef migrations add InitialIdentity \
+dotnet ef migrations add InitialCreate \
   --startup-project App.Api \
   --project App.Infrastructure
 ```
 
 Apply migrations:
-```
+```bash
 dotnet ef database update \
   --startup-project App.Api \
   --project App.Infrastructure
 ```
 
-## 🧱 Vertical Slice Architecture
+---
 
-Each feature is self-contained:
+## 🔐 Authentication
 
-```csharp
-// Example: Features/Auth/Register.cs
-public static class Register
-{
-    public record Request(string Email, string Password, string DisplayName);
-    public record Response(Guid Id, string Email, string Token);
+* ASP.NET Identity manages user creation, roles, and passwords.
+* JWT tokens generated via IJwtTokenService.
+* Endpoints under /auth handle registration, login, and current user retrieval.
 
-    public static async Task<IResult> Handle(Request req, UserManager<AppUser> users, IJwtTokenService jwt)
-    {
-        var user = new AppUser { UserName = req.Email, Email = req.Email, DisplayName = req.DisplayName };
-        var result = await users.CreateAsync(user, req.Password);
-        if (!result.Succeeded) return Results.ValidationProblem(...);
+---
 
-        var token = jwt.CreateAccessToken(user, []);
-        return Results.Ok(new Response(user.Id, user.Email!, token));
-    }
-}
+## 🌐 Frontend Overview
+
+The Vue 3 client communicates with the backend via a clean Axios layer.
+Core UI patterns include:
+* Searchable and paginated tables
+* Add/Edit/Delete/Restore dialogs
+* Real-time status badges and filters
+* Responsive layout using Tailwind and Grid utility classes
+
+---
+
+## Example Endpoints
+
+| Method | Endpoint                  | Description                 |
+| :----- | :------------------------ | :-------------------------- |
+| GET    | `/health/db`              | Database connectivity check |
+| POST   | `/auth/register`          | Register new user           |
+| POST   | `/auth/login`             | Login and receive JWT       |
+| GET    | `/auth/me`                | Current user info           |
+| GET    | `/employees`              | Paginated employees         |
+| POST   | `/positions`              | Create new position         |
+| PATCH  | `/positions/{id}/restore` | Restore deleted position    |
+
+---
+
+## 🧰 Development Commands
+
+```bash
+dotnet build         # build all projects
+dotnet test          # (optional) run tests
+npm install && npm run dev  # run frontend (if separate repo)
 ```
-This keeps request/response types, handler logic, and endpoint mapping in one place.
 
-##  🛠️ Development
+---
 
-- dotnet build – build all projects
-- dotnet test – run tests (add a tests/ project if desired)
-- dotnet run --project App.AppHost – run full stack with Aspire
+## 🏛️ About Bryant Engineering, Inc.
+Bryant Engineering, Inc.
+ is a civil engineering and land surveying consulting firm based in Owensboro and Bowling Green, KY.
+This internal system streamlines personnel management and operational oversight for engineering projects.
 
-## 🌐 Endpoints
+---
 
-- GET /health/db – check DB connectivity
-- POST /auth/register – register a new user
-- POST /auth/login – login and receive JWT
-- GET /auth/me – get current user info (requires JWT)
+## Developed By
 
-## 📖 Notes
-
-- Use dotnet user-secrets for sensitive values like JWT keys and DB passwords when not running under Aspire.
-- The solution is designed to evolve: just add new features under App.Api/Features/{FeatureName}.
-
+Daniel Ng – Full-Stack Software Engineer
