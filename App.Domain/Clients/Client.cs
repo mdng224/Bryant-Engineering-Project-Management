@@ -9,12 +9,11 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     public Guid Id { get; private set; }
 
     // --- Core Fields ----------------------------------------------------------
-    
-    // Company name is required if FirstName and LastName are both blank
-    public string? CompanyName { get; private set; }
-    public string? FirstName   { get; private set; }
-    public string? MiddleName  { get; private set; }
-    public string? LastName    { get; private set; }
+    public string? Name          { get; private set; }
+    // TODO: Might need to break this out into its own table
+    public string? ContactFirst  { get; private set; }
+    public string? ContactMiddle { get; private set; }
+    public string? ContactLast   { get; private set; }
     public string? Email       { get; private set; }
     public string? Phone       { get; private set; }
     public Address? Address    { get; private set; }
@@ -24,37 +23,46 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     public DateTimeOffset CreatedAtUtc  { get; private set; }
     public DateTimeOffset UpdatedAtUtc  { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
-
     public Guid? CreatedById            { get; private set; }
     public Guid? UpdatedById            { get; private set; }
     public Guid? DeletedById            { get; private set; }
-
     public bool IsDeleted => DeletedAtUtc.HasValue;
     
     // --- Constructors --------------------------------------------------------
     private Client() { } // EF
 
-    public Client(
-        string? email       = null,
-        string? companyName = null,
-        string? firstName   = null,
-        string? lastName    = null,
-        string? middleName  = null,
-        string? phone       = null,
-        Address? address    = null,
-        string? note        = null)
+    private Client(
+        string? name,
+        string? contactFirst,
+        string? contactMiddle,
+        string? contactLast,
+        string? email,
+        string? phone,
+        Address? address,
+        string? note)
     {
         Id = Guid.CreateVersion7();
-
-        // normalize + apply rule via core setters
-        SetContactInfoInternal(companyName, firstName, lastName, middleName, email, phone);
+        SetContactInfoInternal(name, contactFirst, contactMiddle, contactLast, email, phone);
         SetAddressInternal(address);
         SetNoteInternal(note);
     }
 
+    /// <summary>Minimal seed path: pass only what you have from CSV (company + contact names).</summary>
+    public static Client Seed(string clientName, string? contactFirst, string? contactLast) =>
+        new(
+            name: clientName,
+            contactFirst: contactFirst,
+            contactMiddle: null,
+            contactLast: contactLast,
+            email: null,
+            phone: null,
+            address: null,
+            note: null
+        );
+
     // --- Public Mutators ------------------------------------------------------
     public void ChangeContactInfo(
-        string? companyName,
+        string? name,
         string? firstName,
         string? lastName,
         string? middleName,
@@ -62,7 +70,7 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         string? phone)
     {
         EnsureNotDeleted();
-        SetContactInfoInternal(companyName, firstName, lastName, middleName, email, phone);
+        SetContactInfoInternal(name, firstName, lastName, middleName, email, phone);
     }
 
     public void SetAddress(Address? address)
@@ -76,33 +84,33 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         EnsureNotDeleted();
         SetNoteInternal(note);
     }
-
-    // --- Core Setters ---------------------------------------------------------
+    
+    // --- Internals ------------------------------------------------------------
     private void SetContactInfoInternal(
-        string? companyName,
-        string? firstName,
-        string? lastName,
-        string? middleName,
+        string? name,
+        string? contactFirst,
+        string? contactMiddle,
+        string? contactLast,
         string? email,
         string? phone)
     {
-        var newEmail   = string.IsNullOrWhiteSpace(email)       ? null : email.ToNormalizedEmail();
-        var newCompany = string.IsNullOrWhiteSpace(companyName) ? null : companyName.ToNormalizedName();
-        var newFirst   = string.IsNullOrWhiteSpace(firstName)   ? null : firstName.ToNormalizedName();
-        var newLast    = string.IsNullOrWhiteSpace(lastName)    ? null : lastName.ToNormalizedName();
-        var newMiddle  = string.IsNullOrWhiteSpace(middleName)  ? null : middleName.ToNormalizedName();
+        var newCompany = NullIfBlank(name);
+        var newFirst   = contactFirst?.ToNormalizedName();
+        var newMiddle  = contactMiddle?.ToNormalizedName();
+        var newLast    = contactLast?.ToNormalizedName();
+        var newEmail   = string.IsNullOrWhiteSpace(email) ? null : email.ToNormalizedEmail();
         var newPhone   = phone.ToNormalizedPhone();
 
-        // Rule: if both names are blank, CompanyName must be provided.
+        // Rule: if both names are blank, company must be provided.
         if (newFirst is null && newLast is null && newCompany is null)
             throw new InvalidOperationException("CompanyName is required when both FirstName and LastName are blank.");
 
-        if (newCompany != CompanyName) CompanyName = newCompany;
-        if (newFirst   != FirstName)   FirstName   = newFirst;
-        if (newLast    != LastName)    LastName    = newLast;
-        if (newMiddle  != MiddleName)  MiddleName  = newMiddle;
-        if (newEmail   != Email)       Email       = newEmail;
-        if (newPhone   != Phone)       Phone       = newPhone;
+        if (Name         != newCompany) Name         = newCompany;
+        if (ContactFirst != newFirst)   ContactFirst = newFirst;
+        if (ContactMiddle!= newMiddle)  ContactMiddle= newMiddle;
+        if (ContactLast  != newLast)    ContactLast  = newLast;
+        if (Email        != newEmail)   Email        = newEmail;
+        if (Phone        != newPhone)   Phone        = newPhone;
     }
 
     private void SetAddressInternal(Address? address)
@@ -148,4 +156,6 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         if (DeletedAtUtc is not null)
             throw new InvalidOperationException("Cannot mutate a soft-deleted client.");
     }
+
+    private static string? NullIfBlank(string? s)  => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }

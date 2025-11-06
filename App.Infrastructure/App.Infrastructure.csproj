@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="MailKit" Version="4.14.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
@@ -22,7 +23,15 @@
   <ItemGroup>
     <Folder Include="Persistence\Migrations\" />
   </ItemGroup>
-
+    
+    <!-- Embed seed CSVs so they travel with the assembly -->
+    <ItemGroup>
+        <EmbeddedResource Include="Persistence\Seed\Data\*.csv">
+            <!-- Ensures resource name is App.Infrastructure.Persistence.Seed.Data.{FileName}.csv -->
+            <LogicalName>App.Infrastructure.Persistence.Seed.Data.%(Filename)%(Extension)</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>
+    
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

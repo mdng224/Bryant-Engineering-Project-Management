@@ -19,10 +19,10 @@ public sealed class ClientRepository(AppDbContext db) : IClientReader
         {
             var pattern = $"%{normalizedNameFilter}%";
             query = query.Where(c =>
-                EF.Functions.ILike(c.FirstName!, pattern) ||
-                EF.Functions.ILike(c.MiddleName!, pattern) ||
-                EF.Functions.ILike(c.LastName!, pattern) ||
-                EF.Functions.ILike(c.CompanyName!, pattern)
+                EF.Functions.ILike(c.ContactFirst!, pattern) ||
+                EF.Functions.ILike(c.ContactMiddle!, pattern) ||
+                EF.Functions.ILike(c.ContactLast!, pattern) ||
+                EF.Functions.ILike(c.Name!, pattern)
             );
         }
         
@@ -33,10 +33,10 @@ public sealed class ClientRepository(AppDbContext db) : IClientReader
         // Sort: companies first (company_name not null), then by company_name; 
         // for person entries (company_name null) sort by last/first/middle; finally by Id for stability
         var clients = await query
-            .OrderBy(c => c.CompanyName == null)
-            .ThenBy(c => c.LastName)
-            .ThenBy(c => c.FirstName)
-            .ThenBy(c => c.MiddleName)
+            .OrderBy(c => c.Name == null)
+            .ThenBy(c => c.ContactLast)
+            .ThenBy(c => c.ContactFirst)
+            .ThenBy(c => c.ContactMiddle)
             .ThenBy(c => c.Id)
             .Skip(skip)
             .Take(take)
