@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace App.Api.Contracts.Positions.Validators;
 
-public sealed class AddPositionRequestValidator : AbstractValidator<AddPositionRequest>
+public sealed class AddProjectRequestValidator : AbstractValidator<AddProjectRequest>
 {
-    public AddPositionRequestValidator()
+    public AddProjectRequestValidator()
     {
         RuleFor(apr => apr.Name)
             .NotEmpty().WithMessage("Name is required.")

@@ -54,6 +54,8 @@ public static class DependencyInjection
         services.AddScoped<IEmployeePositionReader, EmployeePositionRepository>();
         services.AddScoped<IClientReader, ClientRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        services.AddScoped<IProjectReader, ProjectRepository> ();
+        services.AddScoped<IProjectWriter, ProjectRepository> ();
         
         // --- Auth helpers (hashing + token creation) ---
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();

@@ -11,14 +11,17 @@ public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWri
     // -------------------- Readers --------------------
     public async Task<Position?> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        var position = await db.Positions.AsTracking()
+        var position = await db.Positions
+            .AsTracking()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(p => p.Id == id, ct);
         
         return position;
     }
 
-    public async Task<IReadOnlyList<Position>> GetByNameIncludingDeletedAsync(string normalizedName, CancellationToken ct = default)
+    public async Task<IReadOnlyList<Position>> GetByNameIncludingDeletedAsync(
+        string normalizedName,
+        CancellationToken ct = default)
     {
         var positions = await db.Positions
             .AsNoTracking()

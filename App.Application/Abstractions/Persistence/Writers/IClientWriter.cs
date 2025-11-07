@@ -1,10 +1,10 @@
-﻿using App.Domain.Employees;
+﻿using App.Domain.Clients;
 
 namespace App.Application.Abstractions.Persistence.Writers;
 
-public interface IPositionWriter
+public interface IClientWriter
 {
-    void Add(Position position);
+    void Add(Client client);
     Task<bool> SoftDeleteAsync(Guid id, CancellationToken ct = default);
-    void Update(Position position);
+    void Update(Client client);
 }

@@ -1,6 +1,6 @@
 ﻿namespace App.Application.Positions.Commands.AddPosition;
 
-public record AddPositionCommand(
+public sealed record AddPositionCommand(
     string Name,
     string Code,
     bool RequiresLicense);

@@ -25,9 +25,9 @@ public static class PositionEndpoints
 
         // POST /positions
         positions.MapPost("", HandleAddPosition)
-            .AddEndpointFilter<Validate<AddPositionRequest>>()
+            .AddEndpointFilter<Validate<AddProjectRequest>>()
             .WithSummary("Create a new position")
-            .Accepts<AddPositionRequest>("application/json")
+            .Accepts<AddProjectRequest>("application/json")
             .Produces<PositionResponse>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status409Conflict);
@@ -53,16 +53,16 @@ public static class PositionEndpoints
         
         // PATCH /positions/{id}
         positions.MapPatch("/{id:guid}", HandleUpdatePosition)
-            .AddEndpointFilter<Validate<UpdatePositionRequest>>()
+            .AddEndpointFilter<Validate<UpdateProjectRequest>>()
             .WithSummary("Update a position")
-            .Accepts<UpdatePositionRequest>("application/json")
+            .Accepts<UpdateProjectRequest>("application/json")
             .Produces<PositionResponse>()
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status400BadRequest);
     }
     
     private static async Task<IResult> HandleAddPosition(
-        [FromBody] AddPositionRequest request,
+        [FromBody] AddProjectRequest request,
         ICommandHandler<AddPositionCommand, Result<PositionDto>> handler,
         CancellationToken ct)
     {
@@ -148,7 +148,7 @@ public static class PositionEndpoints
     
     private static async Task<IResult> HandleUpdatePosition(
         [FromRoute] Guid id,
-        UpdatePositionRequest request,
+        UpdateProjectRequest request,
         ICommandHandler<UpdatePositionCommand, Result<PositionDto>> handler,
         CancellationToken ct)
     {

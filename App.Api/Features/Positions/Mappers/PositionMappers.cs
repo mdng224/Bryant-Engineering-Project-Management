@@ -11,12 +11,12 @@ namespace App.Api.Features.Positions.Mappers;
 
 public static class PositionMappers
 {
-    public static AddPositionCommand ToCommand(this AddPositionRequest request) =>
+    public static AddPositionCommand ToCommand(this AddProjectRequest request) =>
         new(Name: request.Name,
             Code: request.Code,
             RequiresLicense: request.RequiresLicense);
 
-    public static UpdatePositionCommand ToCommand(this UpdatePositionRequest request,
+    public static UpdatePositionCommand ToCommand(this UpdateProjectRequest request,
         Guid positionId) =>
         new(PositionId: positionId,
             Name: request.Name,

@@ -1,3 +1,3 @@
 ﻿namespace App.Application.Positions.Commands.RestorePosition;
 
-public record RestorePositionCommand(Guid Id);
+public sealed record RestorePositionCommand(Guid Id);

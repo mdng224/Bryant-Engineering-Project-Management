@@ -1,6 +1,6 @@
-// src/api/employees/contracts.ts
+// src/api/projects/contracts.ts
 
-type EmployeeBase = {
+type ProjectBase = {
   id: string;
   firstName: string;
   lastName: string;
@@ -10,33 +10,33 @@ type EmployeeBase = {
   department: string | null;
 };
 
-export type GetEmployeesRequest = {
+export type GetProjectsRequest = {
   page: number;
   pageSize: number;
   name?: string;
   isDeleted?: boolean | null;
 };
 
-export type GetEmployeesResponse = {
-  employees: EmployeeListItemResponse[];
+export type GetProjectsResponse = {
+  projects: ProjectListItemResponse[];
   totalCount: number;
   page: number;
   pageSize: number;
   totalPages: number;
 };
 
-export type EmployeeListItemResponse = {
-  summary: EmployeeSummaryResponse;
-  details: EmployeeResponse;
+export type ProjectListItemResponse = {
+  summary: ProjectSummaryResponse;
+  details: ProjectResponse;
 };
 
-// This is for the non detail view in the table for an employee
-export type EmployeeSummaryResponse = EmployeeBase & {
+// This is for the non detail view in the table for an project
+export type ProjectSummaryResponse = ProjectBase & {
   isActive: boolean;
 };
 
-// For expanded detail look on an employee
-export type EmployeeResponse = EmployeeBase & {
+// For expanded detail look on an project
+export type ProjectResponse = ProjectBase & {
   userId: string;
   salaryType: string | null;
   endDate: string | null;

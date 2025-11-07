@@ -81,6 +81,16 @@ public sealed class Project : IAuditableEntity, ISoftDeletable
         };
     }
     
+    public bool Restore()
+    {
+        if (!IsDeleted)
+            return false;
+        
+        DeletedAtUtc = null;
+        DeletedById = null;
+        return true;
+    }
+    
     // --- Helpers --------------------------------------------------------------
     private static (int year, int number)? ParseLegacyCode(string? rawProjectCode)
     {

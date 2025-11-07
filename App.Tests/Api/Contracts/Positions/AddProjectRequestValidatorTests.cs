@@ -6,14 +6,14 @@ using FluentValidation.TestHelper;
 
 namespace App.Tests.Api.Contracts.Positions;
 
-public class AddPositionRequestValidatorTests
+public class AddProjectRequestValidatorTests
 {
-    private readonly AddPositionRequestValidator _validator = new();
+    private readonly AddProjectRequestValidator _validator = new();
 
     [Fact]
     public void Should_Have_Error_When_Name_Is_Empty()
     {
-        var model = new AddPositionRequest(Name: "", Code: "ENG", RequiresLicense: true);
+        var model = new AddProjectRequest(Name: "", Code: "ENG", RequiresLicense: true);
         var result = _validator.TestValidate(model);
         result.ShouldHaveValidationErrorFor(x => x.Name);
     }
@@ -21,7 +21,7 @@ public class AddPositionRequestValidatorTests
     [Fact]
     public void Should_Pass_With_Valid_Data()
     {
-        var model = new AddPositionRequest(Name: "Engineer", Code: "ENG", RequiresLicense: false);
+        var model = new AddProjectRequest(Name: "Engineer", Code: "ENG", RequiresLicense: false);
         var result = _validator.TestValidate(model);
         result.IsValid.Should().BeTrue();
     }

@@ -19,7 +19,6 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     public string? Phone         { get; private set; }
     public Address? Address      { get; private set; }
     public string? Note          { get; private set; }
-    
     public string? ProjectCode   { get; private set; }      // Legacy: How clients and projects were linked
     
     // 🔁 Navigation (optional for EF, useful for domain logic)

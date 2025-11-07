@@ -63,7 +63,7 @@ internal static class EmployeeMappers
             dto.DeletedAtUtc,
             dto.IsActive);
     
-    private static EmployeeListItem ToListItem(this EmployeeDto dto, IReadOnlyList<PositionMiniDto> positionLookup) =>
+    private static EmployeeListItemResponse ToListItem(this EmployeeDto dto, IReadOnlyList<PositionMiniDto> positionLookup) =>
         new(
             Summary: dto.ToSummaryResponse(),
             Details: dto.ToEmployeeResponse(dto.PositionIds.ToPositionNames(positionLookup))

@@ -6,6 +6,19 @@ namespace App.Infrastructure.Persistence.Repositories;
 
 public sealed class ClientRepository(AppDbContext db) : IClientReader
 {
+    public async Task<IReadOnlyList<Client>> GetByNameIncludingDeletedAsync(
+        string normalizedName,
+        CancellationToken ct = default)
+    {
+        var clients = await db.Clients
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(p => p.Name == normalizedName)
+            .ToListAsync(ct);
+
+        return clients;
+    }
+
     public async Task<(IReadOnlyList<Client> clients, int totalCount)> GetPagedAsync(
         int skip,
         int take,

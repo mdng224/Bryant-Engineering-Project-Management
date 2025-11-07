@@ -1,7 +1,7 @@
 ﻿namespace App.Api.Contracts.Employees.Responses;
 
 public record GetEmployeesResponse(
-    IReadOnlyList<EmployeeListItem> Employees,
+    IReadOnlyList<EmployeeListItemResponse> Employees,
     int TotalCount,
     int Page,
     int PageSize,

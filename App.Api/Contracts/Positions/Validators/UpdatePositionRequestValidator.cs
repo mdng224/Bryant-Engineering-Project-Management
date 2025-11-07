@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace App.Api.Contracts.Positions.Validators;
 
-public sealed class UpdatePositionRequestValidator : AbstractValidator<UpdatePositionRequest>
+public sealed class UpdatePositionRequestValidator : AbstractValidator<UpdateProjectRequest>
 {
     public UpdatePositionRequestValidator()
     {

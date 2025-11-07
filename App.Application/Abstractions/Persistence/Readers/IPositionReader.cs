@@ -4,7 +4,7 @@ namespace App.Application.Abstractions.Persistence.Readers;
 
 public interface IPositionReader
 {
-    Task<Position?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Position?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<Position>> GetByNameIncludingDeletedAsync(
         string name,
         CancellationToken ct = default);
