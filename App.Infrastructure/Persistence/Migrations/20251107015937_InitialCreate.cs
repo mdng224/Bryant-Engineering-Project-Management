@@ -16,10 +16,10 @@ namespace App.Infrastructure.Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    company_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    first_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    middle_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    last_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    contact_first = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    contact_middle = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    contact_last = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     email = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
                     phone = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
                     Address_Line_1 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
@@ -28,6 +28,7 @@ namespace App.Infrastructure.Persistence.Migrations
                     Address_State = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     Address_PostalCode = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
                     note = table.Column<string>(type: "text", nullable: true),
+                    project_code = table.Column<string>(type: "character varying(7)", maxLength: 7, nullable: true),
                     created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -38,7 +39,7 @@ namespace App.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_clients", x => x.Id);
-                    table.CheckConstraint("ck_clients_company_or_person", " (btrim(coalesce(company_name, '')) <> '')  OR (btrim(coalesce(first_name,  '')) <> '')  OR (btrim(coalesce(last_name,   '')) <> '') ");
+                    table.CheckConstraint("ck_clients_company_or_person", " (btrim(coalesce(name, '')) <> '')  OR (btrim(coalesce(contact_first,  '')) <> '')  OR (btrim(coalesce(contact_last,   '')) <> '') ");
                 });
 
             migrationBuilder.CreateTable(
@@ -103,6 +104,43 @@ namespace App.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_roles", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "projects",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    code = table.Column<string>(type: "character varying(7)", maxLength: 7, nullable: false),
+                    year = table.Column<int>(type: "integer", nullable: false),
+                    number = table.Column<int>(type: "integer", nullable: false),
+                    scope = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    manager = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    is_open = table.Column<bool>(type: "boolean", nullable: false),
+                    type = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    Address_Line_1 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    Address_Line_2 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    Address_City = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Address_State = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Address_PostalCode = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
+                    client_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    created_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    updated_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    DeletedById = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_projects", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_projects_clients_client_id",
+                        column: x => x.client_id,
+                        principalTable: "clients",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -281,6 +319,17 @@ namespace App.Infrastructure.Persistence.Migrations
                 filter: "\"deleted_at_utc\" IS NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_projects_client_id",
+                table: "projects",
+                column: "client_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_projects_code",
+                table: "projects",
+                column: "code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ux_roles_name",
                 table: "roles",
                 column: "name",
@@ -303,9 +352,6 @@ namespace App.Infrastructure.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "clients");
-
-            migrationBuilder.DropTable(
                 name: "email_verifications");
 
             migrationBuilder.DropTable(
@@ -315,10 +361,16 @@ namespace App.Infrastructure.Persistence.Migrations
                 name: "outbox_messages");
 
             migrationBuilder.DropTable(
+                name: "projects");
+
+            migrationBuilder.DropTable(
                 name: "employees");
 
             migrationBuilder.DropTable(
                 name: "positions");
+
+            migrationBuilder.DropTable(
+                name: "clients");
 
             migrationBuilder.DropTable(
                 name: "users");

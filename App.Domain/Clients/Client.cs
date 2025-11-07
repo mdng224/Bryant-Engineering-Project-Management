@@ -1,5 +1,6 @@
 ﻿using App.Domain.Common;
 using App.Domain.Common.Abstractions;
+using App.Domain.Projects;
 
 namespace App.Domain.Clients;
 
@@ -14,10 +15,16 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     public string? ContactFirst  { get; private set; }
     public string? ContactMiddle { get; private set; }
     public string? ContactLast   { get; private set; }
-    public string? Email       { get; private set; }
-    public string? Phone       { get; private set; }
-    public Address? Address    { get; private set; }
-    public string? Note        { get; private set; }
+    public string? Email         { get; private set; }
+    public string? Phone         { get; private set; }
+    public Address? Address      { get; private set; }
+    public string? Note          { get; private set; }
+    
+    public string? ProjectCode   { get; private set; }      // Legacy: How clients and projects were linked
+    
+    // 🔁 Navigation (optional for EF, useful for domain logic)
+    private readonly List<Project> _projects = [];
+    public IReadOnlyCollection<Project> Projects => _projects;
 
     // --- Auditing ----------------------------------------------------------
     public DateTimeOffset CreatedAtUtc  { get; private set; }
@@ -39,25 +46,28 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         string? email,
         string? phone,
         Address? address,
-        string? note)
+        string? note,
+        string projectCode)
     {
         Id = Guid.CreateVersion7();
         SetContactInfoInternal(name, contactFirst, contactMiddle, contactLast, email, phone);
         SetAddressInternal(address);
         SetNoteInternal(note);
+        ProjectCode = projectCode.Trim();
     }
 
     /// <summary>Minimal seed path: pass only what you have from CSV (company + contact names).</summary>
-    public static Client Seed(string clientName, string? contactFirst, string? contactLast) =>
+    public static Client Seed(string clientName, string? contactFirst, string? contactLast, string projectCode) =>
         new(
-            name: clientName,
-            contactFirst: contactFirst,
+            name:          clientName,
+            contactFirst:  contactFirst,
             contactMiddle: null,
-            contactLast: contactLast,
-            email: null,
-            phone: null,
-            address: null,
-            note: null
+            contactLast:   contactLast,
+            email:         null,
+            phone:         null,
+            address:       null,
+            note:          null,
+            projectCode:   projectCode
         );
 
     // --- Public Mutators ------------------------------------------------------

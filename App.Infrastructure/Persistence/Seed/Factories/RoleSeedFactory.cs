@@ -1,7 +1,7 @@
 ﻿using App.Domain.Security;
 using App.Domain.Users;
 
-namespace App.Infrastructure.Persistence.Seed;
+namespace App.Infrastructure.Persistence.Seed.Factories;
 
 internal static class RoleSeedFactory
 {

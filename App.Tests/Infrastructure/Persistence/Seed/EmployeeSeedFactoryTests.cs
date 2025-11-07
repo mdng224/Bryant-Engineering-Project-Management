@@ -2,6 +2,7 @@
 using App.Domain.Security;
 using App.Infrastructure.Persistence.Seed;
 using App.Infrastructure.Persistence.Seed.Configurations;
+using App.Infrastructure.Persistence.Seed.Factories;
 using FluentAssertions;
 
 namespace App.Tests.Infrastructure.Persistence.Seed;

@@ -3,7 +3,7 @@ using App.Domain.Employees;
 using App.Domain.Security;
 using App.Infrastructure.Persistence.Seed.Configurations;
 
-namespace App.Infrastructure.Persistence.Seed;
+namespace App.Infrastructure.Persistence.Seed.Factories;
 
 public static class EmployeeSeedFactory
 {

@@ -2,6 +2,7 @@
 using App.Domain.Clients;
 using App.Domain.Common;
 using App.Domain.Employees;
+using App.Domain.Projects;
 using App.Domain.Users;
 using App.Infrastructure.Persistence.Configurations;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Position> Positions => Set<Position>();
     public DbSet<EmployeePosition> EmployeePositions => Set<EmployeePosition>();
     public DbSet<Client> Clients => Set<Client>();
+    public DbSet<Project> Projects => Set<Project>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,6 +37,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration(new EmployeePositionConfig()); // 5
         modelBuilder.ApplyConfiguration(new EmailVerificationConfig()); // 6
         modelBuilder.ApplyConfiguration(new ClientConfig());
+        modelBuilder.ApplyConfiguration(new ProjectConfig());
     }
 
     // --- Model configuration -----------------------------------------------

@@ -1,7 +1,7 @@
 ﻿using App.Domain.Employees;
 using static App.Infrastructure.Persistence.Seed.Configurations.PositionIds;
 
-namespace App.Infrastructure.Persistence.Seed;
+namespace App.Infrastructure.Persistence.Seed.Factories;
 
 internal static class PositionSeedFactory
 {
