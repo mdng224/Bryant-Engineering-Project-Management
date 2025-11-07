@@ -13,20 +13,20 @@ public sealed class ProjectConfig : IEntityTypeConfiguration<Project>
         b.ToTable("projects");
 
         // --- Key ------------------------------------------------------------
-        b.HasKey(c => c.Id);
-        b.Property(c => c.Id).ValueGeneratedNever(); // Guid v7 provided in code
+        b.HasKey(p => p.Id);
+        b.Property(p => p.Id).ValueGeneratedNever(); // Guid v7 provided in code
 
         // --- Columns --------------------------------------------------------
-        b.Property(c => c.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
-        b.Property(c => c.Code).HasColumnName("code").HasMaxLength(7).IsRequired();
-        b.Property(c => c.Year).HasColumnName("year").IsRequired();
-        b.Property(c => c.Number).HasColumnName("number").IsRequired();
+        b.Property(p => p.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
+        b.Property(p => p.Code).HasColumnName("code").HasMaxLength(7).IsRequired();
+        b.Property(p => p.Year).HasColumnName("year").IsRequired();
+        b.Property(p => p.Number).HasColumnName("number").IsRequired();
         // Computed property - do NOT persist as a regular column
         b.Ignore(p => p.NewCode);
-        b.Property(c => c.Scope).HasColumnName("scope").HasMaxLength(100).IsRequired(false);
-        b.Property(c => c.Manager).HasColumnName("manager").HasMaxLength(100).IsRequired(false);
-        b.Property(c => c.IsOpen).HasColumnName("is_open").IsRequired();
-        b.Property(c => c.Type).HasColumnName("type").HasMaxLength(64).IsRequired(false);
+        b.Property(p => p.Scope).HasColumnName("scope").HasMaxLength(100).IsRequired();
+        b.Property(p => p.Manager).HasColumnName("manager").HasMaxLength(100).IsRequired();
+        b.Property(p => p.IsOpen).HasColumnName("is_open").IsRequired();
+        b.Property(p => p.Type).HasColumnName("type").HasMaxLength(64).IsRequired();
         b.OwnsAddress();
         b.ConfigureAuditable();
 
@@ -36,7 +36,7 @@ public sealed class ProjectConfig : IEntityTypeConfiguration<Project>
             .IsRequired();
 
         b.HasOne(p => p.Client)
-            .WithMany(c => c.Projects)
+            .WithMany(p => p.Projects)
             .HasForeignKey(p => p.ClientId)
             .OnDelete(DeleteBehavior.Restrict);
         

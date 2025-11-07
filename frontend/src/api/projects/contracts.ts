@@ -1,13 +1,16 @@
 // src/api/projects/contracts.ts
 
+import type { Address } from '../common';
+
 type ProjectBase = {
   id: string;
-  firstName: string;
-  lastName: string;
-  preferredName?: string | null;
-  employmentType?: string | null;
-  hireDate: string | null;
-  department: string | null;
+  clientId: string;
+  name: string;
+  newCode: string;
+  scope: string | null;
+  manager: string | null;
+  status: boolean;
+  type: string | null;
 };
 
 export type GetProjectsRequest = {
@@ -31,21 +34,18 @@ export type ProjectListItemResponse = {
 };
 
 // This is for the non detail view in the table for an project
-export type ProjectSummaryResponse = ProjectBase & {
-  isActive: boolean;
-};
+export type ProjectSummaryResponse = ProjectBase;
 
 // For expanded detail look on an project
 export type ProjectResponse = ProjectBase & {
-  userId: string;
-  salaryType: string | null;
-  endDate: string | null;
-  companyEmail: string | null;
-  workLocation: string | null;
-  licenseNotes: string | null;
-  notes: string | null;
-  recommendedRoleId: string | null;
-  createdAtUtc: string;
-  updatedAtUtc: string;
-  deletedAtUtc: string | null;
+  address: Address | null;
+  code: string | null;
+  year: number;
+  number: number;
+  CreatedAtUtc: string | null;
+  UpdatedAtUtc: string | null;
+  DeletedAtUtc: string | null;
+  CreatedById: string | null;
+  UpdatedById: string | null;
+  DeletedById: string | null;
 };

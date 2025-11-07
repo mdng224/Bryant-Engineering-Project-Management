@@ -106,18 +106,17 @@ public static class DbSeeder
             // Create the project
             var project = Project.Seed(
                 clientId:    client.Id,
-                name:        row.ProjectName ?? "(unnamed project)",
+                name:        row.ProjectName,
                 projectCode: row.ProjectCode,
-                scope:       row.Scope ?? "unknown",
-                manager:     row.PM ?? "unknown",
-                status:      row.Status ?? "unknown",
-                // If your Project.Seed requires non-null location, keep ?? "".
-                // If you updated Project.Seed to accept null, pass row.Location directly.
-                location:    row.Location ?? "unknown"
+                scope:       row.Scope,
+                manager:     row.PM,
+                status:      row.Status,
+                location:    row.Location,
+                type:        row.Type
             );
 
             db.Projects.Add(project);
-            createdProjectCodes.Add(row.ProjectCode);
+            createdProjectCodes.Add(row.ProjectCode ?? string.Empty);
         }
 
         if (db.ChangeTracker.HasChanges())

@@ -42,24 +42,24 @@ public static class EmployeeEndpoints
         CancellationToken ct = default)
     {
         // 1) Employees
-        var getEmployeesQuery = request.ToQuery();
-        var employeesResult  = await getEmployeesHandler.Handle(getEmployeesQuery, ct);
-        if (!employeesResult.IsSuccess)
-            return Problem(employeesResult.Error!.Value.Message);
+        var query = request.ToQuery();
+        var result  = await getEmployeesHandler.Handle(query, ct);
+        if (!result.IsSuccess)
+            return Problem(result.Error!.Value.Message);
         
-        var employeesPage = employeesResult.Value!;
+        var employeesPage = result.Value!;
         var employeeIds = employeesPage.Items.Select(e => e.Id).Distinct().ToArray();
         
         // 2) Positions lookup (prefer a dedicated lookup query or cap the size)
-        var getPositionsForEmployeesQuery = new GetPositionsForEmployeesQuery(employeeIds);
-        var positionsMapResult = await getPositionsForEmployeesHandler.Handle(getPositionsForEmployeesQuery, ct);
-        if (!positionsMapResult.IsSuccess)
-            return Problem(positionsMapResult.Error!.Value.Message);
+        var positionsQuery = new GetPositionsForEmployeesQuery(employeeIds);
+        var positionsResult = await getPositionsForEmployeesHandler.Handle(positionsQuery, ct);
+        if (!positionsResult.IsSuccess)
+            return Problem(positionsResult.Error!.Value.Message);
         
-        var positionsByEmployee = positionsMapResult.Value!; // Dict<EmployeeId, List<PositionMiniDto>>
+        var positionsByEmployee = positionsResult.Value!; // Dict<EmployeeId, List<PositionMiniDto>>
         
         // 3) Map to response
-        var response = employeesResult.Value!.ToGetEmployeesResponse(positionsByEmployee);
+        var response = result.Value!.ToGetEmployeesResponse(positionsByEmployee);
         
         return Ok(response);
     }

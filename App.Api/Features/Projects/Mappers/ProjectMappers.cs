@@ -9,6 +9,17 @@ namespace App.Api.Features.Projects.Mappers;
 
 public static class ProjectMappers
 {
+    public static GetProjectsResponse ToGetProjectsResponse(this PagedResult<ProjectDto> pagedResult)
+    {
+        var projects = pagedResult.Items.Select(pd => pd.ToListItem()).ToList();
+
+        return new GetProjectsResponse(
+            ProjectListItemResponses: projects,
+            TotalCount:               pagedResult.TotalCount,
+            Page:                     pagedResult.Page,
+            PageSize:                 pagedResult.PageSize,
+            TotalPages:               pagedResult.TotalPages);
+    }
     public static GetProjectsQuery ToQuery(this GetProjectsRequest request)
     {
         var normalizedNameFilter = (request.NameFilter ?? string.Empty).ToNormalizedName();
@@ -18,8 +29,37 @@ public static class ProjectMappers
         return getProjectsQuery;
     }
     
-    public static ProjectResponse ToResponse(this ProjectDto dto) =>
-        new(Id: dto.Id,
-            Name: dto.Name,
-            DeletedAtUtc: dto.DeletedAtUtc);
+    public static ProjectSummaryResponse ToSummaryResponse(this ProjectDto dto) =>
+        new(
+            Id:       dto.Id,
+            ClientId: dto.ClientId,
+            Name:     dto.Name,
+            NewCode:  dto.NewCode,
+            Scope:    dto.Scope,
+            Manager:  dto.Manager,
+            Status:   dto.Status,
+            Type:     dto.Type);
+    
+    private static ProjectListItemResponse ToListItem(this ProjectDto dto) =>
+        new(
+            Summary: dto.ToSummaryResponse(),
+            Details: dto.ToProjectResponse());
+    
+    private static ProjectResponse ToProjectResponse(this ProjectDto dto) =>
+        new(
+            Id:            dto.Id,
+            ClientId:      dto.ClientId,
+            Name:          dto.Name,
+            NewCode:       dto.NewCode,
+            Scope:         dto.Scope,
+            Manager:       dto.Manager,
+            Status:        dto.Status,
+            Type:          dto.Type,
+            Address:       dto.Address,
+            CreatedAtUtc:  dto.CreatedAtUtc,
+            UpdatedAtUtc:  dto.UpdatedAtUtc,
+            DeletedAtUtc:  dto.DeletedAtUtc,
+            CreatedById:   dto.CreatedById,
+            UpdatedById:   dto.UpdatedById,
+            DeletedById:   dto.DeletedById);
 }

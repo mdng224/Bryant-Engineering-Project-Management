@@ -1,5 +1,4 @@
-﻿using App.Api.Contracts.Positions;
-using App.Api.Contracts.Positions.Requests;
+﻿using App.Api.Contracts.Positions.Requests;
 using App.Api.Contracts.Positions.Responses;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;

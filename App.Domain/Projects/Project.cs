@@ -13,18 +13,18 @@ public sealed class Project : IAuditableEntity, ISoftDeletable
     // --- Core Fields ----------------------------------------------------------
     public string Name     { get; private set; }
     public string Code     { get; private set; }    // legacy (e.g., "01-2632")
-    public int Year        { get; private set; }
-    public int Number      { get; private set; }
+    public int Year        { get; private init; }
+    public int Number      { get; private init; }
     public string NewCode  => $"{Year}-{Number}";
-    public string? Scope   { get; private set; }
-    public string? Manager { get; private set; }
+    public string Scope    { get; private set; }
+    public string Manager  { get; private set; }
     public bool IsOpen     { get; private set; }
     
     // TODO: May need to create a project type
-    public string? Type    { get; private set; }
+    public string Type     { get; private set; }
     
     // TODO: Ask andy if we need this to be a specific address or just a location string
-    public Address? Address  { get; private set; }  // Seed will put everything in Line1 for now
+    public Address? Address { get; private set; }  // Seed will put everything in Line1 for now
     
     // 🔗 FK + navigation
     public Guid ClientId { get; private set; }
@@ -44,13 +44,14 @@ public sealed class Project : IAuditableEntity, ISoftDeletable
 
     // --- Factory --------------------------------------------------------------
     public static Project Seed(
-        Guid clientId,
+        Guid   clientId,
         string name,
         string projectCode,
-        string? scope,
-        string? manager,
-        string? status,
-        string location)
+        string scope,
+        string manager,
+        string status,
+        string location,
+        string type)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Project name is required.", nameof(name));
@@ -73,11 +74,11 @@ public sealed class Project : IAuditableEntity, ISoftDeletable
             Code     = NormalizeLegacyCode(projectCode),
             Year     = year,
             Number   = number,
-            Scope    = string.IsNullOrWhiteSpace(scope) ? null : scope.Trim(),
-            Manager  = string.IsNullOrWhiteSpace(manager) ? null : manager.Trim(),
+            Scope    = scope.Trim(),
+            Manager  = manager.Trim(),
             Address  = address,
-            IsOpen   = isOpen
-            // Type left null on seed (you can map later if desired)
+            IsOpen   = isOpen,
+            Type     = type.Trim()
         };
     }
     

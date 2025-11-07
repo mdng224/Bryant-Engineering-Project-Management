@@ -33,19 +33,19 @@ public static class ClientEndpoints
             .Produces(StatusCodes.Status409Conflict);
     }
 
-    private static async Task HandleGetClients(
+    private static async Task<IResult> HandleGetClients(
         [AsParameters] GetClientsRequest request,
         IQueryHandler<GetClientsQuery, Result<PagedResult<ClientDto>>> getClientsHandler,
         CancellationToken ct = default)
     {
-        var getClientsQuery = request.ToQuery();
-        var clientsResult  = await getClientsHandler.Handle(getClientsQuery, ct);
-       // if (!clientsResult.IsSuccess)
-         //   return Problem(clientsResult.Error!.Value.Message);
+        var query = request.ToQuery();
+        var result  = await getClientsHandler.Handle(query, ct);
+        if (!result.IsSuccess)
+            return Problem(result.Error!.Value.Message);
+
+        var response = result.Value!.ToGetClientsResponse();
         
-        //var response = clientsResult.Value!.ToResult();
-        
-        throw new NotImplementedException();
+        return Ok(response);
     }
     
     private static async Task<IResult> HandleRestoreClient(
@@ -68,7 +68,7 @@ public static class ClientEndpoints
             };
         }
 
-        var response = result.Value!.ToResponse();
+        var response = result.Value!.ToSummaryResponse();
         return Ok(response);
     }
 }

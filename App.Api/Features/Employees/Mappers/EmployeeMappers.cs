@@ -1,5 +1,4 @@
-﻿using App.Api.Contracts.Employees;
-using App.Api.Contracts.Employees.Requests;
+﻿using App.Api.Contracts.Employees.Requests;
 using App.Api.Contracts.Employees.Responses;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;

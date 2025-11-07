@@ -33,15 +33,20 @@ public static class ProjectEndpoints
             .Produces(StatusCodes.Status409Conflict);
     }
 
-    private static async Task HandleGetProjects(
+    private static async Task<IResult> HandleGetProjects(
         [AsParameters] GetProjectsRequest request,
         IQueryHandler<GetProjectsQuery, Result<PagedResult<ProjectDto>>> getProjectsHandler,
         CancellationToken ct = default)
     {
-        var query = request.ToQuery();
-        var projectsResult  = await getProjectsHandler.Handle(query, ct);
+        var query   = request.ToQuery();
+        var result  = await getProjectsHandler.Handle(query, ct);
         
-        throw new NotImplementedException();
+        if (!result.IsSuccess)
+            return Problem(result.Error!.Value.Message);
+
+        var response = result.Value!.ToGetProjectsResponse();
+
+        return Ok(response);
     }
     
     private static async Task<IResult> HandleRestoreProject(
@@ -50,7 +55,7 @@ public static class ProjectEndpoints
         CancellationToken ct)
     {
         var command = new RestoreProjectCommand(id);
-        var result = await handler.Handle(command, ct);
+        var result  = await handler.Handle(command, ct);
 
         if (!result.IsSuccess)
         {
@@ -64,7 +69,7 @@ public static class ProjectEndpoints
             };
         }
 
-        var response = result.Value!.ToResponse();
+        var response = result.Value!.ToSummaryResponse();
         return Ok(response);
     }
 }

@@ -1,7 +1,7 @@
 ﻿namespace App.Api.Contracts.Projects.Responses;
 
 public sealed record GetProjectsResponse(
-    IReadOnlyList<ProjectResponse> Positions,
+    IReadOnlyList<ProjectListItemResponse> ProjectListItemResponses,
     int TotalCount,
     int Page,
     int PageSize,

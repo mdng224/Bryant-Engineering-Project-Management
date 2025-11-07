@@ -67,7 +67,7 @@ public static class PositionEndpoints
         CancellationToken ct)
     {
         var command = request.ToCommand();
-        var result = await handler.Handle(command, ct);
+        var result  = await handler.Handle(command, ct);
 
         if (!result.IsSuccess)
         {
@@ -92,7 +92,7 @@ public static class PositionEndpoints
         CancellationToken ct)
     {
         var command = new DeletePositionCommand(id);
-        var result = await handler.Handle(command, ct);
+        var result  = await handler.Handle(command, ct);
 
         if (result.IsSuccess)
             return NoContent();
@@ -111,7 +111,7 @@ public static class PositionEndpoints
         IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionDto>>> handler,
         CancellationToken ct)
     {
-        var query = request.ToQuery();
+        var query  = request.ToQuery();
         var result = await handler.Handle(query, ct);
 
         if (!result.IsSuccess)
@@ -128,7 +128,7 @@ public static class PositionEndpoints
         CancellationToken ct)
     {
         var command = new RestorePositionCommand(id);
-        var result = await handler.Handle(command, ct);
+        var result  = await handler.Handle(command, ct);
 
         if (!result.IsSuccess)
         {
@@ -153,7 +153,7 @@ public static class PositionEndpoints
         CancellationToken ct)
     {
         var command = request.ToCommand(id);
-        var result = await handler.Handle(command, ct);
+        var result  = await handler.Handle(command, ct);
 
         if (!result.IsSuccess)
         {

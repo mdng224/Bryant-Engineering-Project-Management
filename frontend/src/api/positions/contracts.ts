@@ -17,7 +17,6 @@ export type GetPositionsRequest = {
   page: number;
   pageSize: number;
   nameFilter: string | null;
-  isDeleted: boolean | null;
 };
 
 export type GetPositionsResponse = {

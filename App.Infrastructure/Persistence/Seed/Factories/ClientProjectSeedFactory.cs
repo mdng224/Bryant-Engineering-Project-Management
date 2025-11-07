@@ -10,24 +10,26 @@ public static class ClientProjectSeedFactory
     // ---------- Public seed records (what DbSeeder will use) ------------------
 
     public sealed record CombinedSeed(
-        string  ProjectCode,
-        string? ProjectName,
-        string? ClientName,
-        string? ProjectContact,
-        string? Scope,
-        string? PM,
-        string? Status,
-        string? Location
+        string ProjectCode,
+        string ProjectName,
+        string ClientName,
+        string ProjectContact,
+        string Scope,
+        string PM,
+        string Status,
+        string Location,
+        string Type
     );
 
     public sealed record ClientSeed(string ClientName, string? ContactRaw, string? FirstProjectCode);
     public sealed record ProjectSeed(
-        string  ProjectCode,
-        string? ProjectName,
-        string? Scope,
-        string? PM,
-        string? Status,
-        string? Location
+        string ProjectCode,
+        string ProjectName,
+        string Scope,
+        string PM,
+        string Status,
+        string Location,
+        string Type
     );
 
     // ---------- CSV row + map (private) --------------------------------------
@@ -42,20 +44,22 @@ public static class ClientProjectSeedFactory
         public string PM              { get; set; } = "";  // "PM"
         public string Status          { get; set; } = "";  // "Status"
         public string Location        { get; set; } = "";  // "Location"
+        public string Type            { get; set; } = ""; // "Project Type"
     }
 
     private sealed class CombinedCsvMap : ClassMap<CombinedCsvRow>
     {
         public CombinedCsvMap()
         {
-            Map(x => x.ProjectCode)     .Name("PROJECT Code");
-            Map(x => x.ProjectName)     .Name("PROJECT NAME");
-            Map(x => x.ClientNameFinal) .Name("Client Name (FINAL)");
-            Map(x => x.ProjectContact)  .Name("PROJECT CONTACT");
-            Map(x => x.Scope)           .Name("Scope");
-            Map(x => x.PM)              .Name("PM");
-            Map(x => x.Status)          .Name("Status");
-            Map(x => x.Location)        .Name("Location");
+            Map(ccr => ccr.ProjectCode)     .Name("PROJECT Code");
+            Map(ccr => ccr.ProjectName)     .Name("PROJECT NAME");
+            Map(ccr => ccr.ClientNameFinal) .Name("Client Name (FINAL)");
+            Map(ccr => ccr.ProjectContact)  .Name("PROJECT CONTACT");
+            Map(ccr => ccr.Scope)           .Name("Scope");
+            Map(ccr => ccr.PM)              .Name("PM");
+            Map(ccr => ccr.Status)          .Name("Status");
+            Map(ccr => ccr.Location)        .Name("Location");
+            Map(ccr => ccr.Type)            .Name("Project Type");
         }
     }
 
@@ -89,36 +93,6 @@ public static class ClientProjectSeedFactory
         return dict.Values.ToList();
     }
 
-    /// Unique projects by project code (case-insensitive). Keeps first.
-    public static List<ProjectSeed> UniqueProjectsByCode(List<CombinedSeed> allRows, out List<string> warnings)
-    {
-        warnings = [];
-
-        var normalized = allRows
-            .Where(cs => !string.IsNullOrWhiteSpace(cs.ProjectCode))
-            .Select(cs => new ProjectSeed(
-                ProjectCode: cs.ProjectCode!,
-                ProjectName: cs.ProjectName,
-                Scope      : cs.Scope,
-                PM         : cs.PM,
-                Status     : cs.Status,
-                Location   : cs.Location
-            ))
-            .ToList();
-
-        var unique = SeedUtils.DedupeBy(
-            normalized,
-            keySelector: p => p.ProjectCode,
-            comparer: StringComparer.OrdinalIgnoreCase
-        ).ToList();
-
-        var duplicates = normalized.Count - unique.Count;
-        if (duplicates > 0)
-            warnings.Add($"Dropped {duplicates} duplicate project row(s) by PROJECT Code.");
-
-        return unique;
-    }
-
     // ---------- Convenience (single-pass enumerator) --------------------------
 
     /// Efficient iterator: yields normalized rows in file order. Great for one-loop seeding.
@@ -142,13 +116,14 @@ public static class ClientProjectSeedFactory
         {
             yield return new CombinedSeed(
                 ProjectCode   : NormalizeCode(ccr.ProjectCode),
-                ProjectName   : SeedUtils.CollapseSpaces(ccr.ProjectName),
-                ClientName    : SeedUtils.CollapseSpaces(ccr.ClientNameFinal),
-                ProjectContact: SeedUtils.NullIfWhiteSpace(ccr.ProjectContact),
-                Scope         : SeedUtils.NullIfWhiteSpace(ccr.Scope),
-                PM            : SeedUtils.NullIfWhiteSpace(ccr.PM),
-                Status        : SeedUtils.NullIfWhiteSpace(ccr.Status),
-                Location      : SeedUtils.CollapseSpaces(ccr.Location)
+                ProjectName   : SeedUtils.CollapseSpaces(ccr.ProjectName) ?? "unknown",
+                ClientName    : SeedUtils.CollapseSpaces(ccr.ClientNameFinal) ?? "unknown",
+                ProjectContact: SeedUtils.NullIfWhiteSpace(ccr.ProjectContact) ?? "unknown",
+                Scope         : SeedUtils.NullIfWhiteSpace(ccr.Scope) ?? "unknown",
+                PM            : SeedUtils.NullIfWhiteSpace(ccr.PM) ?? "unknown",
+                Status        : SeedUtils.NullIfWhiteSpace(ccr.Status) ?? "unknown",
+                Location      : SeedUtils.CollapseSpaces(ccr.Location) ?? "unknown",
+                Type          : SeedUtils.CollapseSpaces(ccr.Type) ?? "unknown"
             );
         }
     }

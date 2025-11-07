@@ -74,7 +74,7 @@ public static class AuthEndpoints
         [FromServices] IQueryHandler<LoginQuery, Result<LoginResult>> handler,
         CancellationToken ct)
     {
-        var query = request.ToQuery();
+        var query  = request.ToQuery();
         var result = await handler.Handle(query, ct);
 
         return result.ToHttpResult(loginResult => Ok(loginResult.ToResponse()));
@@ -86,7 +86,7 @@ public static class AuthEndpoints
         CancellationToken ct)
     {
         var command = request.ToCommand();
-        var result = await handler.Handle(command, ct);
+        var result  = await handler.Handle(command, ct);
 
         return result.ToHttpResult(registerResult =>
         {
