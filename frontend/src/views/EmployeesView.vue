@@ -24,8 +24,8 @@
           <button
             v-if="!cell.row.original.deletedAtUtc"
             :class="actionButtonClass"
-            aria-label="Edit employee"
-            @click="handleViewEmployee(cell.row.original as EmployeeSummaryResponse)"
+            aria-label="view employee"
+            @click="handleView(cell.row.original as EmployeeSummaryResponse)"
           >
             <Eye class="h-4 w-4" />
           </button>
@@ -72,13 +72,13 @@
 </template>
 
 <script setup lang="ts">
-  import { employeeService } from '@/api/employees';
   import type {
     EmployeeResponse,
     EmployeeSummaryResponse,
     GetEmployeesRequest,
     GetEmployeesResponse,
-  } from '@/api/employees/contracts';
+  } from '@/api/employees';
+  import { employeeService } from '@/api/employees';
   import DeletedFilter from '@/components/DeletedFilter.vue';
   import EditEmployeeDialog from '@/components/dialogs/EditEmployeeDialog.vue';
   import ViewEmployeeDialog from '@/components/dialogs/ViewEmployeeDialog.vue';
@@ -191,7 +191,7 @@
   const viewEmployeeDialogIsOpen = ref(false);
 
   /* -------------------------------- Handlers ------------------------------ */
-  const handleViewEmployee = (summary: EmployeeSummaryResponse): void => {
+  const handleView = (summary: EmployeeSummaryResponse): void => {
     const detail = employeeDetailsById.value.get(summary.id) ?? null;
     selectedEmployee.value = detail;
     viewEmployeeDialogIsOpen.value = !!detail;

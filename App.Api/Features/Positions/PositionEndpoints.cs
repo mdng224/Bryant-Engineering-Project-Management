@@ -63,7 +63,7 @@ public static class PositionEndpoints
     
     private static async Task<IResult> HandleAddPosition(
         [FromBody] AddProjectRequest request,
-        ICommandHandler<AddPositionCommand, Result<PositionDto>> handler,
+        [FromServices] ICommandHandler<AddPositionCommand, Result<PositionDto>> handler,
         CancellationToken ct)
     {
         var command = request.ToCommand();
@@ -88,7 +88,7 @@ public static class PositionEndpoints
     
     private static async Task<IResult> HandleDeletePosition(
         [FromRoute] Guid id,
-        ICommandHandler<DeletePositionCommand, Result<Unit>> handler,
+        [FromServices] ICommandHandler<DeletePositionCommand, Result<Unit>> handler,
         CancellationToken ct)
     {
         var command = new DeletePositionCommand(id);
@@ -108,7 +108,7 @@ public static class PositionEndpoints
     
     private static async Task<IResult> HandleGetPositions(
         [AsParameters] GetPositionsRequest request,
-        IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionDto>>> handler,
+        [FromServices] IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionDto>>> handler,
         CancellationToken ct)
     {
         var query  = request.ToQuery();
@@ -124,7 +124,7 @@ public static class PositionEndpoints
     
     private static async Task<IResult> HandleRestorePosition(
         [FromRoute] Guid id,
-        ICommandHandler<RestorePositionCommand, Result<PositionDto>> handler,
+        [FromServices] ICommandHandler<RestorePositionCommand, Result<PositionDto>> handler,
         CancellationToken ct)
     {
         var command = new RestorePositionCommand(id);
@@ -149,7 +149,7 @@ public static class PositionEndpoints
     private static async Task<IResult> HandleUpdatePosition(
         [FromRoute] Guid id,
         UpdateProjectRequest request,
-        ICommandHandler<UpdatePositionCommand, Result<PositionDto>> handler,
+        [FromServices] ICommandHandler<UpdatePositionCommand, Result<PositionDto>> handler,
         CancellationToken ct)
     {
         var command = request.ToCommand(id);

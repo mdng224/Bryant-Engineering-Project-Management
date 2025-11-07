@@ -24,8 +24,8 @@
           <!-- View button -->
           <button
             :class="actionButtonClass"
-            aria-label="Edit client"
-            @click="handleViewClient(cell.row.original as ClientSummaryResponse)"
+            aria-label="View client"
+            @click="handleView(cell.row.original as ClientSummaryResponse)"
           >
             <Eye class="h-4 w-4" />
           </button>
@@ -58,6 +58,7 @@
     GetClientsRequest,
     GetClientsResponse,
   } from '@/api/clients/contracts';
+  import DeletedFilter from '@/components/DeletedFilter.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
@@ -73,31 +74,16 @@
   const actionButtonClass =
     'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
 
-  // Department badge colors
-  type DepartmentType = 'Engineering' | 'Drafting' | 'Surveying' | 'OfficeAdmin';
-  const departmentClasses: Record<DepartmentType, string> = {
-    Engineering: 'bg-sky-700 text-sky-100',
-    Drafting: 'bg-fuchsia-700 text-fuchsia-100',
-    Surveying: 'bg-amber-700 text-amber-100',
-    OfficeAdmin: 'bg-slate-700 text-slate-200',
-  };
-  const getDepartmentClass = (dept: string): string =>
-    departmentClasses[dept as DepartmentType] ?? 'bg-slate-800/60 text-slate-300';
-
   /* -------------------------------- Columns ------------------------------- */
   const col: ColumnHelper<ClientSummaryResponse> = createColumnHelper<ClientSummaryResponse>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns: ColumnDef<ClientSummaryResponse, any>[] = [
-    col.accessor('lastName', { header: 'Last Name', meta: { kind: 'text' as const } }),
-    col.accessor('firstName', { header: 'First Name', meta: { kind: 'text' as const } }),
-    col.accessor('preferredName', { header: 'Preferred Name', meta: { kind: 'text' as const } }),
-    col.accessor('department', {
-      header: 'Department',
-      meta: { kind: 'badge' as const, classFor: (val: string) => getDepartmentClass(val) },
-    }),
-    col.accessor('employmentType', { header: 'Employment Type', meta: { kind: 'text' as const } }),
-    col.accessor('hireDate', { header: 'Hire Date', meta: { kind: 'datetime' as const } }),
-    col.accessor('isActive', { header: 'Active Client?', meta: { kind: 'boolean' as const } }),
+    col.accessor('name', { header: 'Last Name', meta: { kind: 'text' as const } }),
+    col.accessor('contactLast', { header: 'Last Name', meta: { kind: 'text' as const } }),
+    col.accessor('contactFirst', { header: 'First Name', meta: { kind: 'text' as const } }),
+    col.accessor('contactMiddle', { header: 'Middle Name', meta: { kind: 'text' as const } }),
+    col.accessor('email', { header: 'Email', meta: { kind: 'text' as const } }),
+    col.accessor('phone', { header: 'Phone', meta: { kind: 'text' as const } }),
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
   ];
 
@@ -127,14 +113,16 @@
   const clientDetailsById = computed(() => new Map(clientDetails.value.map(e => [e.id, e])));
 
   const fetchClients = async ({ page, pageSize, query }: FetchParams<ClientQuery>) => {
-    const params: GetClientsRequest = { page, pageSize, name: query?.name || undefined };
+    const params: GetClientsRequest = {
+      page,
+      pageSize,
+      name: query?.name || null,
+      isDeleted: query?.isDeleted || null,
+    };
     const response: GetClientsResponse = await clientService.get(params);
 
-    // Cache details for action dialogs
-    clientDetails.value = response.clients.map(e => e.details);
-
     return {
-      items: response.clients.map(e => e.summary), // summaries are the table rows
+      items: response.clientListItemResponses.map(clir => clir.summary), // summaries are the table rows
       totalCount: response.totalCount,
       totalPages: response.totalPages,
       page: response.page,
@@ -154,7 +142,7 @@
   const selectedClient = ref<ClientResponse | null>(null);
   const editClientDialogIsOpen = ref(false);
 
-  const handleViewClient = (summary: ClientSummaryResponse): void => {
+  const handleView = (summary: ClientSummaryResponse): void => {
     const detail = clientDetailsById.value.get(summary.id) ?? null;
     selectedClient.value = detail;
     viewClientDialogIsOpen.value = !!detail;

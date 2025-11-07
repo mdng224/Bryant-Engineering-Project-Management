@@ -3,6 +3,7 @@ using App.Application.Clients;
 using App.Application.EmployeePositions;
 using App.Application.Employees;
 using App.Application.Positions;
+using App.Application.Projects;
 using App.Application.Users;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,6 +20,7 @@ public static class DependencyInjection
         services.AddUsersApplication();
         services.AddEmployeePositionsApplication();
         services.AddClientsApplication();
+        services.AddProjectsApplication();
 
         return services;
     }

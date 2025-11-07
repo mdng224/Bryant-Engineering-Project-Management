@@ -36,8 +36,8 @@ public static class EmployeeEndpoints
 
     private static async Task<IResult> HandleGetEmployees(
         [AsParameters] GetEmployeesRequest request,
-        IQueryHandler<GetEmployeesQuery, Result<PagedResult<EmployeeDto>>> getEmployeesHandler,
-        IQueryHandler<GetPositionsForEmployeesQuery, Result<IReadOnlyDictionary<Guid, IReadOnlyList<PositionMiniDto>>>>
+        [FromServices] IQueryHandler<GetEmployeesQuery, Result<PagedResult<EmployeeDto>>> getEmployeesHandler,
+        [FromServices] IQueryHandler<GetPositionsForEmployeesQuery, Result<IReadOnlyDictionary<Guid, IReadOnlyList<PositionMiniDto>>>>
             getPositionsForEmployeesHandler,
         CancellationToken ct = default)
     {
@@ -66,7 +66,7 @@ public static class EmployeeEndpoints
     
     private static async Task<IResult> HandleRestoreEmployee(
         [FromRoute] Guid id,
-        ICommandHandler<RestoreEmployeeCommand, Result<EmployeeDto>> handler,
+        [FromServices] ICommandHandler<RestoreEmployeeCommand, Result<EmployeeDto>> handler,
         CancellationToken ct)
     {
         var command = new RestoreEmployeeCommand(id);

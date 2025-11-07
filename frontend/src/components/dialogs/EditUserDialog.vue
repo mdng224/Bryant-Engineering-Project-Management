@@ -184,7 +184,6 @@
       emit('save');
       emit('close');
     } catch (e: unknown) {
-      console.log(e);
       let msg = extractApiError(e, 'name');
 
       if (!msg || msg === 'An unexpected error occurred.') {

@@ -17,19 +17,19 @@ type ClientBase = {
 export type GetClientsRequest = {
   page: number;
   pageSize: number;
-  name?: string;
+  name: string | null;
   isDeleted: boolean | null;
 };
 
 export type GetClientsResponse = {
-  clients: ClientListItem[];
+  clientListItemResponses: ClientListItemResponses[];
   totalCount: number;
   page: number;
   pageSize: number;
   totalPages: number;
 };
 
-export type ClientListItem = {
+export type ClientListItemResponses = {
   summary: ClientSummaryResponse;
   details: ClientResponse;
 };

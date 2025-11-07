@@ -421,6 +421,7 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasColumnName("is_open");
 
                     b.Property<string>("Manager")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("manager");
@@ -436,11 +437,13 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasColumnName("number");
 
                     b.Property<string>("Scope")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("scope");
 
                     b.Property<string>("Type")
+                        .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("type");

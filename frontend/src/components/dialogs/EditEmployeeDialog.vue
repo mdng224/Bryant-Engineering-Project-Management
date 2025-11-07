@@ -325,7 +325,6 @@
 
   /******************** Handlers ********************/
   function onCancel() {
-    console.log('clicked onCancel()');
     emit('close');
   }
 

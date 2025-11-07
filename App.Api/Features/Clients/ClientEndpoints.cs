@@ -35,11 +35,11 @@ public static class ClientEndpoints
 
     private static async Task<IResult> HandleGetClients(
         [AsParameters] GetClientsRequest request,
-        IQueryHandler<GetClientsQuery, Result<PagedResult<ClientDto>>> getClientsHandler,
+        [FromServices] IQueryHandler<GetClientsQuery, Result<PagedResult<ClientDto>>> handler,
         CancellationToken ct = default)
     {
         var query = request.ToQuery();
-        var result  = await getClientsHandler.Handle(query, ct);
+        var result  = await handler.Handle(query, ct);
         if (!result.IsSuccess)
             return Problem(result.Error!.Value.Message);
 
@@ -50,7 +50,7 @@ public static class ClientEndpoints
     
     private static async Task<IResult> HandleRestoreClient(
         [FromRoute] Guid id,
-        ICommandHandler<RestoreClientCommand, Result<ClientDto>> handler,
+        [FromServices] ICommandHandler<RestoreClientCommand, Result<ClientDto>> handler,
         CancellationToken ct)
     {
         var command = new RestoreClientCommand(id);

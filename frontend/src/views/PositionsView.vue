@@ -43,7 +43,7 @@
             v-if="!cell.row.original.deletedAtUtc"
             :class="actionButtonClass"
             aria-label="Edit position"
-            @click="handleEditPosition(cell.row.original as PositionResponse)"
+            @click="handleEdit(cell.row.original as PositionResponse)"
           >
             <Pencil class="h-4 w-4" />
           </button>
@@ -180,7 +180,7 @@
       page,
       pageSize,
       nameFilter: query?.position || null,
-      isDeleted: query?.isDeleted ?? null,
+      isDeleted: query?.isDeleted || null,
     };
     const response: GetPositionsResponse = await positionService.get(params);
 
@@ -256,7 +256,7 @@
     deleteDialogIsOpen.value = true;
   };
 
-  const handleEditPosition = (position: PositionResponse): void => {
+  const handleEdit = (position: PositionResponse): void => {
     selectedPosition.value = position;
     editPositionDialogIsOpen.value = true;
   };

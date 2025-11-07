@@ -6,7 +6,7 @@ import { ProjectsRoutes } from './routes';
 
 /* ------------------------------ GET (list) ------------------------------ */
 const get = async (params: GetProjectsRequest): Promise<GetProjectsResponse> => {
-  const { data } = await api.get<GetProjectsResponse>(ProjectsRoutes.list, { params });
+  const { data } = await api.get<GetProjectsResponse>(ProjectsRoutes.get, { params });
   return data;
 };
 
