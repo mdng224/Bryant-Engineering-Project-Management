@@ -154,7 +154,7 @@
     const params: GetEmployeesRequest = {
       page,
       pageSize,
-      name: query?.name || undefined,
+      nameFilter: query?.name || null,
       isDeleted: query?.isDeleted ?? null,
     };
     const response: GetEmployeesResponse = await employeeService.get(params);

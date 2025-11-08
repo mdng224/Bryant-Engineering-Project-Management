@@ -15,7 +15,7 @@ public static class DbSeeder
         {
             var existing = await db.Roles.AsNoTracking().Select(x => x.Id).ToListAsync(ct);
             var existingSet = existing.Count == 0 ? null : new HashSet<Guid>(existing);
-            var toAdd = (existingSet is null)
+            var toAdd = existingSet is null
                 ? RoleSeedFactory.All.ToList()
                 : RoleSeedFactory.All.Where(s => !existingSet.Contains(s.Id)).ToList();
 
@@ -26,7 +26,7 @@ public static class DbSeeder
         {
             var existing = await db.Positions.AsNoTracking().Select(x => x.Id).ToListAsync(ct);
             var existingSet = existing.Count == 0 ? null : new HashSet<Guid>(existing);
-            var toAdd = (existingSet is null)
+            var toAdd = existingSet is null
                 ? PositionSeedFactory.All.ToList()
                 : PositionSeedFactory.All.Where(s => !existingSet.Contains(s.Id)).ToList();
 
@@ -37,7 +37,7 @@ public static class DbSeeder
         {
             var existing = await db.Employees.AsNoTracking().Select(x => x.Id).ToListAsync(ct);
             var existingSet = existing.Count == 0 ? null : new HashSet<Guid>(existing);
-            var toAdd = (existingSet is null)
+            var toAdd = existingSet is null
                 ? EmployeeSeedFactory.All.ToList()
                 : EmployeeSeedFactory.All.Where(s => !existingSet.Contains(s.Id)).ToList();
 
@@ -94,9 +94,9 @@ public static class DbSeeder
                 var (first, last) = ClientProjectSeedFactory.TrySplitLastFirst(row.ProjectContact);
                 // If your Client.Seed signature accepts projectCode and stores it, keep it; otherwise remove it.
                 client = Client.Seed(
-                    clientName:   clientName,
-                    contactFirst: first,
-                    contactLast:  last,
+                    clientName:   clientName.ToLowerInvariant(),
+                    contactFirst: first?.ToLowerInvariant(),
+                    contactLast:  last?.ToLowerInvariant(),
                     projectCode:  row.ProjectCode
                 );
                 db.Clients.Add(client);
@@ -106,17 +106,17 @@ public static class DbSeeder
             // Create the project
             var project = Project.Seed(
                 clientId:    client.Id,
-                name:        row.ProjectName,
+                name:        row.ProjectName.ToLowerInvariant(),
                 projectCode: row.ProjectCode,
-                scope:       row.Scope,
-                manager:     row.PM,
-                status:      row.Status,
-                location:    row.Location,
-                type:        row.Type
+                scope:       row.Scope.ToLowerInvariant(),
+                manager:     row.PM.ToLowerInvariant(),
+                status:      row.Status.ToLowerInvariant(),
+                location:    row.Location.ToLowerInvariant(),
+                type:        row.Type.ToLowerInvariant()
             );
 
             db.Projects.Add(project);
-            createdProjectCodes.Add(row.ProjectCode ?? string.Empty);
+            createdProjectCodes.Add(row.ProjectCode);
         }
 
         if (db.ChangeTracker.HasChanges())

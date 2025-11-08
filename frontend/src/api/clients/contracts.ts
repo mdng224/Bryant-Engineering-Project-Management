@@ -17,7 +17,7 @@ type ClientBase = {
 export type GetClientsRequest = {
   page: number;
   pageSize: number;
-  name: string | null;
+  nameFilter: string | null;
   isDeleted: boolean | null;
 };
 

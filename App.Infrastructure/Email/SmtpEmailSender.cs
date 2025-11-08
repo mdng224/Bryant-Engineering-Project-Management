@@ -25,7 +25,7 @@ public sealed partial class SmtpEmailSender(
         
         // --- Build message ---------------------------------------------------
         var mimeMessage = new MimeMessage();
-        mimeMessage.From.Add(new MailboxAddress(_settings.FromName ?? string.Empty, _settings.From));
+        mimeMessage.From.Add(new MailboxAddress(_settings.FromName, _settings.From));
         mimeMessage.To.Add(MailboxAddress.Parse(to));
         mimeMessage.Subject = subject;
 

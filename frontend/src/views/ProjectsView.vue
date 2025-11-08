@@ -52,7 +52,7 @@
           </button>
         </span>
       </template>
-      <CellRenderer :cell="cell" />
+      <CellRenderer :cell />
     </template>
   </DataTable>
 
@@ -127,15 +127,15 @@
     const params: GetProjectsRequest = {
       page,
       pageSize,
-      name: query?.name || undefined,
+      nameFilter: query?.name || null,
       isDeleted: query?.isDeleted ?? null,
     };
     const response: GetProjectsResponse = await projectService.get(params);
     // Cache details for action dialogs
-    projectDetails.value = response.projectListItemResponses.map(e => e.details);
+    projectDetails.value = response.projectListItemResponses.map(plir => plir.details);
 
     return {
-      items: response.projectListItemResponses.map(e => e.summary), // summaries are the table rows
+      items: response.projectListItemResponses.map(plir => plir.summary), // summaries are the table rows
       totalCount: response.totalCount,
       totalPages: response.totalPages,
       page: response.page,

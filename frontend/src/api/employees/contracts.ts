@@ -13,7 +13,7 @@ type EmployeeBase = {
 export type GetEmployeesRequest = {
   page: number;
   pageSize: number;
-  name?: string;
+  nameFilter: string | null;
   isDeleted?: boolean | null;
 };
 

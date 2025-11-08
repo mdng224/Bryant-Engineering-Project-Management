@@ -12,14 +12,14 @@ public class BcryptPasswordHasher : IPasswordHasher
             : BCryptNet.HashPassword(password, workFactor: 11); // keep same work factor your existing rows use (11 in your DB)
     }
 
-    public bool Verify(string password, string hash)
+    public bool Verify(string hashedPassword, string providedPassword)
     {
-        if (string.IsNullOrEmpty(password) || string.IsNullOrWhiteSpace(hash))
+        if (string.IsNullOrEmpty(hashedPassword) || string.IsNullOrWhiteSpace(providedPassword))
             return false;
 
         try
         {
-            return BCryptNet.Verify(password, hash.Trim());
+            return BCryptNet.Verify(hashedPassword, providedPassword.Trim());
         }
         catch
         {

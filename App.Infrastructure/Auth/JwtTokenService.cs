@@ -34,20 +34,20 @@ public class JwtTokenService(IConfiguration config) : ITokenService
     private static Claim[] CreateClaims(Guid userId, string email, string roleName) =>
     [
         // Standard JWT claims
-        new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-        new Claim(JwtRegisteredClaimNames.Email, email),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new Claim(
+        new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+        new(JwtRegisteredClaimNames.Email, email),
+        new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new(
             JwtRegisteredClaimNames.Iat,
             DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
             ClaimValueTypes.Integer64),
 
         // ASP.NET-friendly
-        new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-        new Claim(ClaimTypes.Name, email),
+        new(ClaimTypes.NameIdentifier, userId.ToString()),
+        new(ClaimTypes.Name, email),
 
         // 🔑 Authorize(Roles="...") relies on this
-        new Claim(ClaimTypes.Role, roleName),
+        new(ClaimTypes.Role, roleName),
     ];
 
     private SigningCredentials CreateSigningCredentials()

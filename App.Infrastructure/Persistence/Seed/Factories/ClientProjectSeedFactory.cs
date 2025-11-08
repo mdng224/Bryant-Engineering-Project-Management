@@ -20,20 +20,7 @@ public static class ClientProjectSeedFactory
         string Location,
         string Type
     );
-
-    public sealed record ClientSeed(string ClientName, string? ContactRaw, string? FirstProjectCode);
-    public sealed record ProjectSeed(
-        string ProjectCode,
-        string ProjectName,
-        string Scope,
-        string PM,
-        string Status,
-        string Location,
-        string Type
-    );
-
     // ---------- CSV row + map (private) --------------------------------------
-
     private sealed class CombinedCsvRow
     {
         public string ProjectCode     { get; set; } = "";  // "PROJECT Code"
@@ -61,36 +48,6 @@ public static class ClientProjectSeedFactory
             Map(ccr => ccr.Location)        .Name("Location");
             Map(ccr => ccr.Type)            .Name("Project Type");
         }
-    }
-
-    // ---------- Core loaders --------------------------------------------------
-
-    /// Unique clients by name (case-insensitive). Keeps the first contact & first project code seen.
-    public static List<ClientSeed> UniqueClientsByName(List<CombinedSeed> allRows, out List<string> warnings)
-    {
-        warnings = [];
-        var normalized = allRows
-            .Where(r => !string.IsNullOrWhiteSpace(r.ClientName))
-            .Select(r => new
-            {
-                ClientName = r.ClientName!,
-                ContactRaw = r.ProjectContact,
-                r.ProjectCode
-            })
-            .ToList();
-
-        // Keep first row per client (case-insensitive)
-        var dict = new Dictionary<string, ClientSeed>(StringComparer.OrdinalIgnoreCase);
-        foreach (var r in normalized.Where(r => !dict.ContainsKey(r.ClientName)))
-        {
-            dict[r.ClientName] = new ClientSeed(r.ClientName, r.ContactRaw, r.ProjectCode);
-        }
-
-        var duplicates = normalized.Count - dict.Count;
-        if (duplicates > 0)
-            warnings.Add($"Dropped {duplicates} duplicate client row(s) by Client Name.");
-
-        return dict.Values.ToList();
     }
 
     // ---------- Convenience (single-pass enumerator) --------------------------

@@ -31,7 +31,7 @@
           </button>
         </span>
       </template>
-      <CellRenderer :cell="cell" />
+      <CellRenderer :cell />
     </template>
   </DataTable>
 
@@ -78,7 +78,7 @@
   const col: ColumnHelper<ClientSummaryResponse> = createColumnHelper<ClientSummaryResponse>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns: ColumnDef<ClientSummaryResponse, any>[] = [
-    col.accessor('name', { header: 'Last Name', meta: { kind: 'text' as const } }),
+    col.accessor('name', { header: 'Client Name', meta: { kind: 'text' as const } }),
     col.accessor('contactLast', { header: 'Last Name', meta: { kind: 'text' as const } }),
     col.accessor('contactFirst', { header: 'First Name', meta: { kind: 'text' as const } }),
     col.accessor('contactMiddle', { header: 'Middle Name', meta: { kind: 'text' as const } }),
@@ -116,11 +116,11 @@
     const params: GetClientsRequest = {
       page,
       pageSize,
-      name: query?.name || null,
+      nameFilter: query?.name || null,
       isDeleted: query?.isDeleted || null,
     };
     const response: GetClientsResponse = await clientService.get(params);
-
+    console.log(response.clientListItemResponses[0]);
     return {
       items: response.clientListItemResponses.map(clir => clir.summary), // summaries are the table rows
       totalCount: response.totalCount,

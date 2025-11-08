@@ -23,21 +23,8 @@ internal static class SeedUtils
                 lastSpace = false;
             }
         }
-        return sb.ToString().Trim();
+        return sb.ToString().Trim().ToLowerInvariant();
     }
     
-    public static IEnumerable<T> DedupeBy<T, TKey>(
-        IEnumerable<T> source,
-        Func<T, TKey> keySelector,
-        IEqualityComparer<TKey>? comparer = null)
-    {
-        var seen = new HashSet<TKey>(comparer ?? EqualityComparer<TKey>.Default);
-        foreach (var item in source)
-        {
-            if (seen.Add(keySelector(item)))
-                yield return item; // keep first occurrence
-        }
-    }
-    
-    public static string? NullIfWhiteSpace(string? s) => string.IsNullOrWhiteSpace(s) ? null : s!.Trim();
+    public static string? NullIfWhiteSpace(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }

@@ -16,12 +16,12 @@ type ProjectBase = {
 export type GetProjectsRequest = {
   page: number;
   pageSize: number;
-  name?: string;
-  isDeleted?: boolean | null;
+  nameFilter: string | null;
+  isDeleted: boolean | null;
 };
 
 export type GetProjectsResponse = {
-  projects: ProjectListItemResponse[];
+  projectListItemResponses: ProjectListItemResponse[];
   totalCount: number;
   page: number;
   pageSize: number;
