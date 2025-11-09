@@ -28,7 +28,7 @@
               aria-live="assertive"
               tabindex="-1"
             >
-              <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+              <alter-triangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
               <span>{{ errorMessage }}</span>
             </p>
           </div>
@@ -98,7 +98,7 @@
   import { extractApiError } from '@/api/error';
   import { positionService } from '@/api/positions';
   import type { PositionResponse, UpdatePositionRequest } from '@/api/positions/contracts';
-  import { AlertTriangle, Save, X } from 'lucide-vue-next';
+  import { Save, X } from 'lucide-vue-next';
   import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 
   const props = defineProps<{

@@ -20,5 +20,5 @@ public record ProjectResponse(
     DateTimeOffset? DeletedAtUtc,
     Guid? CreatedById,
     Guid? UpdatedById,
-    Guid? DeletedById
+    string? DeletedBy
 );

@@ -11,6 +11,7 @@ type ProjectBase = {
   scope: string | null;
   manager: string | null;
   type: string | null;
+  deletedAtUtc: string | null;
 };
 
 export type GetProjectsRequest = {
@@ -44,8 +45,7 @@ export type ProjectResponse = ProjectBase & {
   number: number;
   createdAtUtc: string | null;
   updatedAtUtc: string | null;
-  deletedAtUtc: string | null;
   createdById: string | null;
   updatedById: string | null;
-  deletedById: string | null;
+  deletedBy: string | null;
 };

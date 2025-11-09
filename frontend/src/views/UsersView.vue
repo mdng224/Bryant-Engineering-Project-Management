@@ -2,8 +2,8 @@
   <h2 class="pb-4 text-xl font-semibold text-slate-100">Users</h2>
 
   <div class="flex gap-4 pb-4">
-    <TableSearch v-model="emailFilter" placeholder="Search email…" @commit="commit" />
-    <DeletedFilter
+    <table-search v-model="emailFilter" placeholder="Search email…" @commit="commit" />
+    <deleted-filter
       v-model="deletedFilter"
       label-1="Active"
       label-2="Deleted"
@@ -19,7 +19,7 @@
     aria-live="assertive"
     tabindex="-1"
   >
-    <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+    <alter-triangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
     <span>{{ errorMessage }}</span>
   </p>
 
@@ -59,15 +59,15 @@
             aria-label="reactivate position"
             @click="handleOpenRestoreDialog(cell.row.original as UserResponse)"
           >
-            <RotateCcw class="h-4 w-4 hover:text-green-400" />
+            <lock-open class="h-4 w-4 hover:text-green-400" />
           </button>
         </template>
       </template>
-      <CellRenderer :cell />
+      <cell-renderer :cell />
     </template>
   </data-table>
 
-  <TableFooter :table :total-count :total-pages :pagination :set-page-size />
+  <table-footer :table :total-count :total-pages :pagination :set-page-size />
 
   <!-- Dialogs -->
   <DeleteDialog
@@ -108,7 +108,7 @@
   import { useAuth } from '@/composables/useAuth';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { AlertTriangle, Lock, Pencil, RotateCcw } from 'lucide-vue-next';
+  import { Lock, LockOpen, Pencil } from 'lucide-vue-next';
   import { onBeforeUnmount, ref, watch } from 'vue';
   import type { GetUsersRequest, GetUsersResponse, UserResponse, UserStatus } from '../api/users';
   import { useDebouncedRef } from '../composables/useDebouncedRef';

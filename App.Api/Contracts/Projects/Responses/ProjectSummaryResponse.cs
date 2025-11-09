@@ -9,5 +9,6 @@ public sealed record ProjectSummaryResponse(
     string NewCode,
     string Scope,
     string Manager,
-    string Type
+    string Type,
+    DateTimeOffset? DeletedAtUtc
 );

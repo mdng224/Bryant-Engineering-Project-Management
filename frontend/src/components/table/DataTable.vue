@@ -33,7 +33,7 @@
             <!-- Delegate actual content to a slot with sensible defaults -->
             <slot name="cell" :cell>
               <!-- default renderer using column meta -->
-              <CellRenderer :cell />
+              <cell-renderer :cell />
             </slot>
           </td>
         </tr>

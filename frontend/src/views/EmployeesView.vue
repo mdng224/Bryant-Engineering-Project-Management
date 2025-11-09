@@ -3,8 +3,8 @@
 
   <div class="flex items-center justify-between pb-4">
     <div class="flex gap-4">
-      <TableSearch v-model="nameFilter" placeholder="Search by name..." @commit="commitNameNow" />
-      <DeletedFilter
+      <table-search v-model="nameFilter" placeholder="Search by name..." @commit="commitNameNow" />
+      <deleted-filter
         v-model="deletedFilter"
         label-1="Active"
         label-2="Deleted"
@@ -15,7 +15,7 @@
       class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
       @click="addDialogIsOpen = true"
     >
-      <CirclePlus class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+      <circle-plus class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
       <span class="text-white">Add Employee</span>
     </button>
   </div>
@@ -32,7 +32,7 @@
             aria-label="view employee"
             @click="handleView(cell.row.original.id as string)"
           >
-            <Eye class="h-4 w-4" />
+            <eye class="h-4 w-4" />
           </button>
 
           <!-- Delete button -->
@@ -53,15 +53,15 @@
             aria-label="reactivate position"
             @click="handleOpenReactivateDialog(cell.row.original as EmployeeSummaryResponse)"
           >
-            <RotateCcw class="h-4 w-4 hover:text-green-400" />
+            <lock-open class="h-4 w-4 hover:text-green-400" />
           </button>
         </span>
       </template>
-      <CellRenderer :cell />
+      <cell-renderer :cell />
     </template>
   </data-table>
 
-  <TableFooter :table :totalCount :totalPages :pagination :setPageSize />
+  <table-footer :table :totalCount :totalPages :pagination :setPageSize />
 
   <details-dialog
     :open="openDetailsDialog"
@@ -100,7 +100,7 @@
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { CirclePlus, Eye, Lock, RotateCcw } from 'lucide-vue-next';
+  import { CirclePlus, Eye, Lock, LockOpen } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
   /* ------------------------------- Constants ------------------------------ */

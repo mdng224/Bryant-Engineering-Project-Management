@@ -144,7 +144,7 @@
             v-if="password2 && password2 !== password"
             class="flex items-center gap-2 text-xs text-rose-300"
           >
-            <AlertTriangle class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <alter-triangle class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>Passwords do not match.</span>
           </p>
         </div>
@@ -158,7 +158,7 @@
           aria-live="assertive"
           tabindex="-1"
         >
-          <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+          <alter-triangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
           <span>{{ errorMessage }}</span>
         </p>
 
@@ -191,7 +191,7 @@
   import { authService } from '@/api/auth';
   import { extractApiError } from '@/api/error';
   import { useAuthFields } from '@/composables/useAuthFields';
-  import { AlertTriangle, CheckCircle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
+  import { CheckCircle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
   import { computed, nextTick, onMounted, ref } from 'vue';
   import { useRoute } from 'vue-router';
 

@@ -3,8 +3,8 @@
 
   <div class="flex items-center justify-between pb-4">
     <div class="flex gap-4">
-      <TableSearch v-model="nameFilter" placeholder="Search client name..." @commit="commit" />
-      <DeletedFilter
+      <table-search v-model="nameFilter" placeholder="Search client name..." @commit="commit" />
+      <deleted-filter
         v-model="deletedFilter"
         label-1="Active"
         label-2="Deleted"
@@ -16,7 +16,7 @@
       class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
       @click="addDialogIsOpen = true"
     >
-      <CirclePlus class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+      <circle-plus class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
       <span class="text-white">Add Client</span>
     </button>
   </div>
@@ -32,11 +32,11 @@
             aria-label="View client"
             @click="handleView(cell.row.original.id as string)"
           >
-            <Eye class="h-4 w-4" />
+            <eye class="h-4 w-4" />
           </button>
         </span>
       </template>
-      <CellRenderer :cell />
+      <cell-renderer :cell />
     </template>
   </data-table>
 

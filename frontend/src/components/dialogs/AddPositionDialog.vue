@@ -29,7 +29,7 @@
             aria-live="assertive"
             tabindex="-1"
           >
-            <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+            <alter-triangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
             <span>{{ errorMessage }}</span>
           </p>
 
@@ -88,7 +88,7 @@
 <script setup lang="ts">
   import { extractApiError } from '@/api/error';
   import { positionService } from '@/api/positions/services';
-  import { AlertTriangle, Plus, X } from 'lucide-vue-next';
+  import { Plus, X } from 'lucide-vue-next';
   import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
   const props = defineProps<{ open: boolean }>();

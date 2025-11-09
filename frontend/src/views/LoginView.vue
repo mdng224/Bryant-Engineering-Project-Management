@@ -87,7 +87,7 @@
           aria-live="assertive"
           tabindex="-1"
         >
-          <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+          <alter-triangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
           <span>{{ errorMessage }}</span>
         </p>
 
@@ -121,7 +121,7 @@
   import { useAuth } from '@/composables/useAuth';
   import { useAuthFields } from '@/composables/useAuthFields';
   import { isAxiosError } from 'axios';
-  import { AlertTriangle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
+  import { Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
   import { computed, nextTick, onMounted, ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
 

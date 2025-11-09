@@ -20,5 +20,5 @@ public sealed record ProjectDto(
     DateTimeOffset? DeletedAtUtc,
     Guid? CreatedById,
     Guid? UpdatedById,
-    Guid? DeletedById
+    string? DeletedBy
     );

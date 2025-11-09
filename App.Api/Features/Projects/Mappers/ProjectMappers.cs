@@ -38,7 +38,8 @@ public static class ProjectMappers
             NewCode:    dto.NewCode,
             Scope:      dto.Scope,
             Manager:    dto.Manager,
-            Type:       dto.Type);
+            Type:       dto.Type,
+            DeletedAtUtc: dto.DeletedAtUtc);
     
     private static ProjectListItemResponse ToListItem(this ProjectDto dto) =>
         new(
@@ -63,5 +64,5 @@ public static class ProjectMappers
             DeletedAtUtc:  dto.DeletedAtUtc,
             CreatedById:   dto.CreatedById,
             UpdatedById:   dto.UpdatedById,
-            DeletedById:   dto.DeletedById);
+            DeletedBy:     dto.DeletedBy);
 }
