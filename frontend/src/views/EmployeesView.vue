@@ -20,7 +20,7 @@
     </button>
   </div>
 
-  <DataTable :table :loading :total-count empty-text="No employees found.">
+  <data-table :table :loading :total-count empty-text="No employees found.">
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
       <template v-if="(cell.column.columnDef.meta as any)?.kind === 'actions'">
@@ -43,7 +43,7 @@
             @click="handleOpenDeleteDialog(cell.row.original as EmployeeSummaryResponse)"
           >
             {{ cell.row.original.deletedAtUtc }}
-            <Trash2 class="h-4 w-4 text-rose-500 hover:text-rose-400" />
+            <Lock class="h-4 w-4 text-rose-500 hover:text-rose-400" />
           </button>
 
           <!-- Reactivate button -->
@@ -59,7 +59,7 @@
       </template>
       <CellRenderer :cell />
     </template>
-  </DataTable>
+  </data-table>
 
   <TableFooter :table :totalCount :totalPages :pagination :setPageSize />
 
@@ -100,7 +100,7 @@
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { CirclePlus, Eye, RotateCcw, Trash2 } from 'lucide-vue-next';
+  import { CirclePlus, Eye, Lock, RotateCcw } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
   /* ------------------------------- Constants ------------------------------ */

@@ -24,7 +24,7 @@
     </button>
   </div>
 
-  <DataTable :table :loading :total-count empty-text="No projects found.">
+  <data-table :table :loading :total-count empty-text="No projects found.">
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
       <template v-if="(cell.column.columnDef.meta as any)?.kind === 'actions'">
@@ -47,7 +47,7 @@
             @click="handleOpenDeleteDialog(cell.row.original as ProjectSummaryResponse)"
           >
             {{ cell.row.original.deletedAtUtc }}
-            <Trash2 class="h-4 w-4 text-rose-500 hover:text-rose-400" />
+            <Lock class="h-4 w-4 text-rose-500 hover:text-rose-400" />
           </button>
 
           <!-- Reactivate button -->
@@ -63,7 +63,7 @@
       </template>
       <CellRenderer :cell />
     </template>
-  </DataTable>
+  </data-table>
 
   <TableFooter :table :totalCount :totalPages :pagination :setPageSize />
 
@@ -97,7 +97,7 @@
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { CirclePlus, Eye, RotateCcw, Trash2 } from 'lucide-vue-next';
+  import { CirclePlus, Eye, Lock, RotateCcw } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
   const actionButtonClass =
@@ -114,32 +114,36 @@
   const { formatUtc } = useDateFormat();
 
   const fields: FieldDef[] = [
-    fieldDef('clientId', 'Client ID', 'mono'),
-    fieldDef('clientName', 'Client'),
-    fieldDef('newCode', 'Code'),
+    fieldDef('code', 'Code'),
     fieldDef('year', 'Year'),
     fieldDef('number', 'Number'),
-    fieldDef('scope', 'Scope'),
+    fieldDef('clientName', 'Client'),
+    fieldDef('clientId', 'Client ID', 'mono'),
     fieldDef('manager', 'PM'),
+    fieldDef('scope', 'Scope'),
     fieldDef('type', 'Type'),
     {
       key: 'address.line1',
       label: 'Address Line 1',
+      type: 'text',
       get: (r: { address: Address }) => r.address?.line1,
     },
     {
       key: 'address.line2',
       label: 'Address Line 2',
+      type: 'text',
       get: (r: { address: Address }) => r.address?.line2,
     },
     {
       key: 'address.city',
       label: 'City',
+      type: 'text',
       get: (r: { address: Address }) => r.address?.city,
     },
     {
       key: 'address.state',
       label: 'State',
+      type: 'text',
       get: (r: { address: Address }) => r.address?.state,
     },
     {
@@ -160,11 +164,11 @@
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns: ColumnDef<ProjectSummaryResponse, any>[] = [
+    col.accessor('code', { header: 'Code', meta: { kind: 'text' as const } }),
     col.accessor('name', { header: 'Project Name', meta: { kind: 'text' as const } }),
     col.accessor('clientName', { header: 'Client Name', meta: { kind: 'text' as const } }),
-    col.accessor('newCode', { header: 'Code', meta: { kind: 'text' as const } }),
-    col.accessor('scope', { header: 'Scope', meta: { kind: 'text' as const } }),
     col.accessor('manager', { header: 'Project Manager', meta: { kind: 'text' as const } }),
+    col.accessor('scope', { header: 'Scope', meta: { kind: 'text' as const } }),
     col.accessor('type', { header: 'Project Type', meta: { kind: 'text' as const } }),
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
   ];

@@ -37,7 +37,7 @@
                         v-if="nameKey"
                         class="col-span-12 min-w-0 truncate font-semibold text-slate-100 sm:col-span-8"
                       >
-                        {{ getItemVal(nameKey) }}
+                        {{ toTitleCase(getItemVal(nameKey)) }}
                       </div>
 
                       <div
@@ -174,13 +174,24 @@
 
     if (f.format) return val(f.format(raw, props.item));
 
+    let result: string;
     switch (f.type) {
       case 'date':
-        return raw ? (props.formatUtc ? props.formatUtc(String(raw)) : String(raw)) : '—';
+        result = raw ? (props.formatUtc ? props.formatUtc(String(raw)) : String(raw)) : '—';
+        break;
       default:
-        return val(raw);
+        result = val(raw);
     }
+
+    // apply title case only for 'text' type
+    if (f.type === 'text' && result !== '—') {
+      result = toTitleCase(result);
+    }
+
+    return result;
   };
+  const toTitleCase = (s: string) =>
+    s.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
   // tiny clipboard util
   const copy = async (text: string) => {

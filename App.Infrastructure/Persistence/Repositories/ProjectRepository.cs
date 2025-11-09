@@ -66,7 +66,8 @@ public sealed class ProjectRepository(AppDbContext db) : IProjectReader, IProjec
         
         var projects = await query
             .Include(p => p.Client)
-            .OrderBy(p => p.Name)
+            .OrderBy(p => p.Year)
+            .ThenByDescending(p => p.Number)
             .ThenBy(p => p.Id)
             .Skip(skip)
             .Take(take)

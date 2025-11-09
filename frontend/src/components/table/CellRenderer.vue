@@ -1,11 +1,10 @@
-<!-- components/table/CellRenderer.vue -->
 <template>
   <span v-if="kind === 'text'" class="text-slate-100">
-    {{ asString }}
+    {{ displayText }}
   </span>
 
   <span v-else-if="kind === 'datetime'" class="text-[12px] tracking-wide text-slate-100">
-    {{ formatUtc(val as string | null) }}
+    {{ displayDate }}
   </span>
 
   <span v-else-if="kind === 'boolean'" class="text-sm">
@@ -22,7 +21,7 @@
 
   <slot v-else-if="kind === 'actions'"></slot>
 
-  <span v-else>{{ val as string }}</span>
+  <span v-else>{{ asString }}</span>
 </template>
 
 <script setup lang="ts">
@@ -35,19 +34,40 @@
     | { kind: 'badge'; classFor?: (value: string) => string };
 
   const props = defineProps<{ cell: Cell<unknown, unknown> }>();
-  const rawMeta = props.cell.column.columnDef.meta as ColMeta | undefined;
-  const rawVal = props.cell.getValue();
-  const asString = computed(() => (rawVal == null ? '' : String(rawVal)));
-  const asBoolean = computed(() => Boolean(rawVal));
   const meta = props.cell.column.columnDef.meta as ColMeta | undefined;
   const kind = meta?.kind ?? 'text';
-  const val = props.cell.getValue();
 
-  const badgeClass = computed(() => {
-    const fn = (rawMeta as Extract<ColMeta, { kind: 'badge' }>)?.classFor;
+  const rawVal = props.cell.getValue();
+  const { formatUtc } = useDateFormat();
 
-    return fn ? fn(asString.value) : 'bg-slate-800/60 text-slate-300';
+  const asString = computed(() => (rawVal == null ? '' : String(rawVal)));
+  const asBoolean = computed(() => Boolean(rawVal));
+
+  const normalizeEmpty = (v: unknown) => {
+    if (v === null || v === undefined) return '—';
+    const s = String(v).trim();
+    const lower = s.toLowerCase();
+    if (s === '' || lower === 'n/a' || lower === 'unknown') return '—';
+    return s;
+  };
+
+  const toTitleCase = (s: string) =>
+    s.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
+  const displayText = computed(() => {
+    const normalized = normalizeEmpty(rawVal);
+    return normalized === '—' ? normalized : toTitleCase(normalized);
   });
 
-  const { formatUtc } = useDateFormat();
+  const displayDate = computed(() => {
+    const v = rawVal == null ? null : String(rawVal);
+    if (!v) return '—';
+    return formatUtc(v);
+  });
+
+  const badgeClass = computed(() => {
+    if (meta?.kind !== 'badge') return '';
+    const fn = meta.classFor;
+    return fn ? fn(asString.value) : 'bg-slate-800/60 text-slate-300';
+  });
 </script>

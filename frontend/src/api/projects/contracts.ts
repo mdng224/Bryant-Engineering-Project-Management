@@ -6,6 +6,7 @@ type ProjectBase = {
   id: string;
   name: string;
   clientName: string;
+  code: string;
   newCode: string;
   scope: string | null;
   manager: string | null;
@@ -39,7 +40,6 @@ export type ProjectSummaryResponse = ProjectBase;
 export type ProjectResponse = ProjectBase & {
   clientId: string;
   address: Address | null;
-  code: string | null;
   year: number;
   number: number;
   createdAtUtc: string | null;

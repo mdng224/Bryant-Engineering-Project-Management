@@ -23,7 +23,7 @@
     <span>{{ errorMessage }}</span>
   </p>
 
-  <DataTable
+  <data-table
     :table="table as unknown as import('@tanstack/vue-table').Table<unknown>"
     :loading
     :total-count
@@ -49,7 +49,7 @@
             aria-label="delete user"
             @click="handleOpenDeleteDialog(cell.row.original as UserResponse)"
           >
-            <Trash2 class="h-4 w-4 text-rose-500 hover:text-rose-400" />
+            <Lock class="h-4 w-4 text-rose-500 hover:text-rose-400" />
           </button>
 
           <!-- Reactivate button -->
@@ -65,7 +65,7 @@
       </template>
       <CellRenderer :cell />
     </template>
-  </DataTable>
+  </data-table>
 
   <TableFooter :table :total-count :total-pages :pagination :set-page-size />
 
@@ -108,7 +108,7 @@
   import { useAuth } from '@/composables/useAuth';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { AlertTriangle, Pencil, RotateCcw, Trash2 } from 'lucide-vue-next';
+  import { AlertTriangle, Lock, Pencil, RotateCcw } from 'lucide-vue-next';
   import { onBeforeUnmount, ref, watch } from 'vue';
   import type { GetUsersRequest, GetUsersResponse, UserResponse, UserStatus } from '../api/users';
   import { useDebouncedRef } from '../composables/useDebouncedRef';

@@ -33,7 +33,7 @@
     <span>{{ errorMessage }}</span>
   </span>
 
-  <DataTable
+  <data-table
     :table="table as unknown as import('@tanstack/vue-table').Table<unknown>"
     :loading
     :total-count
@@ -61,7 +61,7 @@
             @click="handleOpenDeleteDialog(cell.row.original as PositionResponse)"
           >
             {{ cell.row.original.deletedAtUtc }}
-            <Trash2 class="h-4 w-4 text-rose-500 hover:text-rose-400" />
+            <Lock class="h-4 w-4 text-rose-500 hover:text-rose-400" />
           </button>
 
           <!-- Reactivate button -->
@@ -77,7 +77,7 @@
       </template>
       <CellRenderer :cell="cell" />
     </template>
-  </DataTable>
+  </data-table>
 
   <TableFooter :table :total-count :total-pages :pagination :set-page-size />
 
@@ -128,7 +128,7 @@
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { AlertTriangle, CirclePlus, Pencil, RotateCcw, Trash2 } from 'lucide-vue-next';
+  import { AlertTriangle, CirclePlus, Lock, Pencil, RotateCcw } from 'lucide-vue-next';
   import { onBeforeUnmount, ref, watch } from 'vue';
 
   const errorMessage = ref<string | null>(null);

@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-  import { CheckCircle2, ChevronDown, Trash2 } from 'lucide-vue-next';
+  import { CheckCircle2, ChevronDown, Lock } from 'lucide-vue-next';
   import { computed, ref, watch } from 'vue';
 
   const props = defineProps<{ modelValue: boolean | null; label1: string; label2: string }>();
@@ -47,7 +47,7 @@
 
   const options = [
     { value: false, label: props.label1, icon: CheckCircle2, color: 'text-emerald-400' },
-    { value: true, label: props.label2, icon: Trash2, color: 'text-rose-400' },
+    { value: true, label: props.label2, icon: Lock, color: 'text-rose-400' },
   ];
 
   const isOpen = ref(false);
