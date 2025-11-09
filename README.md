@@ -23,6 +23,8 @@ src/
 │ ├─ Users/ # CRUD + pagination
 │ ├─ Employees/ # CRUD + restore + soft delete
 │ └─ Positions/ # CRUD + restore + soft delete
+│ └─ Clients/ # CRUD + restore + soft delete
+│ └─ Projects/ # CRUD + restore + soft delete
 │
 ├─ App.Application/ # CQRS handlers, DTOs, validators, interfaces
 │ ├─ Abstractions/ # ICommand, IQuery, IUnitOfWork, etc.
@@ -30,11 +32,15 @@ src/
 │ ├─ Employees/
 │ ├─ Positions/
 │ └─ Users/
+│ └─ Clients/
+│ └─ Projects/
 │
 ├─ App.Domain/ # Entities, enums, events, value objects
 │ ├─ Users/
 │ ├─ Employees/
 │ ├─ Positions/
+│ └─ Clients/
+│ └─ Projects/
 │ └─ Common/
 │
 ├─ App.Infrastructure/ # EF Core, Identity, Persistence, Outbox
