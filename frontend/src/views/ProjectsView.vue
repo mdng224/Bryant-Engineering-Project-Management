@@ -12,7 +12,7 @@
         v-model="deletedFilter"
         label-1="Open"
         label-2="Closed"
-        @change="val => setQuery({ name: name || null, isDeleted: val ?? null })"
+        @change="val => setQuery({ name: name || null, isDeleted: val ?? false })"
       />
     </div>
     <button
@@ -34,7 +34,7 @@
             v-if="!cell.row.original.deletedAtUtc"
             :class="actionButtonClass"
             aria-label="view project"
-            @click="handleView(cell.row.original as ProjectSummaryResponse)"
+            @click="handleView(cell.row.original.id as string)"
           >
             <Eye class="h-4 w-4" />
           </button>
@@ -66,9 +66,19 @@
   </DataTable>
 
   <TableFooter :table :totalCount :totalPages :pagination :setPageSize />
+
+  <details-dialog
+    :open="openDetailsDialog"
+    title="Project Details"
+    :item="selectedProject as ProjectResponse"
+    :fields
+    :format-utc
+    @close="openDetailsDialog = false"
+  />
 </template>
 
 <script setup lang="ts">
+  import type { Address } from '@/api/common';
   import {
     projectService,
     type GetProjectsRequest,
@@ -77,11 +87,14 @@
     type ProjectSummaryResponse,
   } from '@/api/projects';
   import DeletedFilter from '@/components/DeletedFilter.vue';
+  import type { FieldDef } from '@/components/dialogs/DetailsDialog.vue';
+  import DetailsDialog from '@/components/dialogs/DetailsDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
   import TableSearch from '@/components/TableSearch.vue';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
+  import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { CirclePlus, Eye, RotateCcw, Trash2 } from 'lucide-vue-next';
@@ -89,6 +102,58 @@
 
   const actionButtonClass =
     'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
+
+  /* ------------------------------- Details ------------------------------ */
+  const fieldDef = <K extends keyof ProjectResponse>(
+    key: K,
+    label: string,
+    type: 'text' | 'date' | 'mono' | 'multiline' = 'text',
+    span: 1 | 2 = 1,
+  ) => ({ key: key as string, label, type, span }) satisfies FieldDef;
+
+  const { formatUtc } = useDateFormat();
+
+  const fields: FieldDef[] = [
+    fieldDef('clientId', 'Client ID', 'mono'),
+    fieldDef('clientName', 'Client'),
+    fieldDef('newCode', 'Code'),
+    fieldDef('year', 'Year'),
+    fieldDef('number', 'Number'),
+    fieldDef('scope', 'Scope'),
+    fieldDef('manager', 'PM'),
+    fieldDef('type', 'Type'),
+    {
+      key: 'address.line1',
+      label: 'Address Line 1',
+      get: (r: { address: Address }) => r.address?.line1,
+    },
+    {
+      key: 'address.line2',
+      label: 'Address Line 2',
+      get: (r: { address: Address }) => r.address?.line2,
+    },
+    {
+      key: 'address.city',
+      label: 'City',
+      get: (r: { address: Address }) => r.address?.city,
+    },
+    {
+      key: 'address.state',
+      label: 'State',
+      get: (r: { address: Address }) => r.address?.state,
+    },
+    {
+      key: 'address.postalCode',
+      label: 'ZIP',
+      get: (r: { address: Address }) => r.address?.postalCode,
+    },
+    fieldDef('createdAtUtc', 'Created', 'date'),
+    fieldDef('createdById', 'Created By', 'mono'),
+    fieldDef('updatedAtUtc', 'Updated', 'date'),
+    fieldDef('updatedById', 'Updated By', 'mono'),
+    fieldDef('deletedAtUtc', 'Closed', 'date'),
+    fieldDef('deletedById', 'Closed By', 'mono'),
+  ] as any;
 
   /* -------------------------------- Columns ------------------------------- */
   const col: ColumnHelper<ProjectSummaryResponse> = createColumnHelper<ProjectSummaryResponse>();
@@ -105,7 +170,8 @@
   ];
 
   /* ------------------------------- Filtering ------------------------------ */
-  const deletedFilter = ref<boolean | null>(false); // default: Active Only
+  const deletedFilter = ref(false); // default: show only active (not deleted)
+
   const {
     input: nameFilter, // bound to v-model
     debounced: name, // used in fetch
@@ -117,26 +183,24 @@
   watch([name, deletedFilter], ([n, del]) => {
     setQuery({
       name: n || null,
-      isDeleted: del ?? null, // keep false as false, only null stays null
+      isDeleted: del, // keep false as false, only null stays null
     });
   });
 
   /* ------------------------------- Fetching ------------------------------- */
-  type EmpQuery = { name: string | null; isDeleted?: boolean | null };
+  type ProjectQuery = { name: string | null; isDeleted: boolean };
 
   const projectDetails = ref<ProjectResponse[]>([]);
   const projectDetailsById = computed(() => new Map(projectDetails.value.map(p => [p.id, p])));
 
-  const fetchProjects = async ({ page, pageSize, query }: FetchParams<EmpQuery>) => {
-    const params: GetProjectsRequest = {
+  const fetchProjects = async ({ page, pageSize, query }: FetchParams<ProjectQuery>) => {
+    const request: GetProjectsRequest = {
       page,
       pageSize,
       nameFilter: query?.name || null,
-      isDeleted: query?.isDeleted ?? null,
+      isDeleted: query?.isDeleted ?? false,
     };
-    console.log(params);
-    const response: GetProjectsResponse = await projectService.get(params);
-    console.log(response);
+    const response: GetProjectsResponse = await projectService.get(request);
     // Cache details for action dialogs
     projectDetails.value = response.projectListItemResponses.map(plir => plir.details);
 
@@ -150,21 +214,24 @@
   };
 
   const { table, loading, totalCount, totalPages, pagination, setQuery, setPageSize } =
-    useDataTable<ProjectSummaryResponse, EmpQuery>(columns, fetchProjects, { name: null });
+    useDataTable<ProjectSummaryResponse, ProjectQuery>(columns, fetchProjects, {
+      name: null,
+      isDeleted: false,
+    });
 
   /* ------------------------------- Dialogs/UX ----------------------------- */
   const addDialogIsOpen = ref(false);
   const deleteDialogIsOpen = ref(false);
   const editProjectDialogIsOpen = ref(false);
+  const openDetailsDialog = ref(false);
   const reactivateDialogIsOpen = ref(false);
   const selectedProject = ref<ProjectResponse | null>(null);
-  const viewProjectDialogIsOpen = ref(false);
 
   /* -------------------------------- Handlers ------------------------------ */
-  const handleView = (summary: ProjectSummaryResponse): void => {
-    const detail = projectDetailsById.value.get(summary.id) ?? null;
+  const handleView = (id: string): void => {
+    const detail = projectDetailsById.value.get(id) ?? null;
     selectedProject.value = detail;
-    viewProjectDialogIsOpen.value = !!detail;
+    openDetailsDialog.value = !!detail;
   };
 
   const handleOpenDeleteDialog = (summary: ProjectSummaryResponse): void => {

@@ -6,8 +6,8 @@ export type UserStatus = 'PendingEmail' | 'PendingApproval' | 'Active' | 'Denied
 export type GetUsersRequest = {
   page: number;
   pageSize: number;
-  email?: string;
-  isDeleted?: boolean | null;
+  email: string | null;
+  isDeleted: boolean;
 };
 
 export type GetUsersResponse = {

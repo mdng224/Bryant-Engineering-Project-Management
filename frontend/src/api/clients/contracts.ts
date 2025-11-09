@@ -18,7 +18,7 @@ export type GetClientsRequest = {
   page: number;
   pageSize: number;
   nameFilter: string | null;
-  isDeleted: boolean | null;
+  isDeleted: boolean;
 };
 
 export type GetClientsResponse = {
@@ -41,10 +41,10 @@ export type ClientSummaryResponse = ClientBase;
 export type ClientResponse = ClientBase & {
   address: Address | null;
   note: string | null;
-  CreatedAtUtc: string | null;
-  UpdatedAtUtc: string | null;
-  DeletedAtUtc: string | null;
-  CreatedById: string | null;
-  UpdatedById: string | null;
-  DeletedById: string | null;
+  createdAtUtc: string | null;
+  updatedAtUtc: string | null;
+  deletedAtUtc: string | null;
+  createdById: string | null;
+  updatedById: string | null;
+  deletedById: string | null;
 };

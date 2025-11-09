@@ -17,8 +17,8 @@
           ref="panelEl"
           class="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900/95 p-6 text-slate-100 shadow-2xl"
         >
-          <h2 class="text-base font-semibold">{{ title }}</h2>
-          <p class="mt-2 text-sm text-slate-300">
+          <h2 class="pb-4 text-2xl font-semibold">{{ title }}</h2>
+          <p class="text-slate-300">
             {{ message }}
           </p>
 

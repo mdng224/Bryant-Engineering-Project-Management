@@ -30,7 +30,7 @@
             v-if="!cell.row.original.deletedAtUtc"
             :class="actionButtonClass"
             aria-label="view employee"
-            @click="handleView(cell.row.original as EmployeeSummaryResponse)"
+            @click="handleView(cell.row.original.id as string)"
           >
             <Eye class="h-4 w-4" />
           </button>
@@ -63,13 +63,18 @@
 
   <TableFooter :table :totalCount :totalPages :pagination :setPageSize />
 
-  <ViewEmployeeDialog
-    :open="viewEmployeeDialogIsOpen"
-    :selected-employee
-    @close="viewEmployeeDialogIsOpen = false"
+  <details-dialog
+    :open="openDetailsDialog"
+    title="Employee Details"
+    name-key="fullName"
+    id-key="id"
+    :item="selectedEmployeeForDialog"
+    :fields
+    :format-utc
+    @close="openDetailsDialog = false"
   />
 
-  <EditEmployeeDialog
+  <edit-employee-dialog
     :open="editEmployeeDialogIsOpen"
     :selected-employee
     @close="editEmployeeDialogIsOpen = false"
@@ -85,13 +90,14 @@
   } from '@/api/employees';
   import { employeeService } from '@/api/employees';
   import DeletedFilter from '@/components/DeletedFilter.vue';
+  import DetailsDialog, { type FieldDef } from '@/components/dialogs/DetailsDialog.vue';
   import EditEmployeeDialog from '@/components/dialogs/EditEmployeeDialog.vue';
-  import ViewEmployeeDialog from '@/components/dialogs/ViewEmployeeDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
   import TableSearch from '@/components/TableSearch.vue';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
+  import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { CirclePlus, Eye, RotateCcw, Trash2 } from 'lucide-vue-next';
@@ -112,6 +118,46 @@
   };
   const getDepartmentClass = (dept: string): string =>
     departmentClasses[dept as DepartmentType] ?? 'bg-slate-800/60 text-slate-300';
+
+  /* ------------------------------- Details ------------------------------ */
+  const selectedEmployeeForDialog = computed(() =>
+    selectedEmployee.value
+      ? {
+          ...selectedEmployee.value,
+          fullName: `${selectedEmployee.value.preferredName} ${selectedEmployee.value.lastName}`,
+        }
+      : null,
+  );
+
+  const fieldDef = <K extends keyof EmployeeResponse>(
+    key: K,
+    label: string,
+    type: 'text' | 'date' | 'mono' | 'multiline' = 'text',
+    span: 1 | 2 = 1,
+  ) => ({ key: key as string, label, type, span }) satisfies FieldDef;
+
+  const { formatUtc } = useDateFormat();
+
+  const fields: FieldDef[] = [
+    fieldDef('fullName', 'Full Name'),
+    fieldDef('firstName', 'First Name'),
+    fieldDef('companyEmail', 'Email'),
+    fieldDef('department', 'Department'),
+    fieldDef('employmentType', 'Employment Type'),
+    fieldDef('salaryType', 'Salary Type'),
+    fieldDef('workLocation', 'Work Location'),
+    fieldDef('recommendedRoleId', 'Recommended Role ID', 'mono'),
+    fieldDef('hireDate', 'Hire Date', 'date'),
+    fieldDef('endDate', 'End Date', 'date'),
+    fieldDef('createdAtUtc', 'Created', 'date'),
+    fieldDef('createdById', 'Created By', 'mono'),
+    fieldDef('updatedAtUtc', 'Updated', 'date'),
+    fieldDef('updatedById', 'Updated By', 'mono'),
+    fieldDef('deletedAtUtc', 'Deleted', 'date'),
+    fieldDef('deletedById', 'Deleted By', 'mono'),
+    fieldDef('licenseNotes', 'License Notes', 'multiline', 2),
+    fieldDef('notes', 'Notes', 'multiline', 2),
+  ] as any;
 
   /* -------------------------------- Columns ------------------------------- */
   const col: ColumnHelper<EmployeeSummaryResponse> = createColumnHelper<EmployeeSummaryResponse>();
@@ -191,15 +237,15 @@
   const addDialogIsOpen = ref(false);
   const deleteDialogIsOpen = ref(false);
   const editEmployeeDialogIsOpen = ref(false);
+  const openDetailsDialog = ref(false);
   const reactivateDialogIsOpen = ref(false);
   const selectedEmployee = ref<EmployeeResponse | null>(null);
-  const viewEmployeeDialogIsOpen = ref(false);
 
   /* -------------------------------- Handlers ------------------------------ */
-  const handleView = (summary: EmployeeSummaryResponse): void => {
-    const detail = employeeDetailsById.value.get(summary.id) ?? null;
+  const handleView = (id: string): void => {
+    const detail = employeeDetailsById.value.get(id) ?? null;
     selectedEmployee.value = detail;
-    viewEmployeeDialogIsOpen.value = !!detail;
+    openDetailsDialog.value = !!detail;
   };
 
   const handleEditEmployee = (summary: EmployeeSummaryResponse): void => {

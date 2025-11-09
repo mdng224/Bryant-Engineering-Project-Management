@@ -38,6 +38,7 @@ export type EmployeeSummaryResponse = EmployeeBase & {
 // For expanded detail look on an employee
 export type EmployeeResponse = EmployeeBase & {
   userId: string;
+  fullName: string;
   salaryType: string | null;
   endDate: string | null;
   companyEmail: string | null;
@@ -48,4 +49,7 @@ export type EmployeeResponse = EmployeeBase & {
   createdAtUtc: string;
   updatedAtUtc: string;
   deletedAtUtc: string | null;
+  createdById: string | null;
+  updatedById: string | null;
+  deletedById: string | null;
 };

@@ -7,7 +7,7 @@
       v-model="deletedFilter"
       label-1="Active"
       label-2="Deleted"
-      @change="handleDeletedFilterChange"
+      @change="val => setQuery({ email: email || null, isDeleted: val ?? false })"
     />
   </div>
 
@@ -173,17 +173,9 @@
     },
   ];
 
-  /* ---------------------------- Deleted Filter State ---------------------------- */
-  const deletedFilter = ref<boolean | null>(false); // default: Active Only
+  /* ---------------------------- Filtering ---------------------------- */
+  const deletedFilter = ref(false); // default: show only active (not deleted)
 
-  const handleDeletedFilterChange = () => {
-    setQuery({
-      email: email.value || undefined,
-      isDeleted: deletedFilter.value, // keep null when "Active + Deleted"
-    });
-  };
-
-  /* ---------------------------- Search ---------------------------- */
   const {
     input: emailFilter, // bind to v-model
     debounced: email, // use in fetch
@@ -193,15 +185,21 @@
 
   onBeforeUnmount(cancelEmailDebounce);
 
+  watch([email, deletedFilter], ([e, del]) => {
+    setQuery({
+      email: e || null,
+      isDeleted: del, // keep false as false, only null stays null
+    });
+  });
   /* ------------------------------ Fetching ------------------------------- */
-  type UserQuery = { email?: string; isDeleted?: boolean | null };
+  type UserQuery = { email: string | null; isDeleted: boolean };
 
   const fetchUsers = async ({ page, pageSize, query }: FetchParams<UserQuery>) => {
     const params: GetUsersRequest = {
       page,
       pageSize,
-      email: query?.email || undefined,
-      isDeleted: query?.isDeleted ?? null,
+      email: query?.email || null,
+      isDeleted: query?.isDeleted ?? false,
     };
     const response: GetUsersResponse = await userService.get(params);
 
@@ -224,16 +222,9 @@
     setPageSize,
     fetchNow: refetch,
   } = useDataTable<UserResponse, UserQuery>(columns, fetchUsers, {
-    email: undefined,
-    isDeleted: deletedFilter.value,
+    email: null,
+    isDeleted: false,
   });
-
-  watch(email, () =>
-    setQuery({
-      email: email.value || undefined,
-      isDeleted: deletedFilter.value,
-    }),
-  );
 
   /* ------------------------------ Handlers ------------------------------- */
   const deleteDialogIsOpen = ref(false);

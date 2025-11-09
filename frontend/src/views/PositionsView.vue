@@ -8,7 +8,7 @@
         v-model="deletedFilter"
         label-1="Active"
         label-2="Deleted"
-        @change="handleDeletedFilterChange"
+        @change="val => setQuery({ position: position || null, isDeleted: val ?? false })"
       />
     </div>
 
@@ -84,22 +84,22 @@
   <!-- Dialogs -->
   <add-position-dialog :open="addDialogIsOpen" @close="addDialogIsOpen = false" @saved="refetch" />
 
-  <DeleteDialog
+  <delete-dialog
     :open="deleteDialogIsOpen"
-    title="Soft delete position"
+    title="Delete Position"
     message="This action will soft delete a position."
     @confirm="handleDelete"
     @close="deleteDialogIsOpen = false"
   />
 
-  <EditPositionDialog
+  <edit-position-dialog
     :open="editPositionDialogIsOpen"
     :selected-position
     @close="editPositionDialogIsOpen = false"
     @save="refetch"
   />
 
-  <RestoreDialog
+  <restore-dialog
     :open="restoreDialogIsOpen"
     title="Restore position"
     message="This action will restore position."
@@ -158,17 +158,9 @@
     },
   ];
 
-  /* ---------------------------- Deleted Filter State ---------------------------- */
-  const deletedFilter = ref<boolean | null>(false); // default: Active Only
+  /* ------------------------------- Filtering ------------------------------ */
+  const deletedFilter = ref(false); // default: show only active (not deleted)
 
-  const handleDeletedFilterChange = () => {
-    setQuery({
-      position: position.value || undefined,
-      isDeleted: deletedFilter.value, // keep null when "Active + Deleted"
-    });
-  };
-
-  /* ------------------------------- Searching ------------------------------ */
   const {
     input: nameFilter, // bound to v-model
     debounced: position, // used in fetch
@@ -177,15 +169,22 @@
   } = useDebouncedRef('', 500);
   onBeforeUnmount(cancelNameDebounce);
 
+  watch([position, deletedFilter], ([p, del]) => {
+    setQuery({
+      position: p || null,
+      isDeleted: del, // keep false as false, only null stays null
+    });
+  });
+
   /* ------------------------------ Fetching ------------------------------- */
-  type PosQuery = { position?: string; isDeleted?: boolean | null };
+  type PosQuery = { position: string | null; isDeleted: boolean };
 
   const fetchPositions = async ({ page, pageSize, query }: FetchParams<PosQuery>) => {
     const params: GetPositionsRequest = {
       page,
       pageSize,
       nameFilter: query?.position || null,
-      isDeleted: query?.isDeleted || null,
+      isDeleted: query?.isDeleted ?? false,
     };
     const response: GetPositionsResponse = await positionService.get(params);
 
@@ -207,15 +206,10 @@
     setQuery,
     setPageSize,
     fetchNow: refetch,
-  } = useDataTable<PositionResponse, PosQuery>(columns, fetchPositions, { position: undefined });
-
-  watch(position, () =>
-    setQuery({
-      position: position.value || undefined,
-
-      isDeleted: deletedFilter.value,
-    }),
-  );
+  } = useDataTable<PositionResponse, PosQuery>(columns, fetchPositions, {
+    position: null,
+    isDeleted: false,
+  });
 
   /* ------------------------------ Handlers ------------------------------- */
   const selectedPosition = ref<PositionResponse | null>(null);

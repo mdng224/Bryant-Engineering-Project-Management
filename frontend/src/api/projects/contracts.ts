@@ -4,8 +4,8 @@ import type { Address } from '../common';
 
 type ProjectBase = {
   id: string;
-  clientName: string;
   name: string;
+  clientName: string;
   newCode: string;
   scope: string | null;
   manager: string | null;
@@ -16,7 +16,7 @@ export type GetProjectsRequest = {
   page: number;
   pageSize: number;
   nameFilter: string | null;
-  isDeleted: boolean | null;
+  isDeleted: boolean;
 };
 
 export type GetProjectsResponse = {
@@ -42,10 +42,10 @@ export type ProjectResponse = ProjectBase & {
   code: string | null;
   year: number;
   number: number;
-  CreatedAtUtc: string | null;
-  UpdatedAtUtc: string | null;
-  DeletedAtUtc: string | null;
-  CreatedById: string | null;
-  UpdatedById: string | null;
-  DeletedById: string | null;
+  createdAtUtc: string | null;
+  updatedAtUtc: string | null;
+  deletedAtUtc: string | null;
+  createdById: string | null;
+  updatedById: string | null;
+  deletedById: string | null;
 };
