@@ -9,6 +9,7 @@ public static class ProjectMappers
         new(
             Id:           project.Id,
             ClientId:     project.ClientId,
+            ClientName:   project.Client.Name ?? "unknown",
             Name:         project.Name,
             Code:         project.Code,
             Year:         project.Year,
@@ -16,7 +17,6 @@ public static class ProjectMappers
             NewCode:      project.NewCode,
             Scope:        project.Scope,
             Manager:      project.Manager,
-            Status:       project.IsOpen,
             Type:         project.Type,
             Address:      project.Address,
             CreatedAtUtc: project.CreatedAtUtc,

@@ -3,8 +3,17 @@
 
   <div class="flex items-center justify-between pb-4">
     <div class="flex gap-4">
-      <TableSearch v-model="nameFilter" placeholder="Search by name..." @commit="commitNameNow" />
-      <DeletedFilter v-model="deletedFilter" @change="handleDeletedFilterChange" />
+      <TableSearch
+        v-model="nameFilter"
+        placeholder="Search by project name..."
+        @commit="commitNameNow"
+      />
+      <DeletedFilter
+        v-model="deletedFilter"
+        label-1="Open"
+        label-2="Closed"
+        @change="val => setQuery({ name: name || null, isDeleted: val ?? null })"
+      />
     </div>
     <button
       class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
@@ -87,28 +96,16 @@
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns: ColumnDef<ProjectSummaryResponse, any>[] = [
     col.accessor('name', { header: 'Project Name', meta: { kind: 'text' as const } }),
-
-    // TODO: Swap this out with client name
-    col.accessor('clientId', { header: 'Client Id', meta: { kind: 'text' as const } }),
+    col.accessor('clientName', { header: 'Client Name', meta: { kind: 'text' as const } }),
     col.accessor('newCode', { header: 'Code', meta: { kind: 'text' as const } }),
     col.accessor('scope', { header: 'Scope', meta: { kind: 'text' as const } }),
     col.accessor('manager', { header: 'Project Manager', meta: { kind: 'text' as const } }),
-    col.accessor('status', { header: 'Status', meta: { kind: 'boolean' as const } }),
     col.accessor('type', { header: 'Project Type', meta: { kind: 'text' as const } }),
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
   ];
 
-  /* ---------------------------- Deleted Filter State ---------------------------- */
+  /* ------------------------------- Filtering ------------------------------ */
   const deletedFilter = ref<boolean | null>(false); // default: Active Only
-
-  const handleDeletedFilterChange = () => {
-    setQuery({
-      name: name.value || null,
-      isDeleted: deletedFilter.value, // keep null when "Active + Deleted"
-    });
-  };
-
-  /* ------------------------------- Searching ------------------------------ */
   const {
     input: nameFilter, // bound to v-model
     debounced: name, // used in fetch
@@ -116,6 +113,13 @@
     cancel: cancelNameDebounce, // cleanup on unmount
   } = useDebouncedRef('', 500);
   onBeforeUnmount(cancelNameDebounce);
+
+  watch([name, deletedFilter], ([n, del]) => {
+    setQuery({
+      name: n || null,
+      isDeleted: del ?? null, // keep false as false, only null stays null
+    });
+  });
 
   /* ------------------------------- Fetching ------------------------------- */
   type EmpQuery = { name: string | null; isDeleted?: boolean | null };
@@ -130,7 +134,9 @@
       nameFilter: query?.name || null,
       isDeleted: query?.isDeleted ?? null,
     };
+    console.log(params);
     const response: GetProjectsResponse = await projectService.get(params);
+    console.log(response);
     // Cache details for action dialogs
     projectDetails.value = response.projectListItemResponses.map(plir => plir.details);
 
@@ -145,14 +151,6 @@
 
   const { table, loading, totalCount, totalPages, pagination, setQuery, setPageSize } =
     useDataTable<ProjectSummaryResponse, EmpQuery>(columns, fetchProjects, { name: null });
-
-  // Update query when search changes
-  watch(name, () =>
-    setQuery({
-      name: name.value || null,
-      isDeleted: deletedFilter.value || null,
-    }),
-  );
 
   /* ------------------------------- Dialogs/UX ----------------------------- */
   const addDialogIsOpen = ref(false);

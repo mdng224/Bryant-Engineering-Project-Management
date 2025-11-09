@@ -80,9 +80,17 @@ public sealed class UserRepository(AppDbContext db) : IUserReader, IUserWriter
             .IgnoreQueryFilters()
             .AsNoTracking();
 
-        query = isDeleted is true
-            ? query.Where(u => u.DeletedAtUtc != null)
-            : query.Where(u => u.DeletedAtUtc == null);
+        switch (isDeleted)
+        {
+            case true:
+                query = query.Where(p => p.DeletedAtUtc != null);
+                break;
+            case false:
+                query = query.Where(p => p.DeletedAtUtc == null);
+                break;
+            case null:
+                break;
+        }
         
         if (!string.IsNullOrWhiteSpace(email))
         {

@@ -4,12 +4,11 @@ import type { Address } from '../common';
 
 type ProjectBase = {
   id: string;
-  clientId: string;
+  clientName: string;
   name: string;
   newCode: string;
   scope: string | null;
   manager: string | null;
-  status: boolean;
   type: string | null;
 };
 
@@ -38,6 +37,7 @@ export type ProjectSummaryResponse = ProjectBase;
 
 // For expanded detail look on an project
 export type ProjectResponse = ProjectBase & {
+  clientId: string;
   address: Address | null;
   code: string | null;
   year: number;

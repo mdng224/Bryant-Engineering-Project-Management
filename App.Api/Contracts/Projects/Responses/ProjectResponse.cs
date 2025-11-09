@@ -6,11 +6,11 @@ namespace App.Api.Contracts.Projects.Responses;
 public record ProjectResponse(
     Guid   Id,
     Guid   ClientId,
+    string ClientName,
     string Name,
     string NewCode,
     string Scope,
     string Manager,
-    bool   Status,
     string Type,
     Address?  Address,
     DateTimeOffset CreatedAtUtc,

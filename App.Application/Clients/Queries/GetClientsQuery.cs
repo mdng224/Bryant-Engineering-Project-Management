@@ -2,4 +2,4 @@
 
 namespace App.Application.Clients.Queries;
 
-public sealed record GetClientsQuery(PagedQuery PagedQuery, string? NameFilter);
+public sealed record GetClientsQuery(PagedQuery PagedQuery, string? NameFilter, bool? IsDeleted);

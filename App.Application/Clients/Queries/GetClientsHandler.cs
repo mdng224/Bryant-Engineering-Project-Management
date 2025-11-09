@@ -1,5 +1,4 @@
 ﻿using App.Application.Abstractions.Handlers;
-using App.Application.Abstractions.Persistence;
 using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Clients.Mappers;
 using App.Application.Common.Dtos;
@@ -23,6 +22,7 @@ public sealed class GetClientsHandler(IClientReader reader)
             skip,
             pageSize,
             normalizedNameFilter,
+            query.IsDeleted,
             ct);
         
         var pagedResult = new PagedResult<Client>(clients, total, page, pageSize)

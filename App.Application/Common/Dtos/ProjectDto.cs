@@ -5,6 +5,7 @@ namespace App.Application.Common.Dtos;
 public sealed record ProjectDto(
     Guid Id,
     Guid ClientId,
+    string ClientName,
     string Name,
     string Code,
     int Year,
@@ -12,7 +13,6 @@ public sealed record ProjectDto(
     string NewCode,
     string Scope,
     string Manager,
-    bool Status,
     string Type,
     Address? Address,
     DateTimeOffset CreatedAtUtc,

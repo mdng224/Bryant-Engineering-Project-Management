@@ -22,13 +22,13 @@
       class="absolute z-50 mt-1 w-52 rounded-md border border-slate-700 bg-slate-800 shadow-lg"
     >
       <button
-        v-for="opt in options"
-        :key="opt.label"
-        @click="selectOption(opt.value)"
+        v-for="option in options"
+        :key="option.label"
+        @click="selectOption(option.value)"
         class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-100 hover:bg-slate-700/50"
       >
-        <component :is="opt.icon" class="h-4 w-4 text-slate-400" />
-        <span>{{ opt.label }}</span>
+        <component :is="option.icon" class="h-4 w-4 text-slate-400" />
+        <span>{{ option.label }}</span>
       </button>
     </div>
   </div>
@@ -38,7 +38,7 @@
   import { CheckCircle2, ChevronDown, Trash2 } from 'lucide-vue-next';
   import { computed, ref, watch } from 'vue';
 
-  const props = defineProps<{ modelValue: boolean | null }>();
+  const props = defineProps<{ modelValue: boolean | null; label1: string; label2: string }>();
 
   const emit = defineEmits<{
     (e: 'update:modelValue', value: boolean | null): void;
@@ -46,8 +46,8 @@
   }>();
 
   const options = [
-    { value: false, label: 'Active Only', icon: CheckCircle2, color: 'text-emerald-400' },
-    { value: true, label: 'Deleted Only', icon: Trash2, color: 'text-rose-400' },
+    { value: false, label: props.label1, icon: CheckCircle2, color: 'text-emerald-400' },
+    { value: true, label: props.label2, icon: Trash2, color: 'text-rose-400' },
   ];
 
   const isOpen = ref(false);

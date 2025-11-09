@@ -23,9 +23,25 @@ public sealed class ClientRepository(AppDbContext db) : IClientReader
         int skip,
         int take,
         string? normalizedNameFilter = null,
+        bool? isDeleted = null,
         CancellationToken ct = default)
     {
-        var query = db.Clients.AsNoTracking();
+        var query = db.Clients
+            .IgnoreQueryFilters()
+            .AsNoTracking();
+        
+        
+        switch (isDeleted)
+        {
+            case true:
+                query = query.Where(p => p.DeletedAtUtc != null);
+                break;
+            case false:
+                query = query.Where(p => p.DeletedAtUtc == null);
+                break;
+            case null:
+                break;
+        }
         
         // Filter by first/middle/last/company (ILIKE %term%)
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))

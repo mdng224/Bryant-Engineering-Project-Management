@@ -4,7 +4,12 @@
   <div class="flex items-center justify-between pb-4">
     <div class="flex gap-4">
       <TableSearch v-model="nameFilter" placeholder="Search by name..." @commit="commitNameNow" />
-      <DeletedFilter v-model="deletedFilter" @change="handleDeletedFilterChange" />
+      <DeletedFilter
+        v-model="deletedFilter"
+        label-1="Active"
+        label-2="Deleted"
+        @change="handleDeletedFilterChange"
+      />
     </div>
     <button
       class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
@@ -52,7 +57,7 @@
           </button>
         </span>
       </template>
-      <CellRenderer :cell="cell" />
+      <CellRenderer :cell />
     </template>
   </DataTable>
 

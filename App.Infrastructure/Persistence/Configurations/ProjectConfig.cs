@@ -25,7 +25,6 @@ public sealed class ProjectConfig : IEntityTypeConfiguration<Project>
         b.Ignore(p => p.NewCode);
         b.Property(p => p.Scope).HasColumnName("scope").HasMaxLength(100).IsRequired();
         b.Property(p => p.Manager).HasColumnName("manager").HasMaxLength(100).IsRequired();
-        b.Property(p => p.IsOpen).HasColumnName("is_open").IsRequired();
         b.Property(p => p.Type).HasColumnName("type").HasMaxLength(64).IsRequired();
         b.OwnsAddress();
         b.ConfigureAuditable();

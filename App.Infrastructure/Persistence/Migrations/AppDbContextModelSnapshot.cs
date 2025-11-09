@@ -416,10 +416,6 @@ namespace App.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DeletedById")
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsOpen")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_open");
-
                     b.Property<string>("Manager")
                         .IsRequired()
                         .HasMaxLength(100)

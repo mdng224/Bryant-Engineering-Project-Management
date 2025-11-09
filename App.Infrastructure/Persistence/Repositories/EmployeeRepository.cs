@@ -36,9 +36,17 @@ public sealed class EmployeeRepository(AppDbContext db) : IEmployeeReader
             .IgnoreQueryFilters()
             .AsNoTracking();
         
-        query = isDeleted is true
-            ? query.Where(e => e.DeletedAtUtc != null)
-            : query.Where(e => e.DeletedAtUtc == null);
+        switch (isDeleted)
+        {
+            case true:
+                query = query.Where(p => p.DeletedAtUtc != null);
+                break;
+            case false:
+                query = query.Where(p => p.DeletedAtUtc == null);
+                break;
+            case null:
+                break;
+        }
         
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {

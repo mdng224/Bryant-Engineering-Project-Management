@@ -18,7 +18,6 @@ public sealed class Project : IAuditableEntity, ISoftDeletable
     public string NewCode  => $"{Year}-{Number}";
     public string Scope    { get; private set; }
     public string Manager  { get; private set; }
-    public bool IsOpen     { get; private set; }
     
     // TODO: May need to create a project type
     public string Type     { get; private set; }
@@ -40,46 +39,55 @@ public sealed class Project : IAuditableEntity, ISoftDeletable
     public bool IsDeleted => DeletedAtUtc.HasValue;
     
     // --- Constructors --------------------------------------------------------
-    private Project() { } // EF
+    private Project(Guid clientId, string name, string code, int year, int number, string scope, string manager,
+        string type, DateTimeOffset? deletedAtUtc, Guid? deletedById)
+    {
+        Id = Guid.CreateVersion7();
+        ClientId = clientId;
+        Name = name.Trim();
+        Code = NormalizeLegacyCode(code);
+        Year = year;
+        Number = number;
+        Scope = scope.Trim();
+        Manager = manager.Trim();
+        Type = type.Trim();
+        DeletedAtUtc = deletedAtUtc;
+        DeletedById = deletedById;
+    } // Seed constructor
 
     // --- Factory --------------------------------------------------------------
-    public static Project Seed(
-        Guid   clientId,
-        string name,
-        string projectCode,
-        string scope,
-        string manager,
-        string status,
-        string location,
-        string type)
+    public static Project Seed(Guid clientId, string name, string projectCode, string scope, string manager,
+        string status, string location, string type, DateTimeOffset deletedNow)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Project name is required.", nameof(name));
 
-        var isOpen = string.Equals(status?.Trim(), "OPEN", StringComparison.OrdinalIgnoreCase);
+        var isClosed = string.Equals(status.Trim(), "CLOSED", StringComparison.OrdinalIgnoreCase);
         var (year, number) = ParseLegacyCode(projectCode)
                              ?? throw new ArgumentException($"Invalid project code '{projectCode}'", nameof(projectCode));
-        var address = new Address(
-            Line1:      location.Trim(),
-            Line2:      null,
-            City:       null,
-            State:      null,
-            PostalCode: null);
-        
-        return new Project
+
+        var project = new Project(
+            clientId: clientId,
+            name:     name,
+            code:     projectCode,
+            year:     year,
+            number:   number,
+            scope:    scope.Trim(),
+            manager:  manager,
+            type:     type,
+            deletedAtUtc: isClosed ? deletedNow : null,
+            deletedById:  isClosed ? Guid.Empty : null
+        )
         {
-            Id       = Guid.NewGuid(),
-            ClientId = clientId,
-            Name     = name.Trim(),
-            Code     = NormalizeLegacyCode(projectCode),
-            Year     = year,
-            Number   = number,
-            Scope    = scope.Trim(),
-            Manager  = manager.Trim(),
-            Address  = address,
-            IsOpen   = isOpen,
-            Type     = type.Trim()
+            Address = new Address(
+                Line1: location.Trim(),
+                Line2: null,
+                City: null,
+                State: null,
+                PostalCode: null)
         };
+
+        return project;
     }
     
     public bool Restore()

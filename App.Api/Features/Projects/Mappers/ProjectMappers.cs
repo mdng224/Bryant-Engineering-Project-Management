@@ -31,14 +31,13 @@ public static class ProjectMappers
     
     public static ProjectSummaryResponse ToSummaryResponse(this ProjectDto dto) =>
         new(
-            Id:       dto.Id,
-            ClientId: dto.ClientId,
-            Name:     dto.Name,
-            NewCode:  dto.NewCode,
-            Scope:    dto.Scope,
-            Manager:  dto.Manager,
-            Status:   dto.Status,
-            Type:     dto.Type);
+            Id:         dto.Id,
+            ClientName: dto.ClientName,
+            Name:       dto.Name,
+            NewCode:    dto.NewCode,
+            Scope:      dto.Scope,
+            Manager:    dto.Manager,
+            Type:       dto.Type);
     
     private static ProjectListItemResponse ToListItem(this ProjectDto dto) =>
         new(
@@ -49,11 +48,11 @@ public static class ProjectMappers
         new(
             Id:            dto.Id,
             ClientId:      dto.ClientId,
+            ClientName:    dto.ClientName,
             Name:          dto.Name,
             NewCode:       dto.NewCode,
             Scope:         dto.Scope,
             Manager:       dto.Manager,
-            Status:        dto.Status,
             Type:          dto.Type,
             Address:       dto.Address,
             CreatedAtUtc:  dto.CreatedAtUtc,

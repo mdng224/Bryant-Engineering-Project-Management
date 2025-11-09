@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251108021451_InitialCreate")]
+    [Migration("20251108234314_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -418,10 +418,6 @@ namespace App.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("DeletedById")
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("IsOpen")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_open");
 
                     b.Property<string>("Manager")
                         .IsRequired()

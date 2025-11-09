@@ -3,11 +3,10 @@
 // Non detailed row
 public sealed record ProjectSummaryResponse(
     Guid   Id,
-    Guid   ClientId,
+    string ClientName,
     string Name,
     string NewCode,
     string Scope,
     string Manager,
-    bool   Status,
     string Type
 );

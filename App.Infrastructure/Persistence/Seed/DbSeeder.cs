@@ -54,6 +54,7 @@ public static class DbSeeder
     // Single-pass client+project seeding from the combined CSV
     private static async Task SeedClientsAndProjectsSinglePass(AppDbContext db, CancellationToken ct)
     {
+        
         // Seed only if BOTH tables are empty
         if (await db.Clients.AsNoTracking().AnyAsync(ct) || await db.Projects.AsNoTracking().AnyAsync(ct))
         {
@@ -64,6 +65,7 @@ public static class DbSeeder
         // In-memory trackers for this run
         var createdClientsByName = new Dictionary<string, Client>(StringComparer.OrdinalIgnoreCase);
         var createdProjectCodes  = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var deletedNow = DateTimeOffset.UtcNow;
 
         using var reader = SeedResources.OpenText(
             "App.Infrastructure.Persistence.Seed.Data.ClientsProjects.csv",
@@ -112,7 +114,8 @@ public static class DbSeeder
                 manager:     row.PM.ToLowerInvariant(),
                 status:      row.Status.ToLowerInvariant(),
                 location:    row.Location.ToLowerInvariant(),
-                type:        row.Type.ToLowerInvariant()
+                type:        row.Type.ToLowerInvariant(),
+                deletedNow:  deletedNow
             );
 
             db.Projects.Add(project);

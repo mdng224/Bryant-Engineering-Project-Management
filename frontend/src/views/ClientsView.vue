@@ -4,7 +4,12 @@
   <div class="flex items-center justify-between pb-4">
     <div class="flex gap-4">
       <TableSearch v-model="nameFilter" placeholder="Search client name..." @commit="commit" />
-      <DeletedFilter v-model="deletedFilter" @change="handleDeletedFilterChange" />
+      <DeletedFilter
+        v-model="deletedFilter"
+        label-1="Active"
+        label-2="Deleted"
+        @change="handleDeletedFilterChange"
+      />
     </div>
 
     <button

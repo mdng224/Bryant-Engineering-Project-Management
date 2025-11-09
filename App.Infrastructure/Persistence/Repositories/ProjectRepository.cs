@@ -32,16 +32,27 @@ public sealed class ProjectRepository(AppDbContext db) : IProjectReader, IProjec
         return project;
     }
 
-    public async Task<(IReadOnlyList<Project> projects, int totalCount)> GetPagedAsync(int skip, int take, string? normalizedNameFilter = null, bool? isDeleted = null,
+    public async Task<(IReadOnlyList<Project> projects, int totalCount)> GetPagedAsync(int skip,
+        int take,
+        string? normalizedNameFilter = null,
+        bool? isDeleted = null,
         CancellationToken ct = default)
     {
         var query = db.Projects
             .IgnoreQueryFilters()
             .AsNoTracking();
         
-        query = isDeleted is true
-            ? query.Where(p => p.DeletedAtUtc != null)
-            : query.Where(p => p.DeletedAtUtc == null);
+        switch (isDeleted)
+        {
+            case true:
+                query = query.Where(p => p.DeletedAtUtc != null);
+                break;
+            case false:
+                query = query.Where(p => p.DeletedAtUtc == null);
+                break;
+            case null:
+                break;
+        }
         
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {
@@ -54,10 +65,12 @@ public sealed class ProjectRepository(AppDbContext db) : IProjectReader, IProjec
             return ([], totalCount);
         
         var projects = await query
+            .Include(p => p.Client)
             .OrderBy(p => p.Name)
             .ThenBy(p => p.Id)
             .Skip(skip)
             .Take(take)
+            .AsSplitQuery()
             .ToListAsync(ct);
         
         return (projects, totalCount);

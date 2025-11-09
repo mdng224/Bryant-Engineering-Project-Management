@@ -3,7 +3,12 @@
 
   <div class="flex gap-4 pb-4">
     <TableSearch v-model="emailFilter" placeholder="Search email…" @commit="commit" />
-    <DeletedFilter v-model="deletedFilter" @change="handleDeletedFilterChange" />
+    <DeletedFilter
+      v-model="deletedFilter"
+      label-1="Active"
+      label-2="Deleted"
+      @change="handleDeletedFilterChange"
+    />
   </div>
 
   <p
@@ -58,7 +63,7 @@
           </button>
         </template>
       </template>
-      <CellRenderer :cell="cell" />
+      <CellRenderer :cell />
     </template>
   </DataTable>
 

@@ -117,7 +117,6 @@ namespace App.Infrastructure.Persistence.Migrations
                     number = table.Column<int>(type: "integer", nullable: false),
                     scope = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     manager = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    is_open = table.Column<bool>(type: "boolean", nullable: false),
                     type = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Address_Line_1 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     Address_Line_2 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
