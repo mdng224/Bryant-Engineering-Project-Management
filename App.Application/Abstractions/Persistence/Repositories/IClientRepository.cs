@@ -1,8 +1,8 @@
 ﻿using App.Domain.Clients;
 
-namespace App.Application.Abstractions.Persistence.Writers;
+namespace App.Application.Abstractions.Persistence.Repositories;
 
-public interface IClientWriter
+public interface IClientRepository
 {
     void Add(Client client);
     Task<bool> SoftDeleteAsync(Guid id, CancellationToken ct = default);

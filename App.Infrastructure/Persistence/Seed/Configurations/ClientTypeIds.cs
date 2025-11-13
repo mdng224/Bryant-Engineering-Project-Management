@@ -1,0 +1,57 @@
+﻿namespace App.Infrastructure.Persistence.Seed.Configurations;
+
+internal static class ClientTypeIds
+{
+    public static readonly Guid Individual                         = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    public static readonly Guid JointIndividuals                   = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    public static readonly Guid EstateTrust                        = Guid.Parse("33333333-3333-3333-3333-333333333333");
+    public static readonly Guid SoleProprietor                     = Guid.Parse("44444444-4444-4444-4444-444444444444");
+    public static readonly Guid Corporation                        = Guid.Parse("55555555-5555-5555-5555-555555555555");
+    public static readonly Guid LimitedLiabilityCompany            = Guid.Parse("66666666-6666-6666-6666-666666666666");
+    public static readonly Guid Partnership                        = Guid.Parse("77777777-7777-7777-7777-777777777777");
+    public static readonly Guid DeveloperBuilder                   = Guid.Parse("88888888-8888-8888-8888-888888888888");
+    public static readonly Guid ConsultantProfessionalFirm         = Guid.Parse("99999999-9999-9999-9999-999999999999");
+    public static readonly Guid UtilityProviderPrivate             = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    public static readonly Guid PropertyManagementCompany          = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+    public static readonly Guid FederalAgency                      = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+    public static readonly Guid StateAgency                        = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
+    public static readonly Guid CountyGovernment                   = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+    public static readonly Guid CityMunicipalGovernment            = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff");
+    public static readonly Guid RegionalAuthoritySpecialDistrict   = Guid.Parse("11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    public static readonly Guid SchoolDistrictBoardOfEducation     = Guid.Parse("22222222-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+    public static readonly Guid UniversityCollegePublic            = Guid.Parse("33333333-cccc-cccc-cccc-cccccccccccc");
+    public static readonly Guid ReligiousOrganizationChurch        = Guid.Parse("44444444-dddd-dddd-dddd-dddddddddddd");
+    public static readonly Guid NonProfitOrganization              = Guid.Parse("55555555-eeee-eeee-eeee-eeeeeeeeeeee");
+    public static readonly Guid CommunityAssociationHoa            = Guid.Parse("66666666-ffff-ffff-ffff-ffffffffffff");
+    public static readonly Guid CivicCulturalInstitution           = Guid.Parse("77777777-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    public static readonly Guid FoundationCharitableTrust          = Guid.Parse("88888888-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+    public static readonly Guid PrivateSchoolAcademy               = Guid.Parse("99999999-cccc-cccc-cccc-cccccccccccc");
+    public static readonly Guid UniversityCollegePrivate           = Guid.Parse("aaaaaaaa-dddd-dddd-dddd-dddddddddddd");
+    public static readonly Guid HospitalMedicalCenter              = Guid.Parse("bbbbbbbb-eeee-eeee-eeee-eeeeeeeeeeee");
+    public static readonly Guid ClinicHealthcareProvider           = Guid.Parse("cccccccc-ffff-ffff-ffff-ffffffffffff");
+    public static readonly Guid SeniorLivingAssistedCare           = Guid.Parse("dddddddd-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    public static readonly Guid FarmAgriculturalOperation          = Guid.Parse("eeeeeeee-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+    public static readonly Guid LandholdingInvestmentCompany       = Guid.Parse("ffffffff-cccc-cccc-cccc-cccccccccccc");
+    public static readonly Guid RealEstateInvestmentTrust          = Guid.Parse("11111111-dddd-dddd-dddd-dddddddddddd");
+    public static readonly Guid PropertyDeveloperSubdivision       = Guid.Parse("22222222-eeee-eeee-eeee-eeeeeeeeeeee");
+    public static readonly Guid PropertyManagementLeasingCompany   = Guid.Parse("33333333-ffff-ffff-ffff-ffffffffffff");
+    public static readonly Guid WaterSewerDistrict                 = Guid.Parse("44444444-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    public static readonly Guid ElectricCooperative                = Guid.Parse("55555555-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+    public static readonly Guid TelecommunicationsProvider         = Guid.Parse("66666666-cccc-cccc-cccc-cccccccccccc");
+    public static readonly Guid TransportationAgency               = Guid.Parse("77777777-dddd-dddd-dddd-dddddddddddd");
+    public static readonly Guid EnergyCompany                      = Guid.Parse("88888888-eeee-eeee-eeee-eeeeeeeeeeee");
+    public static readonly Guid BankCreditUnion                    = Guid.Parse("99999999-ffff-ffff-ffff-ffffffffffff");
+    public static readonly Guid MortgageLenderLoanServicer         = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-bbbbbbbbbbbb");
+    public static readonly Guid InsuranceCompany                   = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-cccccccccccc");
+    public static readonly Guid TitleEscrowCompany                 = Guid.Parse("cccccccc-cccc-cccc-cccc-dddddddddddd");
+    public static readonly Guid LawFirmAttorneyClientRep           = Guid.Parse("dddddddd-dddd-dddd-dddd-eeeeeeeeeeee");
+    public static readonly Guid JointVenture                       = Guid.Parse("eeeeeeee-eeee-eeee-eeee-ffffffffffff");
+    public static readonly Guid ProjectLlcSpv                      = Guid.Parse("ffffffff-ffff-ffff-ffff-aaaaaaaaaaaa");
+    public static readonly Guid ReceiverCourtAppointee             = Guid.Parse("11111111-bbbb-bbbb-bbbb-cccccccccccc");
+    public static readonly Guid BankruptcyTrustee                  = Guid.Parse("22222222-cccc-cccc-cccc-dddddddddddd");
+    public static readonly Guid EstateAdministrator                = Guid.Parse("33333333-dddd-dddd-dddd-eeeeeeeeeeee");
+    public static readonly Guid CivicClubFraternalOrg              = Guid.Parse("44444444-eeee-eeee-eeee-ffffffffffff");
+    public static readonly Guid PoliticalOrganization              = Guid.Parse("55555555-ffff-ffff-ffff-aaaaaaaaaaaa");
+    public static readonly Guid UnknownFailedDbExport              = Guid.Parse("66666666-aaaa-aaaa-aaaa-bbbbbbbbbbbb");
+    public static readonly Guid UnknownToBeClassified              = Guid.Parse("77777777-bbbb-bbbb-bbbb-cccccccccccc");
+}

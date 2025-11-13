@@ -2,11 +2,12 @@
 
 // Non detailed row
 public sealed record ClientSummaryResponse(
-    Guid Id,
+    Guid     Id,
     string? Name,
-    string? ContactFirst,
-    string? ContactMiddle,
-    string? ContactLast,
+    int     TotalActiveProjects,
+    int     TotalProjects,
+    string? FirstName,
+    string? LastName,
     string? Email,
     string? Phone
 );

@@ -2,23 +2,20 @@
 
 namespace App.Application.Common.Dtos;
 
-public sealed record ProjectDto(
+public sealed record ClientListItemDto(
     Guid Id,
-    Guid ClientId,
-    string ClientName,
     string Name,
-    string Code,
-    int Year,
-    int Number,
-    string NewCode,
-    string Scope,
-    string Manager,
-    string Type,
+    int TotalActiveProjects,
+    int TotalProjects,
+    string? FirstName,
+    string? LastName,
+    string? Email,
+    string? Phone,
     Address? Address,
+    string? Note,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc,
     DateTimeOffset? DeletedAtUtc,
     Guid? CreatedById,
     Guid? UpdatedById,
-    string? DeletedBy
-    );
+    Guid? DeletedById);

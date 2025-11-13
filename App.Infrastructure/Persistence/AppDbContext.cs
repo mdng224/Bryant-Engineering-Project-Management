@@ -23,20 +23,28 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Position> Positions => Set<Position>();
     public DbSet<EmployeePosition> EmployeePositions => Set<EmployeePosition>();
+    
+    // --- Clients / Projects --------------------------------------------------
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<Project> Projects => Set<Project>();
+    public DbSet<ClientCategory> ClientCategories => Set<ClientCategory>();
+    public DbSet<ClientType> ClientTypes => Set<ClientType>();
+    public DbSet<Scope> Scopes => Set<Scope>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Reference order matters
-        modelBuilder.ApplyConfiguration(new OutboxMessageConfig());     // 0
-        modelBuilder.ApplyConfiguration(new RoleConfig());             // 1
-        modelBuilder.ApplyConfiguration(new UserConfig());             // 2
-        modelBuilder.ApplyConfiguration(new PositionConfig());         // 3
-        modelBuilder.ApplyConfiguration(new EmployeeConfig());         // 4
-        modelBuilder.ApplyConfiguration(new EmployeePositionConfig()); // 5
-        modelBuilder.ApplyConfiguration(new EmailVerificationConfig()); // 6
+        modelBuilder.ApplyConfiguration(new OutboxMessageConfig());
+        modelBuilder.ApplyConfiguration(new RoleConfig());
+        modelBuilder.ApplyConfiguration(new UserConfig());
+        modelBuilder.ApplyConfiguration(new PositionConfig());
+        modelBuilder.ApplyConfiguration(new EmployeeConfig());
+        modelBuilder.ApplyConfiguration(new EmployeePositionConfig());
+        modelBuilder.ApplyConfiguration(new EmailVerificationConfig());
+        modelBuilder.ApplyConfiguration(new ClientCategoryConfig());
+        modelBuilder.ApplyConfiguration(new ClientTypeConfig());
         modelBuilder.ApplyConfiguration(new ClientConfig());
+        modelBuilder.ApplyConfiguration(new ScopeConfig());
         modelBuilder.ApplyConfiguration(new ProjectConfig());
     }
 

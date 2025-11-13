@@ -12,15 +12,29 @@ namespace App.Infrastructure.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "client_categories",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_client_categories", x => x.Id);
+                    table.CheckConstraint("ck_client_category_name_not_blank", "length(btrim(name)) > 0");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "clients",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    contact_first = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    contact_middle = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    contact_last = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    email = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    name_prefix = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    first_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    last_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    name_suffix = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    email = table.Column<string>(type: "character varying(254)", maxLength: 254, nullable: true),
                     phone = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
                     Address_Line_1 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     Address_Line_2 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
@@ -28,7 +42,9 @@ namespace App.Infrastructure.Persistence.Migrations
                     Address_State = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     Address_PostalCode = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
                     note = table.Column<string>(type: "text", nullable: true),
-                    project_code = table.Column<string>(type: "character varying(7)", maxLength: 7, nullable: true),
+                    client_category_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    client_type_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    project_code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
                     created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -39,7 +55,7 @@ namespace App.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_clients", x => x.Id);
-                    table.CheckConstraint("ck_clients_company_or_person", " (btrim(coalesce(name, '')) <> '')  OR (btrim(coalesce(contact_first,  '')) <> '')  OR (btrim(coalesce(contact_last,   '')) <> '') ");
+                    table.CheckConstraint("ck_clients_company_or_person", " (btrim(coalesce(name, '')) <> '')  OR (btrim(coalesce(first_name,  '')) <> '')  OR (btrim(coalesce(last_name,   '')) <> '') ");
                 });
 
             migrationBuilder.CreateTable(
@@ -107,39 +123,37 @@ namespace App.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "projects",
+                name: "scopes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    Description = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_scopes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "client_types",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    code = table.Column<string>(type: "character varying(7)", maxLength: 7, nullable: false),
-                    year = table.Column<int>(type: "integer", nullable: false),
-                    number = table.Column<int>(type: "integer", nullable: false),
-                    scope = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    manager = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    type = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    Address_Line_1 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
-                    Address_Line_2 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
-                    Address_City = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    Address_State = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    Address_PostalCode = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
-                    client_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
-                    updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
-                    DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    created_by_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    updated_by_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    DeletedById = table.Column<Guid>(type: "uuid", nullable: true)
+                    description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    CategoryId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_projects", x => x.Id);
+                    table.PrimaryKey("PK_client_types", x => x.Id);
+                    table.CheckConstraint("ck_client_type_name_not_blank", "length(btrim(name)) > 0");
                     table.ForeignKey(
-                        name: "FK_projects_clients_client_id",
-                        column: x => x.client_id,
-                        principalTable: "clients",
+                        name: "FK_client_types_client_categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "client_categories",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -167,6 +181,44 @@ namespace App.Infrastructure.Persistence.Migrations
                         column: x => x.role_id,
                         principalTable: "roles",
                         principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "projects",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    year = table.Column<int>(type: "integer", nullable: false),
+                    number = table.Column<int>(type: "integer", nullable: false),
+                    manager = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    type = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    location = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    client_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    scope_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    created_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    updated_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    DeletedById = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_projects", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_projects_clients_client_id",
+                        column: x => x.client_id,
+                        principalTable: "clients",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_projects_scopes_scope_id",
+                        column: x => x.scope_id,
+                        principalTable: "scopes",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -249,6 +301,49 @@ namespace App.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_client_categories_name",
+                table: "client_categories",
+                column: "name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_client_types_CategoryId_name",
+                table: "client_types",
+                columns: new[] { "CategoryId", "name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_client_types_name",
+                table: "client_types",
+                column: "name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_clients_client_category_id_client_type_id",
+                table: "clients",
+                columns: new[] { "client_category_id", "client_type_id" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_clients_email",
+                table: "clients",
+                column: "email");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_clients_last_name_first_name",
+                table: "clients",
+                columns: new[] { "last_name", "first_name" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_clients_name",
+                table: "clients",
+                column: "name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_clients_project_code",
+                table: "clients",
+                column: "project_code");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_email_verifications_expires_at",
                 table: "email_verifications",
                 column: "expires_at_utc");
@@ -329,8 +424,25 @@ namespace App.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_projects_scope_id",
+                table: "projects",
+                column: "scope_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_projects_year_number",
+                table: "projects",
+                columns: new[] { "year", "number" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ux_roles_name",
                 table: "roles",
+                column: "name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_scopes_name",
+                table: "scopes",
                 column: "name",
                 unique: true);
 
@@ -351,6 +463,9 @@ namespace App.Infrastructure.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "client_types");
+
+            migrationBuilder.DropTable(
                 name: "email_verifications");
 
             migrationBuilder.DropTable(
@@ -363,6 +478,9 @@ namespace App.Infrastructure.Persistence.Migrations
                 name: "projects");
 
             migrationBuilder.DropTable(
+                name: "client_categories");
+
+            migrationBuilder.DropTable(
                 name: "employees");
 
             migrationBuilder.DropTable(
@@ -370,6 +488,9 @@ namespace App.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "clients");
+
+            migrationBuilder.DropTable(
+                name: "scopes");
 
             migrationBuilder.DropTable(
                 name: "users");

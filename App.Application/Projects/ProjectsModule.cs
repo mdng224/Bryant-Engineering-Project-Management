@@ -13,10 +13,10 @@ public static class ProjectsModule
     public static IServiceCollection AddProjectsApplication(this IServiceCollection services)
     {
         // Queries
-        services.AddScoped<IQueryHandler<GetProjectsQuery, Result<PagedResult<ProjectDto>>>, GetProjectsHandler>();
+        services.AddScoped<IQueryHandler<GetProjectsQuery, Result<PagedResult<ProjectListItemDto>>>, GetProjectsHandler>();
 
         // Commands
-        services.AddScoped<ICommandHandler<RestoreProjectCommand, Result<ProjectDto>>, RestoreProjectHandler>();
+        services.AddScoped<ICommandHandler<RestoreProjectCommand, Result<ProjectListItemDto>>, RestoreProjectHandler>();
         
         return services;
     }

@@ -35,7 +35,7 @@ public static class ProjectEndpoints
 
     private static async Task<IResult> HandleGetProjects(
         [AsParameters] GetProjectsRequest request,
-        [FromServices] IQueryHandler<GetProjectsQuery, Result<PagedResult<ProjectDto>>> handler,
+        [FromServices] IQueryHandler<GetProjectsQuery, Result<PagedResult<ProjectListItemDto>>> handler,
         CancellationToken ct = default)
     {
         var query   = request.ToQuery();
@@ -51,7 +51,7 @@ public static class ProjectEndpoints
     
     private static async Task<IResult> HandleRestoreProject(
         [FromRoute] Guid id,
-        [FromServices] ICommandHandler<RestoreProjectCommand, Result<ProjectDto>> handler,
+        [FromServices] ICommandHandler<RestoreProjectCommand, Result<ProjectListItemDto>> handler,
         CancellationToken ct)
     {
         var command = new RestoreProjectCommand(id);

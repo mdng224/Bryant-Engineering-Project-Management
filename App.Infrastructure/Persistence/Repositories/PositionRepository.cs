@@ -1,12 +1,12 @@
 ﻿using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Abstractions.Persistence.Writers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Domain.Common.Abstractions;
 using App.Domain.Employees;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Infrastructure.Persistence.Repositories;
 
-public class PositionRepository(AppDbContext db) : IPositionReader, IPositionWriter
+public class PositionRepository(AppDbContext db) : IPositionReader, IPositionRepository
 {
     // -------------------- Readers --------------------
     public async Task<Position?> GetByIdAsync(Guid id, CancellationToken ct)

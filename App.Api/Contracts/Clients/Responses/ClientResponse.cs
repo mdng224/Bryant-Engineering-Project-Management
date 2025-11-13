@@ -5,9 +5,10 @@ namespace App.Api.Contracts.Clients.Responses;
 public sealed record ClientResponse(
     Guid Id,
     string? Name,
-    string? ContactFirst,
-    string? ContactMiddle,
-    string? ContactLast,
+    int TotalActiveProjects,
+    int TotalProjects,
+    string? FirstName,
+    string? LastName,
     string? Email,
     string? Phone,
     Address? Address,

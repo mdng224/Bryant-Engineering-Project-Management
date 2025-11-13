@@ -5,10 +5,9 @@ using CsvHelper.Configuration;
 
 namespace App.Infrastructure.Persistence.Seed.Factories;
 
-public static class ClientProjectSeedFactory
+internal static class ClientProjectSeedFactory
 {
     // ---------- Public seed records (what DbSeeder will use) ------------------
-
     public sealed record CombinedSeed(
         string ProjectCode,
         string ProjectName,

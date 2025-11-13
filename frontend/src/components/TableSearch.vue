@@ -20,7 +20,7 @@
 
   const props = defineProps<{
     delay?: number;
-    modelValue?: string;
+    modelValue: string | null;
     placeholder?: string;
   }>();
 

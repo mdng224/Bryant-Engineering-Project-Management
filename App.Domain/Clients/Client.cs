@@ -6,21 +6,54 @@ namespace App.Domain.Clients;
 
 public sealed class Client : IAuditableEntity, ISoftDeletable
 {
-    // --- Key ------------------------------------------------------------------
-    public Guid Id { get; private set; }
+    // --- Constructors --------------------------------------------------------
+    private Client() { } // EF
 
-    // --- Core Fields ----------------------------------------------------------
-    public string? Name          { get; private set; }
-    // TODO: Might need to break this out into its own table
-    public string? ContactFirst  { get; private set; }
-    public string? ContactMiddle { get; private set; }
-    public string? ContactLast   { get; private set; }
-    public string? Email         { get; private set; }
-    public string? Phone         { get; private set; }
+    private Client(
+        string name,
+        string? namePrefix,
+        string? firstName,
+        string? lastName,
+        string? nameSuffix,
+        string? email,
+        string? phone,
+        Address? address,
+        string? note,
+        Guid? clientCategoryId,
+        Guid? clientTypeId,
+        string? projectCode // legacy optional
+    )
+    {
+        Id = Guid.CreateVersion7();
+        SetContactInfoInternal(name, namePrefix, firstName, lastName, nameSuffix, email, phone);
+        SetAddressInternal(address);
+        SetNoteInternal(note);
+        ClientCategoryId = clientCategoryId;
+        ClientTypeId = clientTypeId;
+        ProjectCode = projectCode?.Trim();
+    }
+    
+    // --- Properties -----------------------------------------------------------
+    public Guid Id { get; private set; }
+    // Company / person
+    public string Name        { get; private set; } = null!;  // company or household name (client_name)
+    public string? NamePrefix { get; private set; }  // name_prefix (e.g., Mr., Ms., Dr.)
+    public string? FirstName  { get; private set; }  // first_name
+    public string? LastName   { get; private set; }  // last_name
+    public string? NameSuffix { get; private set; }  // name_suffix (e.g., Jr., III)
+    
+    // Contact
+    public string? Email { get; private set; }       // email
+    public string? Phone { get; private set; }       // phone
     public Address? Address      { get; private set; }
     public string? Note          { get; private set; }
-    public string? ProjectCode   { get; private set; }      // Legacy: How clients and projects were linked
-    
+    // Classification from CSV
+    public Guid? ClientCategoryId { get; private set; }  // from "CLIENT CATEGORY" lookup
+    public Guid? ClientTypeId     { get; private set; }  // from "CLIENT TYPE" lookup
+
+    // Legacy linkage (optional)
+    public string? ProjectCode { get; private set; }     // legacy: how clients/projects were linked (may be null)
+
     // 🔁 Navigation (optional for EF, useful for domain logic)
     private readonly List<Project> _projects = [];
     public IReadOnlyCollection<Project> Projects => _projects;
@@ -34,58 +67,76 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     public Guid? DeletedById            { get; private set; }
     public bool IsDeleted => DeletedAtUtc.HasValue;
     
-    // --- Constructors --------------------------------------------------------
-    private Client() { } // EF
-
-    private Client(
-        string? name,
-        string? contactFirst,
-        string? contactMiddle,
-        string? contactLast,
-        string? email,
-        string? phone,
-        Address? address,
-        string? note,
-        string projectCode)
-    {
-        Id = Guid.CreateVersion7();
-        SetContactInfoInternal(name, contactFirst, contactMiddle, contactLast, email, phone);
-        SetAddressInternal(address);
-        SetNoteInternal(note);
-        ProjectCode = projectCode.Trim();
-    }
-
-    /// <summary>Minimal seed path: pass only what you have from CSV (company + contact names).</summary>
-    public static Client Seed(string clientName, string? contactFirst, string? contactLast, string projectCode) =>
-        new(
-            name:          clientName,
-            contactFirst:  contactFirst,
-            contactMiddle: null,
-            contactLast:   contactLast,
-            email:         null,
-            phone:         null,
-            address:       null,
-            note:          null,
-            projectCode:   projectCode
-        );
-
-    // --- Public Mutators ------------------------------------------------------
-    public void ChangeContactInfo(
-        string? name,
+    /// <summary>
+    /// CSV-aligned seed method. Pass the raw values from your parsed CSV;
+    /// normalize/lookups happen inside.
+    /// </summary>
+    public static Client Seed(
+        string clientName,
+        string? namePrefix,
         string? firstName,
         string? lastName,
-        string? middleName,
+        string? nameSuffix,
         string? email,
-        string? phone)
+        string? phone,
+        string? line1,
+        string? line2,
+        string? city,
+        string? state,
+        string? postalCode,
+        string? note,
+        Guid? clientCategoryId,
+        Guid? clientTypeId,
+        string? legacyProjectCode = null
+    )
     {
-        EnsureNotDeleted();
-        SetContactInfoInternal(name, firstName, lastName, middleName, email, phone);
+        var address = (line1, line2, city, state, postalCode) switch
+        {
+            (null or "", null or "", null or "", null or "", null or "") => null,
+            _ => new Address(line1, line2, city, state, postalCode)
+        };
+
+        return new Client(
+            name:           clientName,
+            namePrefix:     namePrefix,
+            firstName:      firstName,
+            lastName:       lastName,
+            nameSuffix:     nameSuffix,
+            email:          email,
+            phone:          phone,
+            address:        address,
+            note:           note,
+            clientCategoryId: clientCategoryId,
+            clientTypeId:     clientTypeId,
+            projectCode:    legacyProjectCode
+        );
     }
 
+    // --- Public Mutators ------------------------------------------------------
     public void SetAddress(Address? address)
     {
         EnsureNotDeleted();
         SetAddressInternal(address);
+    }
+
+    public void ChangeContactInfo(
+        string? name,
+        string? namePrefix,
+        string? firstName,
+        string? lastName,
+        string? nameSuffix,
+        string? email,
+        string? phone)
+    {
+        EnsureNotDeleted();
+        SetContactInfoInternal(name, namePrefix, firstName, lastName, nameSuffix, email, phone);
+    }
+
+    public void SetLegacyProjectCode(string? code)
+    {
+        EnsureNotDeleted();
+        var normalized = string.IsNullOrWhiteSpace(code) ? null : code.Trim();
+        if (ProjectCode != normalized) ProjectCode = normalized;
     }
 
     public void SetNote(string? note)
@@ -97,29 +148,32 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     // --- Internals ------------------------------------------------------------
     private void SetContactInfoInternal(
         string? name,
-        string? contactFirst,
-        string? contactMiddle,
-        string? contactLast,
+        string? namePrefix,
+        string? firstName,
+        string? lastName,
+        string? nameSuffix,
         string? email,
         string? phone)
     {
-        var newCompany = NullIfBlank(name);
-        var newFirst   = contactFirst?.ToNormalizedName();
-        var newMiddle  = contactMiddle?.ToNormalizedName();
-        var newLast    = contactLast?.ToNormalizedName();
-        var newEmail   = string.IsNullOrWhiteSpace(email) ? null : email.ToNormalizedEmail();
-        var newPhone   = phone.ToNormalizedPhone();
+        var newCompany   = NullIfBlank(name);
+        var newPrefix    = NullIfBlank(namePrefix);
+        var newFirst     = firstName?.ToNormalizedName();
+        var newLast      = lastName?.ToNormalizedName();
+        var newSuffix    = NullIfBlank(nameSuffix);
+        var newEmail     = string.IsNullOrWhiteSpace(email) ? null : email.ToNormalizedEmail();
+        var newPhone     = phone.ToNormalizedPhone();
 
         // Rule: if both names are blank, company must be provided.
         if (newFirst is null && newLast is null && newCompany is null)
-            throw new InvalidOperationException("CompanyName is required when both FirstName and LastName are blank.");
+            throw new InvalidOperationException("Company name is required when both FirstName and LastName are blank.");
 
-        if (Name         != newCompany) Name         = newCompany;
-        if (ContactFirst != newFirst)   ContactFirst = newFirst;
-        if (ContactMiddle!= newMiddle)  ContactMiddle= newMiddle;
-        if (ContactLast  != newLast)    ContactLast  = newLast;
-        if (Email        != newEmail)   Email        = newEmail;
-        if (Phone        != newPhone)   Phone        = newPhone;
+        if (Name       != newCompany) Name       = newCompany;
+        if (NamePrefix != newPrefix)  NamePrefix = newPrefix;
+        if (FirstName  != newFirst)   FirstName  = newFirst;
+        if (LastName   != newLast)    LastName   = newLast;
+        if (NameSuffix != newSuffix)  NameSuffix = newSuffix;
+        if (Email      != newEmail)   Email      = newEmail;
+        if (Phone      != newPhone)   Phone      = newPhone;
     }
 
     private void SetAddressInternal(Address? address)

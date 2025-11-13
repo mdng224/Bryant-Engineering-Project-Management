@@ -1,6 +1,6 @@
 ﻿using App.Application.Abstractions.Messaging;
 using App.Application.Abstractions.Persistence;
-using App.Application.Abstractions.Persistence.Writers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Domain.Common;
 using App.Domain.Users.Events;
 using App.Infrastructure.Persistence;
@@ -111,7 +111,7 @@ public sealed class OutboxProcessorWorker(
                 var ur = System.Text.Json.JsonSerializer.Deserialize<UserRegistered>(outboxMessage.Payload);
                 if (ur is null) return null;
 
-                var emailVerificationWriter = sp.GetRequiredService<IEmailVerificationWriter>();
+                var emailVerificationWriter = sp.GetRequiredService<IEmailVerificationRepository>();
                 var rawToken = emailVerificationWriter.Add(ur.UserId);
 
                 var baseUrl = config["Auth:Verification:BaseUrl"]

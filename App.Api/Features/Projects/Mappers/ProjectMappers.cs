@@ -9,12 +9,12 @@ namespace App.Api.Features.Projects.Mappers;
 
 public static class ProjectMappers
 {
-    public static GetProjectsResponse ToGetProjectsResponse(this PagedResult<ProjectDto> pagedResult)
+    public static GetProjectsResponse ToGetProjectsResponse(this PagedResult<ProjectListItemDto> pagedResult)
     {
-        var projects = pagedResult.Items.Select(pd => pd.ToListItem()).ToList();
+        var projectListItemResponses = pagedResult.Items.Select(pd => pd.ToListItem()).ToList();
 
         return new GetProjectsResponse(
-            ProjectListItemResponses: projects,
+            ProjectListItemResponses: projectListItemResponses,
             TotalCount:               pagedResult.TotalCount,
             Page:                     pagedResult.Page,
             PageSize:                 pagedResult.PageSize,
@@ -29,40 +29,44 @@ public static class ProjectMappers
         return getProjectsQuery;
     }
     
-    public static ProjectSummaryResponse ToSummaryResponse(this ProjectDto dto) =>
+    public static ProjectSummaryResponse ToSummaryResponse(this ProjectListItemDto listItemDto) =>
         new(
-            Id:         dto.Id,
-            ClientName: dto.ClientName,
-            Name:       dto.Name,
-            Code:       dto.Code,
-            NewCode:    dto.NewCode,
-            Scope:      dto.Scope,
-            Manager:    dto.Manager,
-            Type:       dto.Type,
-            DeletedAtUtc: dto.DeletedAtUtc);
+            Id:         listItemDto.Id,
+            ClientId:   listItemDto.ClientId,
+            ClientName: listItemDto.ClientName,
+            ScopeId:    listItemDto.ScopeId,
+            ScopeName:  listItemDto.ScopeName,
+            Name:       listItemDto.Name,
+            Code:       listItemDto.Code,
+            Manager:    listItemDto.Manager,
+            Type:       listItemDto.Type,
+            DeletedAtUtc: listItemDto.DeletedAtUtc);
     
-    private static ProjectListItemResponse ToListItem(this ProjectDto dto) =>
+    private static ProjectListItemResponse ToListItem(this ProjectListItemDto listItemDto) =>
         new(
-            Summary: dto.ToSummaryResponse(),
-            Details: dto.ToProjectResponse());
+            Summary: listItemDto.ToSummaryResponse(),
+            Details: listItemDto.ToProjectResponse());
     
-    private static ProjectResponse ToProjectResponse(this ProjectDto dto) =>
+    private static ProjectResponse ToProjectResponse(this ProjectListItemDto listItemDto) =>
         new(
-            Id:            dto.Id,
-            ClientId:      dto.ClientId,
-            ClientName:    dto.ClientName,
-            Name:          dto.Name,
-            Code:          dto.Code,
-            Year:          dto.Year,
-            Number:        dto.Number,
-            Scope:         dto.Scope,
-            Manager:       dto.Manager,
-            Type:          dto.Type,
-            Address:       dto.Address,
-            CreatedAtUtc:  dto.CreatedAtUtc,
-            UpdatedAtUtc:  dto.UpdatedAtUtc,
-            DeletedAtUtc:  dto.DeletedAtUtc,
-            CreatedById:   dto.CreatedById,
-            UpdatedById:   dto.UpdatedById,
-            DeletedBy:     dto.DeletedBy);
+            Id:            listItemDto.Id,
+            Code:          listItemDto.Code,
+            ClientId:      listItemDto.ClientId,
+            ClientName:    listItemDto.ClientName,
+            ScopeId:       listItemDto.ScopeId,
+            ScopeName:     listItemDto.ScopeName,
+            Name:          listItemDto.Name,
+            Year:          listItemDto.Year,
+            Number:        listItemDto.Number,
+            Manager:       listItemDto.Manager,
+            Type:          listItemDto.Type,
+            Location:       listItemDto.Location,
+            CreatedAtUtc:  listItemDto.CreatedAtUtc,
+            UpdatedAtUtc:  listItemDto.UpdatedAtUtc,
+            DeletedAtUtc:  listItemDto.DeletedAtUtc,
+            CreatedById:   listItemDto.CreatedById,
+            UpdatedById:   listItemDto.UpdatedById,
+            DeletedBy: listItemDto.DeletedById == Guid.Empty
+                ? "Imported From Legacy Database"
+                : listItemDto.DeletedAtUtc.ToString());
 }

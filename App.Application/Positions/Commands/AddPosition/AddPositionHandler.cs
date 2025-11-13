@@ -1,7 +1,7 @@
 ﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
 using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Abstractions.Persistence.Writers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Common.Dtos;
 using App.Application.Common.Results;
 using App.Application.Positions.Mappers;
@@ -10,7 +10,7 @@ using static App.Application.Common.R;
 
 namespace App.Application.Positions.Commands.AddPosition;
 
-public class AddPositionHandler(IPositionReader reader, IPositionWriter writer, IUnitOfWork uow)
+public class AddPositionHandler(IPositionReader reader, IPositionRepository repository, IUnitOfWork uow)
     : ICommandHandler<AddPositionCommand, Result<PositionDto>>
 {
     public async Task<Result<PositionDto>> Handle(AddPositionCommand command, CancellationToken ct)
@@ -26,14 +26,14 @@ public class AddPositionHandler(IPositionReader reader, IPositionWriter writer, 
         if (tombstonePosition is not null)
         {
             tombstonePosition.RestoreAndUpdate(command.Name, command.Code, command.RequiresLicense);
-            writer.Update(tombstonePosition);
+            repository.Update(tombstonePosition);
             await uow.SaveChangesAsync(ct);
             
             return Ok(tombstonePosition.ToDto());
         }
         
         var position = command.ToDomain();
-        writer.Add(position);
+        repository.Add(position);
         await uow.SaveChangesAsync(ct);
         
         return Ok(position.ToDto());

@@ -1,7 +1,7 @@
 ﻿using App.Application.Abstractions.Messaging;
 using App.Application.Abstractions.Persistence;
 using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Abstractions.Persistence.Writers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Abstractions.Security;
 using App.Application.Auth.Commands.Register;
 using App.Domain.Security;
@@ -15,7 +15,7 @@ namespace App.Tests.Application.Auth.Commands.Register;
 public sealed class RegisterHandlerTests
 {
      private readonly Mock<IUserReader> _reader = new();
-    private readonly Mock<IUserWriter> _writer = new();
+    private readonly Mock<IUserRepository> _writer = new();
     private readonly Mock<IOutboxWriter> _outbox = new();
     private readonly Mock<IPasswordHasher> _hasher = new();
     private readonly Mock<IUnitOfWork> _uow = new();

@@ -23,13 +23,9 @@
   <ItemGroup>
     <Folder Include="Persistence\Migrations\" />
   </ItemGroup>
-    
-    <!-- Embed seed CSVs so they travel with the assembly -->
+
     <ItemGroup>
-        <EmbeddedResource Include="Persistence\Seed\Data\*.csv">
-            <!-- Ensures resource name is App.Infrastructure.Persistence.Seed.Data.{FileName}.csv -->
-            <LogicalName>App.Infrastructure.Persistence.Seed.Data.%(Filename)%(Extension)</LogicalName>
-        </EmbeddedResource>
+        <None Include="Persistence\Seed\Data\*.csv" CopyToOutputDirectory="Always" />
     </ItemGroup>
     
   <PropertyGroup>

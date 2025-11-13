@@ -1,20 +1,19 @@
-﻿using App.Domain.Common;
-
-namespace App.Api.Contracts.Projects.Responses;
+﻿namespace App.Api.Contracts.Projects.Responses;
 
 // For adds/updates
 public record ProjectResponse(
     Guid   Id,
+    string Code,
     Guid   ClientId,
     string ClientName,
+    Guid   ScopeId,
+    string ScopeName,
     string Name,
-    string Code,
     int Year,
     int Number,
-    string Scope,
     string Manager,
     string Type,
-    Address?  Address,
+    string  Location,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc,
     DateTimeOffset? DeletedAtUtc,

@@ -4,12 +4,7 @@
   <div class="flex items-center justify-between pb-4">
     <div class="flex gap-4">
       <table-search v-model="nameFilter" placeholder="Search client name..." @commit="commit" />
-      <deleted-filter
-        v-model="deletedFilter"
-        label-1="Active"
-        label-2="Deleted"
-        @change="val => setQuery({ name: name || null, isDeleted: val ?? false })"
-      />
+      <deleted-filter v-model="deletedFilter" label-1="Active" label-2="Deleted" />
     </div>
 
     <button
@@ -84,7 +79,7 @@
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { CirclePlus, Eye } from 'lucide-vue-next';
-  import { computed, onBeforeUnmount, ref, watch } from 'vue';
+  import { computed, onBeforeUnmount, ref } from 'vue';
 
   /* ------------------------------- Constants ------------------------------ */
   // Buttons
@@ -102,9 +97,11 @@
   const { formatUtc } = useDateFormat();
 
   const fields: FieldDef[] = [
-    fieldDef('contactFirst', 'Contact First Name'),
-    fieldDef('contactMiddle', 'Contact Middle Name'),
-    fieldDef('contactLast', 'Contact Last Name'),
+    fieldDef('totalActiveProjects', 'Total Active Projects'),
+    fieldDef('totalProjects', 'Total Projects'),
+
+    fieldDef('firstName', 'Contact First Name'),
+    fieldDef('lastName', 'Contact Last Name'),
     {
       key: 'address.line1',
       label: 'Address Line 1',
@@ -143,9 +140,13 @@
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns: ColumnDef<ClientSummaryResponse, any>[] = [
     col.accessor('name', { header: 'Client Name', meta: { kind: 'text' as const } }),
-    col.accessor('contactLast', { header: 'Last Name', meta: { kind: 'text' as const } }),
-    col.accessor('contactFirst', { header: 'First Name', meta: { kind: 'text' as const } }),
-    col.accessor('contactMiddle', { header: 'Middle Name', meta: { kind: 'text' as const } }),
+    col.accessor('totalActiveProjects', {
+      header: 'Active Projects',
+      meta: { kind: 'text' as const },
+    }),
+    col.accessor('totalProjects', { header: 'Total Projects', meta: { kind: 'text' as const } }),
+    col.accessor('lastName', { header: 'Last Name', meta: { kind: 'text' as const } }),
+    col.accessor('firstName', { header: 'First Name', meta: { kind: 'text' as const } }),
     col.accessor('email', { header: 'Email', meta: { kind: 'text' as const } }),
     col.accessor('phone', { header: 'Phone', meta: { kind: 'text' as const } }),
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
@@ -159,21 +160,24 @@
     debounced: name, // used in fetch
     setNow: commit, // call on Enter
     cancel: cancelNameDebounce, // cleanup on unmount
-  } = useDebouncedRef('', 500);
-  onBeforeUnmount(cancelNameDebounce);
+  } = useDebouncedRef<string | null>(null, 500);
 
-  watch([name, deletedFilter], ([n, del]) => {
-    setQuery({
-      name: n || null,
-      isDeleted: del, // keep false as false, only null stays null
-    });
+  onBeforeUnmount(() => {
+    cancelNameDebounce();
+    destroy();
   });
 
   /* ------------------------------- Fetching ------------------------------- */
   type ClientQuery = { name: string | null; isDeleted: boolean };
 
   const clientDetails = ref<ClientResponse[]>([]);
-  const clientDetailsById = computed(() => new Map(clientDetails.value.map(e => [e.id, e])));
+  const clientDetailsById = computed(() => {
+    const map = new Map<string, ClientResponse>();
+    for (const item of clientDetails.value) {
+      map.set(item.id, item);
+    }
+    return map;
+  });
 
   const fetchClients = async ({ page, pageSize, query }: FetchParams<ClientQuery>) => {
     const request: GetClientsRequest = {
@@ -184,7 +188,7 @@
     };
     const response: GetClientsResponse = await clientService.get(request);
     clientDetails.value = response.clientListItemResponses.map(clir => clir.details);
-
+    console.log(response);
     return {
       items: response.clientListItemResponses.map(clir => clir.summary), // summaries are the table rows
       totalCount: response.totalCount,
@@ -193,12 +197,18 @@
       pageSize: response.pageSize,
     };
   };
+  const query = computed(() => ({
+    name: name.value ?? null,
+    isDeleted: deletedFilter.value,
+  }));
 
-  const { table, loading, totalCount, totalPages, pagination, setQuery, setPageSize } =
-    useDataTable<ClientSummaryResponse, ClientQuery>(columns, fetchClients, {
-      name: null,
-      isDeleted: false,
-    });
+  // ---- 4. Table ----
+  const { table, loading, totalCount, totalPages, pagination, setPageSize, fetchNow, destroy } =
+    useDataTable<ClientSummaryResponse, typeof query.value>(
+      columns,
+      fetchClients,
+      query, // <-- reactive query
+    );
 
   /* -------------------------------- Handlers ------------------------------ */
   const addDialogIsOpen = ref(false);

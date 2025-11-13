@@ -31,7 +31,6 @@
         <span class="flex gap-2">
           <!-- View button -->
           <button
-            v-if="!cell.row.original.deletedAtUtc"
             :class="actionButtonClass"
             aria-label="view project"
             @click="handleView(cell.row.original.id as string)"
@@ -78,7 +77,6 @@
 </template>
 
 <script setup lang="ts">
-  import type { Address } from '@/api/common';
   import {
     projectService,
     type GetProjectsRequest,
@@ -120,37 +118,10 @@
     fieldDef('clientName', 'Client'),
     fieldDef('clientId', 'Client ID', 'mono'),
     fieldDef('manager', 'PM'),
-    fieldDef('scope', 'Scope'),
+    fieldDef('scopeId', 'Scope Id', 'mono'),
+    fieldDef('scopeName', 'Scope Name'),
     fieldDef('type', 'Type'),
-    {
-      key: 'address.line1',
-      label: 'Address Line 1',
-      type: 'text',
-      get: (r: { address: Address }) => r.address?.line1,
-    },
-    {
-      key: 'address.line2',
-      label: 'Address Line 2',
-      type: 'text',
-      get: (r: { address: Address }) => r.address?.line2,
-    },
-    {
-      key: 'address.city',
-      label: 'City',
-      type: 'text',
-      get: (r: { address: Address }) => r.address?.city,
-    },
-    {
-      key: 'address.state',
-      label: 'State',
-      type: 'text',
-      get: (r: { address: Address }) => r.address?.state,
-    },
-    {
-      key: 'address.postalCode',
-      label: 'ZIP',
-      get: (r: { address: Address }) => r.address?.postalCode,
-    },
+    fieldDef('location', 'Location'),
     fieldDef('createdAtUtc', 'Created', 'date'),
     fieldDef('createdById', 'Created By', 'mono'),
     fieldDef('updatedAtUtc', 'Updated', 'date'),
@@ -167,9 +138,10 @@
     col.accessor('code', { header: 'Code', meta: { kind: 'text' as const } }),
     col.accessor('name', { header: 'Project Name', meta: { kind: 'text' as const } }),
     col.accessor('clientName', { header: 'Client Name', meta: { kind: 'text' as const } }),
+    col.accessor('scopeName', { header: 'Scope', meta: { kind: 'text' as const } }),
     col.accessor('manager', { header: 'Project Manager', meta: { kind: 'text' as const } }),
-    col.accessor('scope', { header: 'Scope', meta: { kind: 'text' as const } }),
     col.accessor('type', { header: 'Project Type', meta: { kind: 'text' as const } }),
+    col.accessor('location', { header: 'Location', meta: { kind: 'text' as const } }),
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
   ];
 
@@ -207,7 +179,7 @@
     const response: GetProjectsResponse = await projectService.get(request);
     // Cache details for action dialogs
     projectDetails.value = response.projectListItemResponses.map(plir => plir.details);
-
+    console.log(response);
     return {
       items: response.projectListItemResponses.map(plir => plir.summary), // summaries are the table rows
       totalCount: response.totalCount,
@@ -216,12 +188,12 @@
       pageSize: response.pageSize,
     };
   };
-
+  const query = computed(() => ({
+    name: name.value ?? null,
+    isDeleted: deletedFilter.value,
+  }));
   const { table, loading, totalCount, totalPages, pagination, setQuery, setPageSize } =
-    useDataTable<ProjectSummaryResponse, ProjectQuery>(columns, fetchProjects, {
-      name: null,
-      isDeleted: false,
-    });
+    useDataTable<ProjectSummaryResponse, ProjectQuery>(columns, fetchProjects, query);
 
   /* ------------------------------- Dialogs/UX ----------------------------- */
   const addDialogIsOpen = ref(false);

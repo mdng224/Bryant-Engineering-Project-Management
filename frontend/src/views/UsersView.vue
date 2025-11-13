@@ -109,7 +109,7 @@
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { Lock, LockOpen, Pencil } from 'lucide-vue-next';
-  import { onBeforeUnmount, ref, watch } from 'vue';
+  import { computed, onBeforeUnmount, ref, watch } from 'vue';
   import type { GetUsersRequest, GetUsersResponse, UserResponse, UserStatus } from '../api/users';
   import { useDebouncedRef } from '../composables/useDebouncedRef';
 
@@ -211,6 +211,10 @@
       pageSize: response.pageSize,
     };
   };
+  const query = computed(() => ({
+    email: email.value ?? null,
+    isDeleted: deletedFilter.value,
+  }));
 
   const {
     table,
@@ -221,10 +225,7 @@
     setQuery,
     setPageSize,
     fetchNow: refetch,
-  } = useDataTable<UserResponse, UserQuery>(columns, fetchUsers, {
-    email: null,
-    isDeleted: false,
-  });
+  } = useDataTable<UserResponse, UserQuery>(columns, fetchUsers, query);
 
   /* ------------------------------ Handlers ------------------------------- */
   const deleteDialogIsOpen = ref(false);

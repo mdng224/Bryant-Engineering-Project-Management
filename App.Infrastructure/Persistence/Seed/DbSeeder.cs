@@ -1,7 +1,6 @@
-﻿using System.Text;
-using App.Domain.Clients;
+﻿using App.Domain.Clients;
 using App.Domain.Projects;
-using App.Infrastructure.Persistence.Seed.Common;
+using App.Infrastructure.Persistence.Seed.Configurations;
 using App.Infrastructure.Persistence.Seed.Factories;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,122 +8,238 @@ namespace App.Infrastructure.Persistence.Seed;
 
 public static class DbSeeder
 {
+    private static readonly string BaseDir = AppContext.BaseDirectory;
+    private static readonly string ClientsPath  = Path.Combine(BaseDir, "Persistence", "Seed", "Data", "Clients.csv");
+    private static readonly string ProjectsPath = Path.Combine(BaseDir, "Persistence", "Seed", "Data", "Projects.csv");
     public static async Task SeedAsync(AppDbContext db, CancellationToken ct = default)
     {
-        // 1) Roles (non-auditable)
-        {
-            var existing = await db.Roles.AsNoTracking().Select(x => x.Id).ToListAsync(ct);
-            var existingSet = existing.Count == 0 ? null : new HashSet<Guid>(existing);
-            var toAdd = existingSet is null
-                ? RoleSeedFactory.All.ToList()
-                : RoleSeedFactory.All.Where(s => !existingSet.Contains(s.Id)).ToList();
+        await SeedIfEmptyAsync(db, RoleSeedFactory.All, ct);
+        await SeedIfEmptyAsync(db, PositionSeedFactory.All, ct);
+        await SeedIfEmptyAsync(db, EmployeeSeedFactory.All, ct);
+        await SeedIfEmptyAsync(db, ClientCategorySeedFactory.All, ct);
+        await SeedIfEmptyAsync(db, ClientTypeSeedFactory.All, ct);
+        await SeedClientIfNotEmptyAsync(db, ct);
+        await SeedIfEmptyAsync(db, ScopeSeedFactory.All, ct);
+        await db.SaveChangesAsync(ct);  // ✅ Save the above before we seed projects (which need Clients + Scopes)
+        await SeedProjectsIfEmptyAsync(db, ct);
 
-            if (toAdd.Count > 0) db.Roles.AddRange(toAdd);
-        }
-
-        // 2) Positions (auditable) — interceptor will stamp audit fields
-        {
-            var existing = await db.Positions.AsNoTracking().Select(x => x.Id).ToListAsync(ct);
-            var existingSet = existing.Count == 0 ? null : new HashSet<Guid>(existing);
-            var toAdd = existingSet is null
-                ? PositionSeedFactory.All.ToList()
-                : PositionSeedFactory.All.Where(s => !existingSet.Contains(s.Id)).ToList();
-
-            if (toAdd.Count > 0) db.Positions.AddRange(toAdd);
-        }
-
-        // 3) Employees (auditable) — interceptor will stamp audit fields
-        {
-            var existing = await db.Employees.AsNoTracking().Select(x => x.Id).ToListAsync(ct);
-            var existingSet = existing.Count == 0 ? null : new HashSet<Guid>(existing);
-            var toAdd = existingSet is null
-                ? EmployeeSeedFactory.All.ToList()
-                : EmployeeSeedFactory.All.Where(s => !existingSet.Contains(s.Id)).ToList();
-
-            if (toAdd.Count > 0) db.Employees.AddRange(toAdd);
-        }
-        
-        await SeedClientsAndProjectsSinglePass(db, ct);
-        
-
-        if (db.ChangeTracker.HasChanges())
-            await db.SaveChangesAsync(ct); // AuditSaveChangesInterceptor will stamp
+        await db.SaveChangesAsync(ct); // AuditSaveChangesInterceptor will stamp
     }
     
-    // Single-pass client+project seeding from the combined CSV
-    private static async Task SeedClientsAndProjectsSinglePass(AppDbContext db, CancellationToken ct)
+    private static async Task SeedIfEmptyAsync<TEntity>(
+        AppDbContext db,
+        IEnumerable<TEntity> seedData,
+        CancellationToken ct)
+        where TEntity : class
     {
-        
-        // Seed only if BOTH tables are empty
-        if (await db.Clients.AsNoTracking().AnyAsync(ct) || await db.Projects.AsNoTracking().AnyAsync(ct))
+        var set = db.Set<TEntity>();
+
+        if (await set.AnyAsync(ct))
         {
-            Console.WriteLine("[Seed] Skipped single-pass (clients or projects not empty).");
+            Console.WriteLine($"Skipping {typeof(TEntity).Name} seeding — already has data.");
             return;
         }
 
-        // In-memory trackers for this run
-        var createdClientsByName = new Dictionary<string, Client>(StringComparer.OrdinalIgnoreCase);
-        var createdProjectCodes  = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var deletedNow = DateTimeOffset.UtcNow;
+        var list = seedData as IList<TEntity> ?? seedData.ToList(); // ✅ materialize once
+        set.AddRange(list);
+        Console.WriteLine($"Seeded {typeof(TEntity).Name} records.");
+    }
 
-        using var reader = SeedResources.OpenText(
-            "App.Infrastructure.Persistence.Seed.Data.ClientsProjects.csv",
-            Encoding.UTF8);
-
-        foreach (var row in ClientProjectSeedFactory.Enumerate(reader))
+    private static async Task SeedClientIfNotEmptyAsync(AppDbContext db, CancellationToken ct)
+    {
+        if (await db.Clients.AnyAsync(ct))
         {
-            // Require a project code
-            if (string.IsNullOrWhiteSpace(row.ProjectCode))
-            {
-                Console.WriteLine("[Seed] Skipping row with empty PROJECT Code.");
-                continue;
-            }
-            if (createdProjectCodes.Contains(row.ProjectCode))
-                continue;
-
-            // Require a client name
-            var clientName = row.ClientName;
-            if (string.IsNullOrWhiteSpace(clientName))
-            {
-                Console.WriteLine($"[Seed] No client name for project code '{row.ProjectCode}'. Skipping row.");
-                continue;
-            }
-
-            // Reuse or create the client in-memory
-            if (!createdClientsByName.TryGetValue(clientName, out var client))
-            {
-                var (first, last) = ClientProjectSeedFactory.TrySplitLastFirst(row.ProjectContact);
-                // If your Client.Seed signature accepts projectCode and stores it, keep it; otherwise remove it.
-                client = Client.Seed(
-                    clientName:   clientName.ToLowerInvariant(),
-                    contactFirst: first?.ToLowerInvariant(),
-                    contactLast:  last?.ToLowerInvariant(),
-                    projectCode:  row.ProjectCode
-                );
-                db.Clients.Add(client);
-                createdClientsByName[clientName] = client;
-            }
-
-            // Create the project
-            var project = Project.Seed(
-                clientId:    client.Id,
-                name:        row.ProjectName.ToLowerInvariant(),
-                projectCode: row.ProjectCode,
-                scope:       row.Scope.ToLowerInvariant(),
-                manager:     row.PM.ToLowerInvariant(),
-                status:      row.Status.ToLowerInvariant(),
-                location:    row.Location.ToLowerInvariant(),
-                type:        row.Type.ToLowerInvariant(),
-                deletedNow:  deletedNow
-            );
-
-            db.Projects.Add(project);
-            createdProjectCodes.Add(row.ProjectCode);
+            Console.WriteLine("Skipping client seeding — already has data.");
+            return;
         }
 
-        if (db.ChangeTracker.HasChanges())
-            await db.SaveChangesAsync(ct);
-        else
-            Console.WriteLine("[Seed] Nothing to insert.");
+        if (!File.Exists(ClientsPath))
+        {
+            Console.WriteLine($"Client seed skipped — file not found: {ClientsPath}");
+            return;
+        }
+
+        // Preload lookup dictionaries (name -> id), normalized
+        var clientCategoryNameIdMap = await db.ClientCategories
+            .AsNoTracking()
+            .ToDictionaryAsync(cc => Normalize(cc.Name), cc => cc.Id, ct);
+
+        var typeByName = await db.ClientTypes
+            .AsNoTracking()
+            .ToDictionaryAsync(c => Normalize(c.Name), c => c.Id, ct);
+        
+        using var reader = File.OpenText(ClientsPath);
+        var clients = ClientSeedFactory.Enumerate(reader)
+            .Select(cs =>
+            {
+                // Resolve category/type IDs by name (case/space tolerant)
+                var categoryId = TryLookupId(clientCategoryNameIdMap, cs.ClientCategory)
+                                 ?? ClientCategoryIds.OtherMiscellaneous;
+                var typeId = TryLookupId(typeByName, cs.ClientType)
+                             ?? ClientTypeIds.UnknownToBeClassified;
+
+                return Client.Seed(
+                    clientName:       cs.ClientName ?? "Unknown",
+                    namePrefix:       cs.NamePrefix,
+                    firstName:        cs.FirstName,
+                    lastName:         cs.LastName,
+                    nameSuffix:       cs.NameSuffix,
+                    email:            cs.Email,
+                    phone:            cs.Phone,
+                    line1:            cs.Line1,
+                    line2:            cs.Line2,
+                    city:             cs.City,
+                    state:            cs.State,
+                    postalCode:       cs.PostalCode,
+                    note:             cs.Note,
+                    clientCategoryId: categoryId,
+                    clientTypeId:     typeId,
+                    legacyProjectCode: null // CSV doesn't provide; Will set later
+                );
+            })
+            .ToList();
+
+        db.Clients.AddRange(clients);
+        Console.WriteLine($"Seeded {clients.Count} Client records from {ClientsPath}.");
+    }
+    
+    private static async Task SeedProjectsIfEmptyAsync(AppDbContext db, CancellationToken ct)
+    {
+        if (await db.Projects.AnyAsync(ct))
+        {
+            Console.WriteLine("Skipping project seeding — already has data.");
+            return;
+        }
+
+        if (!File.Exists(ProjectsPath))
+        {
+            Console.WriteLine($"Project seed skipped — file not found: {ProjectsPath}");
+            return;
+        }
+
+        // --- Build lookups up front (materialize, then normalize in-memory) ----------
+        var clientRows = await db.Clients
+            .AsNoTracking()
+            .Select(c => new { c.Id, c.Name })
+            .ToListAsync(ct);
+
+        var clientsByName = clientRows
+            .GroupBy(x => Normalize(x.Name))
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => x.Id).OrderBy(id => id).ToList()
+            );
+
+        var scopeRows = await db.Scopes
+            .AsNoTracking()
+            .Select(s => new { s.Id, s.Name })
+            .ToListAsync(ct);
+
+        var scopesByName = scopeRows
+            .GroupBy(x => Normalize(x.Name))
+            .ToDictionary(
+                g => g.Key,
+                g => g.First().Id
+            );
+
+        using var reader = File.OpenText(ProjectsPath);
+        var seeds = ProjectSeedFactory.Enumerate(reader).ToList();
+
+        var projects = new List<Project>(seeds.Count);
+        foreach (var r in seeds)
+        {
+            var clientId = ResolveClientId(r.ClientNameFinal, clientsByName);
+            var scopeId = ResolveScopeId(r.Scope, scopesByName, ScopeIds.Unknown);
+            // Create project
+            var p = Project.Seed(
+                clientId:    clientId,
+                scopeId:     scopeId,
+                name:        r.ProjectName,
+                projectCode: r.ProjectCode,
+                manager:     r.PM,
+                status:      r.Status,
+                location:    r.Location,
+                type:        r.Type,
+                deletedNow:  DateTimeOffset.UtcNow
+            );
+
+            projects.Add(p);
+        }
+
+        db.Projects.AddRange(projects);
+        Console.WriteLine($"Seeded {projects.Count} Project records from {ProjectsPath}.");
+
+        // ---- Backfill client.ProjectCode (first known project for that client) ----
+        // Load just the client ids that appeared
+        var affectedClientIds = projects.Select(p => p.ClientId).Distinct().ToList();
+        var affectedClients = await db.Clients
+            .Where(c => affectedClientIds.Contains(c.Id))
+            .ToListAsync(ct);
+
+        // choose a deterministic code per client (e.g., earliest by {Year,Number})
+        var byClient = projects
+            .GroupBy(p => p.ClientId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderBy(p => p.Year).ThenBy(p => p.Number).First().Code
+            );
+
+        var backfilled = 0;
+        foreach (var client in affectedClients.Where(c => string.IsNullOrWhiteSpace(c.ProjectCode)))
+        {
+            if (!byClient.TryGetValue(client.Id, out var code)) continue;
+
+            client.SetLegacyProjectCode(code);
+            backfilled++;
+        }
+
+        Console.WriteLine($"Backfilled ProjectCode on {backfilled} Client records.");
+    }
+    
+    // ----------------- helpers -----------------
+
+    private static string Normalize(string? s) =>
+        string.IsNullOrWhiteSpace(s)
+            ? string.Empty
+            : System.Text.RegularExpressions.Regex.Replace(s.Trim(), @"\s+", " ").ToLowerInvariant();
+
+    private static Guid ResolveClientId(
+        string? clientName,
+        Dictionary<string, List<Guid>> clientsByName)
+    {
+        var key = Normalize(clientName);
+
+        if (!clientsByName.TryGetValue(key, out var candidateIds) || candidateIds.Count == 0)
+            throw new InvalidOperationException($"Unknown client '{clientName}'.");
+
+        if (candidateIds.Count > 1)
+            Console.WriteLine($"⚠️ Duplicate client name '{clientName}' has {candidateIds.Count} records. Using first id.");
+
+        return candidateIds[0]; // deterministic pick
+    }
+    
+    private static Guid ResolveScopeId(
+        string? rawScope,
+        Dictionary<string, Guid> scopesByName,
+        Guid unknownScopeId)
+    {
+        var key = Normalize(rawScope);
+
+        if (string.IsNullOrWhiteSpace(key) ||
+            key is "unknown" or "n/a" or "na" or "tbd")
+            return unknownScopeId;
+
+        if (scopesByName.TryGetValue(key, out var id))
+            return id;
+        
+        Console.WriteLine($"⚠️ Unknown scope '{rawScope}' — defaulting to UNKNOWN.");
+        return unknownScopeId;
+    }
+    
+    private static Guid? TryLookupId(Dictionary<string, Guid> map, string? key)
+    {
+        var k = Normalize(key);
+        if (k.Length == 0) return null;
+        return map.TryGetValue(k, out var id) ? id : null;
     }
 }

@@ -1,13 +1,15 @@
-﻿using App.Domain.Clients;
+﻿using App.Application.Common.Dtos;
 
 namespace App.Application.Abstractions.Persistence.Readers;
 
 public interface IClientReader
 {
-    Task<IReadOnlyList<Client>> GetByNameIncludingDeletedAsync(
-        string name,
+    /*
+    Task<IReadOnlyDictionary<Guid, string>> GetNamesByIdsAsync(
+        IReadOnlyList<Guid> ids,
         CancellationToken ct = default);
-    Task<(IReadOnlyList<Client> clients, int totalCount)> GetPagedAsync(
+*/
+    Task<(IReadOnlyList<ClientListItemDto> items, int totalCount)> GetPagedAsync(
         int skip,
         int take,
         string? normalizedNameFilter = null,

@@ -3,13 +3,13 @@
 import type { Address } from '../common';
 
 // Client is required to have Name or contact first
-// TODO: List client-> many projects (maybe)
 type ClientBase = {
   id: string;
   name: string | null;
-  contactFirst: string | null;
-  contactMiddle: string | null;
-  contactLast: string | null;
+  totalActiveProjects: number;
+  totalProjects: number;
+  firstName: string | null;
+  lastName: string | null;
   email: string | null;
   phone: string | null;
 };
@@ -41,8 +41,8 @@ export type ClientSummaryResponse = ClientBase;
 export type ClientResponse = ClientBase & {
   address: Address | null;
   note: string | null;
-  createdAtUtc: string | null;
-  updatedAtUtc: string | null;
+  createdAtUtc: string;
+  updatedAtUtc: string;
   deletedAtUtc: string | null;
   createdById: string | null;
   updatedById: string | null;

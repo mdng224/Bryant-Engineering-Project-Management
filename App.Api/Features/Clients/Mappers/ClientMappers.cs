@@ -9,7 +9,7 @@ namespace App.Api.Features.Clients.Mappers;
 
 public static class ClientMappers
 {
-    public static GetClientsResponse ToGetClientsResponse(this PagedResult<ClientDto> pagedResult)
+    public static GetClientsResponse ToGetClientsResponse(this PagedResult<ClientListItemDto> pagedResult)
     {
         var clientListItemResponse = pagedResult.Items
             .Select(cd => cd.ToListItem())
@@ -33,36 +33,38 @@ public static class ClientMappers
         return getClientsQuery;
     }
     
-    public static ClientSummaryResponse ToSummaryResponse(this ClientDto dto) =>
+    public static ClientSummaryResponse ToSummaryResponse(this ClientListItemDto listItemDto) =>
         new(
-            Id:            dto.Id,
-            Name:          dto.Name,
-            ContactFirst:  dto.ContactFirst,
-            ContactMiddle: dto.ContactMiddle,
-            ContactLast:   dto.ContactLast,
-            Email:         dto.Email,
-            Phone:         dto.Phone);
+            Id:                  listItemDto.Id,
+            Name:                listItemDto.Name,
+            TotalActiveProjects: listItemDto.TotalActiveProjects,
+            TotalProjects:       listItemDto.TotalProjects,
+            FirstName:        listItemDto.FirstName,
+            LastName:         listItemDto.LastName,
+            Email:               listItemDto.Email,
+            Phone:               listItemDto.Phone);
     
-    private static ClientListItemResponse ToListItem(this ClientDto dto) =>
+    private static ClientListItemResponse ToListItem(this ClientListItemDto listItemDto) =>
         new(
-            Summary: dto.ToSummaryResponse(),
-            Details: dto.ToClientResponse());
+            Summary: listItemDto.ToSummaryResponse(),
+            Details: listItemDto.ToClientResponse());
 
-    private static ClientResponse ToClientResponse(this ClientDto dto) =>
+    private static ClientResponse ToClientResponse(this ClientListItemDto listItemDto) =>
         new(
-            Id:            dto.Id,
-            Name:          dto.Name,
-            ContactFirst:  dto.ContactFirst,
-            ContactMiddle: dto.ContactMiddle,
-            ContactLast:   dto.ContactLast,
-            Email:         dto.Email,
-            Phone:         dto.Phone,
-            Address:       dto.Address,
-            Note:          dto.Note,
-            CreatedAtUtc:  dto.CreatedAtUtc,
-            UpdatedAtUtc:  dto.UpdatedAtUtc,
-            DeletedAtUtc:  dto.DeletedAtUtc,
-            CreatedById:   dto.CreatedById,
-            UpdatedById:   dto.UpdatedById,
-            DeletedById:   dto.DeletedById);
+            Id:                  listItemDto.Id,
+            Name:                listItemDto.Name,
+            TotalActiveProjects: listItemDto.TotalActiveProjects,
+            TotalProjects:       listItemDto.TotalProjects,
+            FirstName:        listItemDto.FirstName,
+            LastName:         listItemDto.LastName,
+            Email:               listItemDto.Email,
+            Phone:               listItemDto.Phone,
+            Address:             listItemDto.Address,
+            Note:                listItemDto.Note,
+            CreatedAtUtc:        listItemDto.CreatedAtUtc,
+            UpdatedAtUtc:        listItemDto.UpdatedAtUtc,
+            DeletedAtUtc:        listItemDto.DeletedAtUtc,
+            CreatedById:         listItemDto.CreatedById,
+            UpdatedById:         listItemDto.UpdatedById,
+            DeletedById:         listItemDto.DeletedById);
 }

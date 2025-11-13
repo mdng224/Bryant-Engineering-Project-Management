@@ -1,6 +1,6 @@
 ﻿using App.Application.Abstractions.Persistence;
 using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Abstractions.Persistence.Writers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Positions.Commands.AddPosition;
 using App.Domain.Employees;
 using FluentAssertions;
@@ -15,7 +15,7 @@ public class AddPositionHandlerTests
     {
         // Arrange
         var reader    = new Mock<IPositionReader>(MockBehavior.Strict);
-        var writer    = new Mock<IPositionWriter>(MockBehavior.Strict);
+        var writer    = new Mock<IPositionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
         // No existing matches -> create path
@@ -63,7 +63,7 @@ public class AddPositionHandlerTests
         Position? captured = null;
 
         var reader     = new Mock<IPositionReader>(MockBehavior.Strict);
-        var writer     = new Mock<IPositionWriter>(MockBehavior.Strict);
+        var writer     = new Mock<IPositionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
         reader.Setup(pr => pr.GetByNameIncludingDeletedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))

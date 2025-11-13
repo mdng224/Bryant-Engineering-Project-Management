@@ -1,5 +1,5 @@
 ﻿using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Abstractions.Persistence.Writers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Domain.Auth;
 using App.Infrastructure.Auth;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Infrastructure.Persistence.Repositories;
 
 public sealed class EmailVerificationRepository(AppDbContext db)
-    : IEmailVerificationReader, IEmailVerificationWriter
+    : IEmailVerificationReader, IEmailVerificationRepository
 {
     // --- Writer -------------------------------------------------------------
     public string Add(Guid userId)

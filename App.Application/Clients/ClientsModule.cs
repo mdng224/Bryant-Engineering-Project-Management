@@ -12,7 +12,7 @@ public static class ClientsModule
     public static IServiceCollection AddClientsApplication(this IServiceCollection services)
     {
         // Queries
-        services.AddScoped<IQueryHandler<GetClientsQuery, Result<PagedResult<ClientDto>>>, GetClientsHandler>();
+        services.AddScoped<IQueryHandler<GetClientsQuery, Result<PagedResult<ClientListItemDto>>>, GetClientsHandler>();
 
         // Commands
 

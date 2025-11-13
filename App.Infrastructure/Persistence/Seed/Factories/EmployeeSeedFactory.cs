@@ -5,7 +5,7 @@ using App.Infrastructure.Persistence.Seed.Configurations;
 
 namespace App.Infrastructure.Persistence.Seed.Factories;
 
-public static class EmployeeSeedFactory
+internal static class EmployeeSeedFactory
 {
     private static Employee SeededEmployee(
         Guid id,

@@ -3,7 +3,7 @@ using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Messaging;
 using App.Application.Abstractions.Persistence;
 using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Abstractions.Persistence.Writers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Abstractions.Security;
 using App.Application.Common;
 using App.Application.Common.Results;
@@ -17,7 +17,7 @@ namespace App.Application.Auth.Commands.Register;
 
 public sealed class RegisterHandler(
     IUserReader userReader,
-    IUserWriter userWriter,
+    IUserRepository userRepository,
     IOutboxWriter outboxWriter,
     IPasswordHasher passwordHasher,
     IUnitOfWork uow)
@@ -36,7 +36,7 @@ public sealed class RegisterHandler(
         var passwordHash = passwordHasher.Hash(command.Password);
         var user = new User(normalizedEmail, passwordHash, RoleIds.User); // IsActive defaults (false) in domain
         
-        userWriter.Add(user);
+        userRepository.Add(user);
         
         var userRegisteredEvent = new UserRegistered(user.Id, user.Email, user.Status);
         outboxWriter.Add(userRegisteredEvent);

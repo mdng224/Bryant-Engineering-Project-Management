@@ -1,16 +1,14 @@
 // src/api/projects/contracts.ts
 
-import type { Address } from '../common';
-
 type ProjectBase = {
+  code: string;
   id: string;
   name: string;
   clientName: string;
-  code: string;
-  newCode: string;
-  scope: string | null;
+  scopeName: string;
   manager: string | null;
-  type: string | null;
+  type: string;
+  location: string;
   deletedAtUtc: string | null;
 };
 
@@ -40,7 +38,7 @@ export type ProjectSummaryResponse = ProjectBase;
 // For expanded detail look on an project
 export type ProjectResponse = ProjectBase & {
   clientId: string;
-  address: Address | null;
+  scopeId: string;
   year: number;
   number: number;
   createdAtUtc: string | null;

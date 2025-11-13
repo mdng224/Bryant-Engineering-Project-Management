@@ -70,20 +70,13 @@ namespace App.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContactFirst")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("contact_first");
+                    b.Property<Guid?>("ClientCategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("client_category_id");
 
-                    b.Property<string>("ContactLast")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("contact_last");
-
-                    b.Property<string>("ContactMiddle")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("contact_middle");
+                    b.Property<Guid?>("ClientTypeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("client_type_id");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamptz")
@@ -100,14 +93,34 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Email")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
                         .HasColumnName("email");
+
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("first_name");
+
+                    b.Property<string>("LastName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_name");
 
                     b.Property<string>("Name")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
+
+                    b.Property<string>("NamePrefix")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("name_prefix");
+
+                    b.Property<string>("NameSuffix")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("name_suffix");
 
                     b.Property<string>("Note")
                         .HasColumnType("text")
@@ -119,8 +132,8 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasColumnName("phone");
 
                     b.Property<string>("ProjectCode")
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
                         .HasColumnName("project_code");
 
                     b.Property<DateTimeOffset>("UpdatedAtUtc")
@@ -133,9 +146,75 @@ namespace App.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("ProjectCode");
+
+                    b.HasIndex("ClientCategoryId", "ClientTypeId");
+
+                    b.HasIndex("LastName", "FirstName");
+
                     b.ToTable("clients", null, t =>
                         {
-                            t.HasCheckConstraint("ck_clients_company_or_person", " (btrim(coalesce(name, '')) <> '')  OR (btrim(coalesce(contact_first,  '')) <> '')  OR (btrim(coalesce(contact_last,   '')) <> '') ");
+                            t.HasCheckConstraint("ck_clients_company_or_person", " (btrim(coalesce(name, '')) <> '')  OR (btrim(coalesce(first_name,  '')) <> '')  OR (btrim(coalesce(last_name,   '')) <> '') ");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Clients.ClientCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("client_categories", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_client_category_name_not_blank", "length(btrim(name)) > 0");
+                        });
+                });
+
+            modelBuilder.Entity("App.Domain.Clients.ClientType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("CategoryId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("client_types", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_client_type_name_not_blank", "length(btrim(name)) > 0");
                         });
                 });
 
@@ -398,8 +477,8 @@ namespace App.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
                         .HasColumnName("code");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
@@ -415,6 +494,12 @@ namespace App.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("DeletedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("location");
 
                     b.Property<string>("Manager")
                         .IsRequired()
@@ -432,11 +517,9 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("number");
 
-                    b.Property<string>("Scope")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("scope");
+                    b.Property<Guid>("ScopeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scope_id");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -463,7 +546,35 @@ namespace App.Infrastructure.Persistence.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
+                    b.HasIndex("ScopeId");
+
+                    b.HasIndex("Year", "Number")
+                        .IsUnique();
+
                     b.ToTable("projects", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Projects.Scope", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("scopes", (string)null);
                 });
 
             modelBuilder.Entity("App.Domain.Users.Role", b =>
@@ -595,6 +706,17 @@ namespace App.Infrastructure.Persistence.Migrations
                     b.Navigation("Address");
                 });
 
+            modelBuilder.Entity("App.Domain.Clients.ClientType", b =>
+                {
+                    b.HasOne("App.Domain.Clients.ClientCategory", "Category")
+                        .WithMany("Types")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("App.Domain.Employees.Employee", b =>
                 {
                     b.HasOne("App.Domain.Users.Role", null)
@@ -674,44 +796,15 @@ namespace App.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("App.Domain.Common.Address", "Address", b1 =>
-                        {
-                            b1.Property<Guid>("ProjectId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("City")
-                                .HasMaxLength(50)
-                                .HasColumnType("character varying(50)");
-
-                            b1.Property<string>("Line1")
-                                .HasMaxLength(64)
-                                .HasColumnType("character varying(64)")
-                                .HasColumnName("Address_Line_1");
-
-                            b1.Property<string>("Line2")
-                                .HasMaxLength(64)
-                                .HasColumnType("character varying(64)")
-                                .HasColumnName("Address_Line_2");
-
-                            b1.Property<string>("PostalCode")
-                                .HasMaxLength(15)
-                                .HasColumnType("character varying(15)");
-
-                            b1.Property<string>("State")
-                                .HasMaxLength(50)
-                                .HasColumnType("character varying(50)");
-
-                            b1.HasKey("ProjectId");
-
-                            b1.ToTable("projects");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ProjectId");
-                        });
-
-                    b.Navigation("Address");
+                    b.HasOne("App.Domain.Projects.Scope", "Scope")
+                        .WithMany()
+                        .HasForeignKey("ScopeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Client");
+
+                    b.Navigation("Scope");
                 });
 
             modelBuilder.Entity("App.Domain.Users.User", b =>
@@ -728,6 +821,11 @@ namespace App.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("App.Domain.Clients.Client", b =>
                 {
                     b.Navigation("Projects");
+                });
+
+            modelBuilder.Entity("App.Domain.Clients.ClientCategory", b =>
+                {
+                    b.Navigation("Types");
                 });
 
             modelBuilder.Entity("App.Domain.Employees.Employee", b =>

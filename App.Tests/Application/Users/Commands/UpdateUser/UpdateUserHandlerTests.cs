@@ -1,6 +1,5 @@
 ﻿using App.Application.Abstractions.Persistence;
 using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Abstractions.Persistence.Writers;
 using App.Application.Users.Commands.UpdateUser;
 using App.Domain.Security;
 using App.Domain.Users;

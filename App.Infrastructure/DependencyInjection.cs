@@ -1,7 +1,7 @@
 ﻿using App.Application.Abstractions.Messaging;
 using App.Application.Abstractions.Persistence;
 using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Abstractions.Persistence.Writers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Abstractions.Security;
 using App.Infrastructure.Auth;
 using App.Infrastructure.Background;
@@ -9,6 +9,7 @@ using App.Infrastructure.Email;
 using App.Infrastructure.Identity;
 using App.Infrastructure.Persistence;
 using App.Infrastructure.Persistence.Interceptors;
+using App.Infrastructure.Persistence.Readers;
 using App.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -45,17 +46,18 @@ public static class DependencyInjection
         });
 
         // --- Repositories / Data access ---
-        services.AddScoped<IUserReader, UserRepository>();
-        services.AddScoped<IUserWriter, UserRepository>();
+        services.AddScoped<IUserReader, UserReader>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IEmployeeReader, EmployeeRepository>();
         services.AddScoped<IOutboxWriter, OutboxRepository>();
         services.AddScoped<IPositionReader, PositionRepository>();
-        services.AddScoped<IPositionWriter, PositionRepository>();
+        services.AddScoped<IPositionRepository, PositionRepository>();
         services.AddScoped<IEmployeePositionReader, EmployeePositionRepository>();
-        services.AddScoped<IClientReader, ClientRepository>();
+        services.AddScoped<IClientReader, ClientReader>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
-        services.AddScoped<IProjectReader, ProjectRepository> ();
-        services.AddScoped<IProjectWriter, ProjectRepository> ();
+        services.AddScoped<IProjectReader, ProjectReader>();
+        services.AddScoped<IProjectRepository, ProjectRepository>();
+        services.AddScoped<IScopeReader, ScopeRepository>();
         
         // --- Auth helpers (hashing + token creation) ---
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
@@ -66,7 +68,7 @@ public static class DependencyInjection
         services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
         services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddScoped<IEmailVerificationReader, EmailVerificationRepository>();
-        services.AddScoped<IEmailVerificationWriter, EmailVerificationRepository>();
+        services.AddScoped<IEmailVerificationRepository, EmailVerificationRepository>();
 
         // --- Background worker ---
         services.AddHostedService<OutboxProcessorWorker>();

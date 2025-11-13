@@ -35,7 +35,7 @@ public static class ClientEndpoints
 
     private static async Task<IResult> HandleGetClients(
         [AsParameters] GetClientsRequest request,
-        [FromServices] IQueryHandler<GetClientsQuery, Result<PagedResult<ClientDto>>> handler,
+        [FromServices] IQueryHandler<GetClientsQuery, Result<PagedResult<ClientListItemDto>>> handler,
         CancellationToken ct = default)
     {
         var query = request.ToQuery();
@@ -50,7 +50,7 @@ public static class ClientEndpoints
     
     private static async Task<IResult> HandleRestoreClient(
         [FromRoute] Guid id,
-        [FromServices] ICommandHandler<RestoreClientCommand, Result<ClientDto>> handler,
+        [FromServices] ICommandHandler<RestoreClientCommand, Result<ClientListItemDto>> handler,
         CancellationToken ct)
     {
         var command = new RestoreClientCommand(id);

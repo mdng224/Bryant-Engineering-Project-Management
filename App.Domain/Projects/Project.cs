@@ -11,23 +11,21 @@ public sealed class Project : IAuditableEntity, ISoftDeletable
     public Guid Id { get; private set; }
     
     // --- Core Fields ----------------------------------------------------------
-    public string Name     { get; private set; }
-    public string Code     { get; private set; }    // legacy (e.g., "01-2632")
+    public string Name   { get; private set; }
+    public string Code   { get; private set; } // legacy (e.g., "01-2632")
     public int Year        { get; private init; }
     public int Number      { get; private init; }
     public string NewCode  => $"{Year}-{Number}";
-    public string Scope    { get; private set; }
     public string Manager  { get; private set; }
-    
-    // TODO: May need to create a project type
     public string Type     { get; private set; }
+    public string Location  { get; private set; }
     
-    // TODO: Ask andy if we need this to be a specific address or just a location string
-    public Address? Address { get; private set; }  // Seed will put everything in Line1 for now
-    
-    // 🔗 FK + navigation
+    // 🔗 FKs + navigation
     public Guid ClientId { get; private set; }
     public Client Client { get; private set; } = null!;
+
+    public Guid ScopeId { get; private set; }
+    public Scope Scope  { get; private set; }
     
     // --- Auditing ----------------------------------------------------------
     public DateTimeOffset CreatedAtUtc  { get; private set; }
@@ -39,55 +37,68 @@ public sealed class Project : IAuditableEntity, ISoftDeletable
     public bool IsDeleted => DeletedAtUtc.HasValue;
     
     // --- Constructors --------------------------------------------------------
-    private Project(Guid clientId, string name, string code, int year, int number, string scope, string manager,
-        string type, DateTimeOffset? deletedAtUtc, Guid? deletedById)
+    private Project(
+        Guid clientId,
+        Guid scopeId,
+        string name,
+        string code,
+        int year,
+        int number,
+        string manager,
+        string type,
+        string location,
+        DateTimeOffset? deletedAtUtc,
+        Guid? deletedById)
     {
         Id = Guid.CreateVersion7();
         ClientId = clientId;
+        ScopeId = scopeId;
         Name = name.Trim();
         Code = NormalizeLegacyCode(code);
         Year = year;
         Number = number;
-        Scope = scope.Trim();
         Manager = manager.Trim();
         Type = type.Trim();
+        Location = location;
         DeletedAtUtc = deletedAtUtc;
         DeletedById = deletedById;
-    } // Seed constructor
+    }
 
     // --- Factory --------------------------------------------------------------
-    public static Project Seed(Guid clientId, string name, string projectCode, string scope, string manager,
-        string status, string location, string type, DateTimeOffset deletedNow)
+    public static Project Seed(
+        Guid clientId,
+        Guid scopeId,
+        string name,
+        string projectCode,
+        string manager,
+        string status,
+        string location,
+        string type,
+        DateTimeOffset deletedNow)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Project name is required.", nameof(name));
+        if (clientId == Guid.Empty)  throw new ArgumentException("ClientId is required.", nameof(clientId));
+        if (scopeId  == Guid.Empty)  throw new ArgumentException("ScopeId is required.",  nameof(scopeId));
+        if (string.IsNullOrWhiteSpace(name))        throw new ArgumentException("Project name is required.", nameof(name));
+        if (string.IsNullOrWhiteSpace(projectCode)) throw new ArgumentException("Project code is required.", nameof(projectCode));
 
-        var isClosed = string.Equals(status.Trim(), "CLOSED", StringComparison.OrdinalIgnoreCase);
-        var (year, number) = ParseLegacyCode(projectCode)
-                             ?? throw new ArgumentException($"Invalid project code '{projectCode}'", nameof(projectCode));
+        var parts = ParseLegacyCode(projectCode)
+                    ?? throw new ArgumentException($"Invalid project code '{projectCode}'", nameof(projectCode));
 
-        var project = new Project(
-            clientId: clientId,
-            name:     name,
-            code:     projectCode,
-            year:     year,
-            number:   number,
-            scope:    scope.Trim(),
-            manager:  manager,
-            type:     type,
+        var isClosed = string.Equals(status?.Trim(), "CLOSED", StringComparison.OrdinalIgnoreCase);
+
+        return new Project(
+            clientId:    clientId,
+            scopeId:     scopeId,
+            name:        name,
+            code:        projectCode,
+            year:        parts.year,
+            number:      parts.number,
+            manager:     manager,
+            type:        type,
+            location:    location,
             deletedAtUtc: isClosed ? deletedNow : null,
-            deletedById:  isClosed ? Guid.Empty : null
-        )
-        {
-            Address = new Address(
-                Line1: location.Trim(),
-                Line2: null,
-                City: null,
-                State: null,
-                PostalCode: null)
-        };
-
-        return project;
+            deletedById : isClosed ? Guid.Empty : null
+        );
     }
     
     public bool Restore()
@@ -115,18 +126,9 @@ public sealed class Project : IAuditableEntity, ISoftDeletable
 
         var yearPart = match.Groups[1].Value;
         var number   = int.Parse(match.Groups[2].Value);
-        int year;
-        
-        if (yearPart.Length == 2)
-        {
-            // Assume "00"–"24" = 2000–2024, else treat as 1900s
-            var y = int.Parse(yearPart);
-            year = (y <= 24 ? 2000 : 1900) + y;
-        }
-        else
-        {
-            year = int.Parse(yearPart);
-        }
+        var year = yearPart.Length == 2
+            ? (int.Parse(yearPart) <= 24 ? 2000 : 1900) + int.Parse(yearPart)
+            : int.Parse(yearPart);
 
         return (year, number);
     }

@@ -1,5 +1,5 @@
 ﻿using App.Application.Abstractions.Persistence;
-using App.Application.Abstractions.Persistence.Writers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Positions.Commands.DeletePosition;
 using FluentAssertions;
 using Moq;
@@ -12,7 +12,7 @@ public class DeletePositionHandlerTests
     public async Task Handle_Should_Return_Ok_When_Delete_Succeeds()
     {
         // Arrange
-        var writer     = new Mock<IPositionWriter>(MockBehavior.Strict);
+        var writer     = new Mock<IPositionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
         var id         = Guid.NewGuid();
 
@@ -42,7 +42,7 @@ public class DeletePositionHandlerTests
     public async Task Handle_Should_Return_NotFound_When_Delete_Fails()
     {
         // Arrange
-        var writer     = new Mock<IPositionWriter>(MockBehavior.Strict);
+        var writer     = new Mock<IPositionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
         var id         = Guid.NewGuid();
 
@@ -70,7 +70,7 @@ public class DeletePositionHandlerTests
     public async Task Handle_Should_Bubble_Exception_From_DeleteAsync()
     {
         // Arrange
-        var writer     = new Mock<IPositionWriter>(MockBehavior.Strict);
+        var writer     = new Mock<IPositionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
         var id         = Guid.NewGuid();
 
