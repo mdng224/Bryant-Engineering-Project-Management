@@ -6,6 +6,7 @@ public sealed record EmployeeSummaryResponse(
     string LastName,
     string FirstName,
     string? PreferredName,
+    IReadOnlyList<string> PositionNames,
     string? Department,              // enum as string
     string? EmploymentType,          // enum as string
     DateTimeOffset? HireDate

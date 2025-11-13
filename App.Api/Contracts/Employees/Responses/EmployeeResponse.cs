@@ -7,6 +7,7 @@ public sealed record EmployeeResponse(
     string FirstName,
     string LastName,
     string? PreferredName,
+    IReadOnlyList<string> PositionNames,
     string? EmploymentType,
     string? SalaryType,
     DateTimeOffset? HireDate,
@@ -17,7 +18,6 @@ public sealed record EmployeeResponse(
     string? Notes,
     Guid? RecommendedRoleId,
     bool IsPreapproved,
-    IReadOnlyList<string> PositionNames,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc,
     DateTimeOffset? DeletedAtUtc

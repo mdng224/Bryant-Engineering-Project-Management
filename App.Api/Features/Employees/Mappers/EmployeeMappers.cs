@@ -38,6 +38,7 @@ internal static class EmployeeMappers
             item.FirstName,
             item.LastName,
             item.PreferredName,
+            item.PositionNames,
             item.EmploymentType,
             item.SalaryType,
             item.HireDate,
@@ -48,7 +49,6 @@ internal static class EmployeeMappers
             item.Notes,
             item.RecommendedRoleId,
             item.IsPreapproved,
-            item.PositionNames,
             item.CreatedAtUtc,
             item.UpdatedAtUtc,
             item.DeletedAtUtc);
@@ -61,6 +61,7 @@ internal static class EmployeeMappers
             item.LastName,
             item.FirstName,
             item.PreferredName,
+            item.PositionNames,
             item.Department,
             item.EmploymentType,
             item.HireDate);

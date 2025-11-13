@@ -161,6 +161,8 @@
     col.accessor('lastName', { header: 'Last Name', meta: { kind: 'text' as const } }),
     col.accessor('firstName', { header: 'First Name', meta: { kind: 'text' as const } }),
     col.accessor('preferredName', { header: 'Preferred Name', meta: { kind: 'text' as const } }),
+    // TODO: Format position names
+    col.accessor('positionNames', { header: 'Position', meta: { kind: 'text' as const } }),
     col.accessor('department', {
       header: 'Department',
       meta: { kind: 'badge' as const, classFor: (val: string) => getDepartmentClass(val) },
@@ -201,9 +203,6 @@
       isDeleted: query?.isDeleted ?? null,
     };
     const response: GetEmployeesResponse = await employeeService.get(params);
-
-    // Cache details for action dialogs
-    employeeDetails.value = response.employees.map(e => e.details);
 
     return {
       items: response.employees.map(e => e.summary), // summaries are the table rows

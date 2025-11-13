@@ -19,7 +19,7 @@ public sealed class GetClientsHandler(IClientReader clientReader)
         var (items, total) = await clientReader.GetPagedAsync(
             skip, pageSize, normalized, query.IsDeleted, ct);
         
-        var pagedResult = new PagedResult<ClientListItemDto>(items, page, pageSize, total);
+        var pagedResult = new PagedResult<ClientListItemDto>(items, total, page, pageSize);
 
         return Ok(pagedResult);
     }

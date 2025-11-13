@@ -8,6 +8,7 @@ type EmployeeBase = {
   employmentType?: string | null;
   hireDate: string | null;
   department: string | null;
+  positionNames: string[];
 };
 
 export type GetEmployeesRequest = {
