@@ -37,7 +37,6 @@
             aria-label="delete position"
             @click="handleOpenDeleteDialog(cell.row.original as EmployeeSummaryResponse)"
           >
-            {{ cell.row.original.deletedAtUtc }}
             <Lock class="h-4 w-4 text-rose-500 hover:text-rose-400" />
           </button>
 
@@ -104,12 +103,13 @@
     'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
 
   // Department badge colors
-  type DepartmentType = 'Engineering' | 'Drafting' | 'Surveying' | 'OfficeAdmin';
+  type DepartmentType = 'Engineering' | 'Drafting' | 'Surveying' | 'OfficeAdmin' | 'Unknown';
   const departmentClasses: Record<DepartmentType, string> = {
     Engineering: 'bg-sky-700 text-sky-100',
     Drafting: 'bg-fuchsia-700 text-fuchsia-100',
     Surveying: 'bg-amber-700 text-amber-100',
     OfficeAdmin: 'bg-slate-700 text-slate-200',
+    Unknown: 'bg-yellow-700 text-yellow-200',
   };
   const getDepartmentClass = (dept: string): string =>
     departmentClasses[dept as DepartmentType] ?? 'bg-slate-800/60 text-slate-300';
@@ -169,7 +169,6 @@
     }),
     col.accessor('employmentType', { header: 'Employment Type', meta: { kind: 'text' as const } }),
     col.accessor('hireDate', { header: 'Hire Date', meta: { kind: 'datetime' as const } }),
-    col.accessor('isActive', { header: 'Active Employee?', meta: { kind: 'boolean' as const } }),
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
   ];
 
@@ -203,6 +202,7 @@
       isDeleted: query?.isDeleted ?? null,
     };
     const response: GetEmployeesResponse = await employeeService.get(params);
+    employeeDetails.value = response.employees.map(e => e.details);
 
     return {
       items: response.employees.map(e => e.summary), // summaries are the table rows

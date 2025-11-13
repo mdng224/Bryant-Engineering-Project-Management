@@ -18,7 +18,8 @@ internal static class EmployeeSeedFactory
         SalaryType? salaryType,
         string? companyEmail,
         Guid? recommendedRoleId = null,
-        bool isPreapproved = false
+        bool isPreapproved = false,
+        bool isFormerEmployee = false
     )
     {
         var employee = new Employee(id, legalFirst, last);
@@ -38,6 +39,9 @@ internal static class EmployeeSeedFactory
             employee.RecommendRole(r);
         if (isPreapproved)
             employee.SetPreapproved(true); // will throw if no CompanyEmail
+        
+        if (isFormerEmployee)
+            employee.SoftDelete();
         
         return employee;
     }
@@ -277,6 +281,153 @@ internal static class EmployeeSeedFactory
             companyEmail:      "andy.weaver@bryant-eng.com",
             recommendedRoleId: RoleIds.Administrator,
             isPreapproved:     true
+        ),
+         // -------------------------
+        // Inactive Employees
+        // -------------------------
+        SeededEmployee(
+            id:                EmployeeIds.WyattCrowell,
+            last:              "Crowell",
+            legalFirst:        "Wyatt",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
+        ),
+        SeededEmployee(
+            id:                EmployeeIds.VivianHiggs,
+            last:              "Higgs",
+            legalFirst:        "Vivian",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
+        ),
+        SeededEmployee(
+            id:                EmployeeIds.TerryFoster,
+            last:              "Foster",
+            legalFirst:        "Terry",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
+        ),
+        SeededEmployee(
+            id:                EmployeeIds.SteveWeaver,
+            last:              "Weaver",
+            legalFirst:        "Steve",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
+        ),
+        SeededEmployee(
+            id:                EmployeeIds.JimDinning,
+            last:              "Dinning",
+            legalFirst:        "Jim",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
+        ),
+        SeededEmployee(
+            id:                EmployeeIds.JarretHamilton,
+            last:              "Hamilton",
+            legalFirst:        "Jarret",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
+        ),
+        SeededEmployee(
+            id:                EmployeeIds.GlenFuchs,
+            last:              "Fuchs",
+            legalFirst:        "Glen",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
+        ),
+        SeededEmployee(
+            id:                EmployeeIds.DonBryant,
+            last:              "Bryant",
+            legalFirst:        "Don",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
+        ),
+        SeededEmployee(
+            id:                EmployeeIds.CodyHenderson,
+            last:              "Henderson",
+            legalFirst:        "Cody",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
+        ),
+        SeededEmployee(
+            id:                EmployeeIds.ChrisFoster,
+            last:              "Foster",
+            legalFirst:        "Chris",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
+        ),
+        SeededEmployee(
+            id:                EmployeeIds.BillWeikel,
+            last:              "Weikel",
+            legalFirst:        "Bill",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
+        ),
+        SeededEmployee(
+            id:                EmployeeIds.AdamMiller,
+            last:              "Miller",
+            legalFirst:        "Adam",
+            nickname:          null,
+            departmentType:    DepartmentType.Unknown,
+            positionIds:       null,
+            employmentType:    null,
+            salaryType:        null,
+            companyEmail:      null,
+            isFormerEmployee:  true
         )
     ];
 }

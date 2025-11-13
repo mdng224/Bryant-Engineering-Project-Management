@@ -59,7 +59,7 @@
             <Lock class="h-4 w-4 text-rose-500 hover:text-rose-400" />
           </button>
 
-          <!-- Reactivate button -->
+          <!-- Restore button -->
           <button
             v-else
             class="rounded-md bg-indigo-600 p-1.5 text-emerald-200 transition hover:bg-green-200"

@@ -54,7 +54,9 @@ internal static class EmployeeMappers
             item.DeletedAtUtc);
 
     private static EmployeeListItemResponse ToListItem(this EmployeeListItemDto item) =>
-        new(Summary: item.ToSummaryResponse(), Details: item.ToEmployeeResponse());
+        new(
+            Summary: item.ToSummaryResponse(),
+            Details: item.ToEmployeeResponse());
 
     private static EmployeeSummaryResponse ToSummaryResponse(this EmployeeListItemDto item) =>
         new(item.Id,
@@ -64,5 +66,6 @@ internal static class EmployeeMappers
             item.PositionNames,
             item.Department,
             item.EmploymentType,
-            item.HireDate);
+            item.HireDate,
+            item.DeletedAtUtc);
 }

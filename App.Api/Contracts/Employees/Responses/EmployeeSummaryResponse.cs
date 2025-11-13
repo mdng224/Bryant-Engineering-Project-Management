@@ -9,5 +9,6 @@ public sealed record EmployeeSummaryResponse(
     IReadOnlyList<string> PositionNames,
     string? Department,              // enum as string
     string? EmploymentType,          // enum as string
-    DateTimeOffset? HireDate
+    DateTimeOffset? HireDate,
+    DateTimeOffset? DeletedAtUtc
 );

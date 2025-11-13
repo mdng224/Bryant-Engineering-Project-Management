@@ -9,6 +9,7 @@ type EmployeeBase = {
   hireDate: string | null;
   department: string | null;
   positionNames: string[];
+  deletedAtUtc: string;
 };
 
 export type GetEmployeesRequest = {
@@ -32,9 +33,7 @@ export type EmployeeListItemResponse = {
 };
 
 // This is for the non detail view in the table for an employee
-export type EmployeeSummaryResponse = EmployeeBase & {
-  isActive: boolean;
-};
+export type EmployeeSummaryResponse = EmployeeBase;
 
 // For expanded detail look on an employee
 export type EmployeeResponse = EmployeeBase & {
