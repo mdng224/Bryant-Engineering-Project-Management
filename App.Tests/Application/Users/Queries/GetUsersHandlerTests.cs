@@ -1,7 +1,7 @@
 ﻿using App.Application.Abstractions.Persistence.Readers;
+using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Users.Queries;
-using App.Domain.Security;
 using App.Domain.Users;
 using FluentAssertions;
 using Moq;
@@ -18,13 +18,20 @@ public sealed class GetUsersHandlerTests
         _handler = new GetUsersHandler(_reader.Object);
     }
 
-    private static List<User> MakeUsers(int count, Guid? roleId = null)
+    private static List<UserDto> MakeUserDtos(int count)
     {
-        var list = new List<User>(capacity: count);
+        var list = new List<UserDto>(capacity: count);
         for (var i = 0; i < count; i++)
         {
-            var u = new User($"user{i}@example.com", "hash", roleId ?? RoleIds.User);
-            list.Add(u);
+            list.Add(new UserDto(
+                Id: Guid.NewGuid(),
+                Email: $"user{i}@example.com",
+                RoleName: "User",
+                Status: UserStatus.Active,
+                CreatedAtUtc: DateTime.UtcNow,
+                UpdatedAtUtc: DateTime.UtcNow,
+                DeletedAtUtc: null
+            ));
         }
         return list;
     }
@@ -37,13 +44,14 @@ public sealed class GetUsersHandlerTests
         var query = new GetUsersQuery(pagedQuery, EmailFilter: null, IsDeleted: null);
 
         // Expect skip = 0; take = 25; email = null; isDeleted = null
+        var resultTuple = ((IReadOnlyList<UserDto>)MakeUserDtos(10), 42);
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),
                 It.Is<int>(t => t == 25),
                 It.Is<string?>(e => e == null),
                 It.Is<bool?>(d => d == null),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MakeUsers(10), 42));
+            .ReturnsAsync(resultTuple);
 
         // Act
         var res = await _handler.Handle(query, CancellationToken.None);
@@ -66,13 +74,14 @@ public sealed class GetUsersHandlerTests
         var query = new GetUsersQuery(pagedQuery, EmailFilter: null, IsDeleted: null);
 
         // Expect skip = 200; take = 100; email = null; isDeleted = null
+        var resultTuple = ((IReadOnlyList<UserDto>)MakeUserDtos(100), 1_234);
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 200),
                 It.Is<int>(t => t == 100),
                 It.Is<string?>(e => e == null),
                 It.Is<bool?>(d => d == null),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MakeUsers(100), 1_234));
+            .ReturnsAsync(resultTuple);
 
         // Act
         var res = await _handler.Handle(query, CancellationToken.None);
@@ -83,7 +92,7 @@ public sealed class GetUsersHandlerTests
         payload.Page.Should().Be(3);
         payload.PageSize.Should().Be(100);
         payload.Items.Count.Should().Be(100);
-        payload.TotalCount.Should().Be(1234);
+        payload.TotalCount.Should().Be(1_234);
         payload.TotalPages.Should().Be((int)Math.Ceiling(1234 / 100.0)); // 13
     }
 
@@ -95,13 +104,14 @@ public sealed class GetUsersHandlerTests
         var query = new GetUsersQuery(pagedQuery, EmailFilter: null, IsDeleted: null);
 
         // Expect skip = 50; take = 50; email = null; isDeleted = null
+        var resultTuple = ((IReadOnlyList<UserDto>)MakeUserDtos(50), 120);
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 50),
                 It.Is<int>(t => t == 50),
                 It.Is<string?>(e => e == null),
                 It.Is<bool?>(d => d == null),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MakeUsers(50), 120));
+            .ReturnsAsync(resultTuple);
 
         // Act
         var res = await _handler.Handle(query, CancellationToken.None);
@@ -121,13 +131,14 @@ public sealed class GetUsersHandlerTests
         var pagedQuery = new PagedQuery(page: 5, pageSize: 25);
         var query = new GetUsersQuery(pagedQuery, EmailFilter: null, IsDeleted: false);
 
+        var resultTuple = ((IReadOnlyList<UserDto>)new List<UserDto>(), 0);
         _reader.Setup(r => r.GetPagedAsync(
                 It.IsAny<int>(),
                 It.IsAny<int>(),
                 It.Is<string?>(e => e == null),
                 It.Is<bool?>(d => d == false),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<User>(), 0));
+            .ReturnsAsync(resultTuple);
 
         var res = await _handler.Handle(query, CancellationToken.None);
 
@@ -146,13 +157,14 @@ public sealed class GetUsersHandlerTests
         var pagedQuery = new PagedQuery(page: -10, pageSize: -3);
         var query = new GetUsersQuery(pagedQuery, EmailFilter: null, IsDeleted: null);
 
+        var resultTuple = ((IReadOnlyList<UserDto>)MakeUserDtos(3), 3);
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),   // (1-1)*25
                 It.Is<int>(t => t == 25),
                 It.Is<string?>(e => e == null),
                 It.Is<bool?>(d => d == null),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MakeUsers(3), 3));
+            .ReturnsAsync(resultTuple);
 
         var res = await _handler.Handle(query, CancellationToken.None);
 
@@ -172,13 +184,14 @@ public sealed class GetUsersHandlerTests
         var pagedQuery = new PagedQuery(page: 1, pageSize: 25);
         var query = new GetUsersQuery(pagedQuery, EmailFilter: "dan", IsDeleted: null);
 
+        var resultTuple = ((IReadOnlyList<UserDto>)MakeUserDtos(2), 2);
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),
                 It.Is<int>(t => t == 25),
                 It.Is<string?>(e => e == "dan"),
                 It.Is<bool?>(d => d == null),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((MakeUsers(2), 2));
+            .ReturnsAsync(resultTuple);
 
         var res = await _handler.Handle(query, CancellationToken.None);
 
@@ -200,6 +213,7 @@ public sealed class GetUsersHandlerTests
         string? passedEmail = null;
         bool? passedDeleted = null;
 
+        var resultTuple = ((IReadOnlyList<UserDto>)MakeUserDtos(1), 1);
         _reader.Setup(r => r.GetPagedAsync(
                 It.Is<int>(s => s == 0),
                 It.Is<int>(t => t == 25),
@@ -211,13 +225,13 @@ public sealed class GetUsersHandlerTests
                 passedEmail = e;
                 passedDeleted = d;
             })
-            .ReturnsAsync((MakeUsers(1), 1));
+            .ReturnsAsync(resultTuple);
 
         var res = await _handler.Handle(query, CancellationToken.None);
 
         res.IsSuccess.Should().BeTrue();
-        passedEmail.Should().Be("dan");   // trimming verified
-        passedDeleted.Should().BeTrue();  // isDeleted passthrough verified
+        passedEmail.Should().Be("dan");   // ToNormalizedEmail trims/normalizes
+        passedDeleted.Should().BeTrue();  // IsDeleted passthrough verified
 
         var payload = res.Value!;
         payload.Items.Should().NotBeNull();

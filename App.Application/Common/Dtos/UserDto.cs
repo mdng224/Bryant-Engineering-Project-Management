@@ -1,10 +1,12 @@
-﻿namespace App.Application.Common.Dtos;
+﻿using App.Domain.Users;
+
+namespace App.Application.Common.Dtos;
 
 public record UserDto(
     Guid Id,
     string Email,
     string RoleName,
-    string Status,
+    UserStatus Status,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc,
     DateTimeOffset? DeletedAtUtc

@@ -1,7 +1,5 @@
-﻿using App.Api.Contracts.Users;
-using App.Api.Contracts.Users.Requests;
+﻿using App.Api.Contracts.Users.Requests;
 using App.Api.Contracts.Users.Responses;
-using App.Application.Common;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Users.Commands.UpdateUser;
@@ -38,7 +36,7 @@ internal static class UserMappers
             Id: dto.Id,
             Email: dto.Email,
             RoleName: dto.RoleName,
-            Status: dto.Status,
+            Status: dto.Status.ToString(),
             CreatedAtUtc: dto.CreatedAtUtc,
             UpdatedAtUtc: dto.UpdatedAtUtc,
             DeletedAtUtc: dto.DeletedAtUtc

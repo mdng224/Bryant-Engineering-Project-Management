@@ -1,27 +1,27 @@
 ﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
-using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Common.Dtos;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Common.Results;
+using Microsoft.EntityFrameworkCore;
+using static App.Application.Common.R;
 
 namespace App.Application.Projects.Commands.RestoreProject;
 
-public class RestoreProjectHandler(IProjectReader reader, IUnitOfWork uow)
-    : ICommandHandler<RestoreProjectCommand, Result<ProjectListItemDto>>
+public class RestoreProjectHandler(IProjectRepository repo, IUnitOfWork uow)
+    : ICommandHandler<RestoreProjectCommand, Result<Unit>>
 {
-    /*
-    public async Task<Result<ProjectListItemDto>> Handle(RestoreProjectCommand cmd, CancellationToken ct)
+    public async Task<Result<Unit>> Handle(RestoreProjectCommand cmd, CancellationToken ct)
     {
         
-        var project = await reader.GetByIdAsync(cmd.Id, ct);
+        var project = await repo.GetAsync(cmd.Id, ct);
         if (project is null)
-            return Fail<ProjectListItemDto>(code: "not_found", message: "Project not found.");
+            return Fail<Unit>(code: "not_found", message: "Project not found.");
 
         if (!project.IsDeleted)  // Idempotent: already active
-            return Ok(project.ToDto());
+            return Ok(Unit.Value);
 
         if (!project.Restore())
-            return Fail<ProjectListItemDto>(code: "restore_failed", message: "Project could not be restored.");
+            return Fail<Unit>(code: "restore_failed", message: "Project could not be restored.");
         
         try
         {
@@ -30,15 +30,11 @@ public class RestoreProjectHandler(IProjectReader reader, IUnitOfWork uow)
         catch (DbUpdateException)
         {
             // Another active row may now hold a unique Name/Code, etc.
-            return Fail<ProjectListItemDto>(
+            return Fail<Unit>(
                 code: "conflict",
                 message: "Restoring this project conflicts with an existing active project.");
         }
 
-        return Ok(project.ToDto());
-    }*/
-    public Task<Result<ProjectListItemDto>> Handle(RestoreProjectCommand request, CancellationToken ct)
-    {
-        throw new NotImplementedException();
+        return Ok(Unit.Value);
     }
 }

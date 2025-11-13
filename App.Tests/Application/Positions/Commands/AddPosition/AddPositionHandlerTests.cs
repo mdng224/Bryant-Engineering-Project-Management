@@ -1,6 +1,7 @@
 ﻿using App.Application.Abstractions.Persistence;
 using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Abstractions.Persistence.Repositories;
+using App.Application.Common.Results;
 using App.Application.Positions.Commands.AddPosition;
 using App.Domain.Employees;
 using FluentAssertions;
@@ -11,11 +12,11 @@ namespace App.Tests.Application.Positions.Commands.AddPosition;
 public class AddPositionHandlerTests
 {
     [Fact]
-    public async Task Handle_ReturnsOk_WithResultMappedFromDomain()
+    public async Task Handle_ReturnsOk_WhenNewPositionCreated()
     {
         // Arrange
-        var reader    = new Mock<IPositionReader>(MockBehavior.Strict);
-        var writer    = new Mock<IPositionRepository>(MockBehavior.Strict);
+        var reader     = new Mock<IPositionReader>(MockBehavior.Strict);
+        var writer     = new Mock<IPositionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
         // No existing matches -> create path
@@ -39,13 +40,7 @@ public class AddPositionHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
-
-        var value = result.Value!;
-        value.Id.Should().NotBeEmpty();
-        value.Name.Should().Be("Project Engineer");
-        value.Code.Should().Be("PE");
-        value.RequiresLicense.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
 
         reader.Verify(pr => pr.GetByNameIncludingDeletedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         writer.Verify(pw => pw.Add(It.IsAny<Position>()), Times.Once);
@@ -88,6 +83,7 @@ public class AddPositionHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
 
         captured.Should().NotBeNull();
         captured!.Id.Should().NotBeEmpty();

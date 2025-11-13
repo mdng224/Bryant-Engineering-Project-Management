@@ -8,10 +8,13 @@ public sealed class EmployeeRepository(AppDbContext db) : IEmployeeRepository
 {
     public async Task<Employee?> GetAsync(Guid id, CancellationToken ct = default)
     {
-        var employee = await db.Employees.AsTracking()
+        var employee = await db.Employees
+            .AsTracking()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(e => e.Id == id, ct);
         
         return employee;
     }
+    
+
 }

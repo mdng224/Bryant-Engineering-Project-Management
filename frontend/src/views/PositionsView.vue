@@ -4,12 +4,7 @@
   <div class="flex items-center justify-between pb-4">
     <div class="flex gap-4">
       <table-search v-model="nameFilter" placeholder="Search position name..." @commit="commit" />
-      <deleted-filter
-        v-model="deletedFilter"
-        label-1="Active"
-        label-2="Deleted"
-        @change="val => setQuery({ position: position || null, isDeleted: val ?? false })"
-      />
+      <deleted-filter v-model="deletedFilter" label-1="Active" label-2="Deleted" />
     </div>
 
     <button
@@ -129,7 +124,7 @@
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { CirclePlus, Lock, LockOpen, Pencil } from 'lucide-vue-next';
-  import { onBeforeUnmount, ref, watch } from 'vue';
+  import { computed, onBeforeUnmount, ref } from 'vue';
 
   const errorMessage = ref<string | null>(null);
   const actionButtonClass = 'rounded-md bg-indigo-600 p-1.5  transition hover:bg-indigo-500';
@@ -167,13 +162,10 @@
     setNow: commit, // call on Enter
     cancel: cancelNameDebounce, // cleanup on unmount
   } = useDebouncedRef('', 500);
-  onBeforeUnmount(cancelNameDebounce);
 
-  watch([position, deletedFilter], ([p, del]) => {
-    setQuery({
-      position: p || null,
-      isDeleted: del, // keep false as false, only null stays null
-    });
+  onBeforeUnmount(() => {
+    cancelNameDebounce();
+    destroy();
   });
 
   /* ------------------------------ Fetching ------------------------------- */
@@ -197,6 +189,11 @@
     };
   };
 
+  const query = computed(() => ({
+    position: position.value ?? null,
+    isDeleted: deletedFilter.value,
+  }));
+
   const {
     table,
     loading,
@@ -206,10 +203,8 @@
     setQuery,
     setPageSize,
     fetchNow: refetch,
-  } = useDataTable<PositionResponse, PosQuery>(columns, fetchPositions, {
-    position: null,
-    isDeleted: false,
-  });
+    destroy,
+  } = useDataTable<PositionResponse, typeof query.value>(columns, fetchPositions, query);
 
   /* ------------------------------ Handlers ------------------------------- */
   const selectedPosition = ref<PositionResponse | null>(null);

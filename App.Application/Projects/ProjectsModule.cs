@@ -16,7 +16,7 @@ public static class ProjectsModule
         services.AddScoped<IQueryHandler<GetProjectsQuery, Result<PagedResult<ProjectListItemDto>>>, GetProjectsHandler>();
 
         // Commands
-        services.AddScoped<ICommandHandler<RestoreProjectCommand, Result<ProjectListItemDto>>, RestoreProjectHandler>();
+        services.AddScoped<ICommandHandler<RestoreProjectCommand, Result<Unit>>, RestoreProjectHandler>();
         
         return services;
     }

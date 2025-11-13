@@ -1,23 +1,21 @@
 ﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
-using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Common.Dtos;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Common.Results;
-using App.Application.Positions.Mappers;
 using Microsoft.EntityFrameworkCore;
 using static App.Application.Common.R;
 
 namespace App.Application.Positions.Commands.UpdatePosition;
 
-public sealed class UpdatePositionHandler(IPositionReader reader, IUnitOfWork uow)
-    : ICommandHandler<UpdatePositionCommand, Result<PositionListItemDto>>
+public sealed class UpdatePositionHandler(IPositionRepository repo, IUnitOfWork uow)
+    : ICommandHandler<UpdatePositionCommand, Result<Unit>>
 {
-    public async Task<Result<PositionListItemDto>> Handle(UpdatePositionCommand command, CancellationToken ct)
+    public async Task<Result<Unit>> Handle(UpdatePositionCommand command, CancellationToken ct)
     {
         var positionId = command.PositionId;
-        var position = await reader.GetForUpdateAsync(positionId, ct);
+        var position = await repo.GetForUpdateAsync(positionId, ct);
         if (position is null)
-            return Fail<PositionListItemDto>(code: "not_found", message: "Position not found.");
+            return Fail<Unit>(code: "not_found", message: "Position not found.");
 
         position.Update(command.Name, command.Code, command.RequiresLicense);
         
@@ -27,17 +25,17 @@ public sealed class UpdatePositionHandler(IPositionReader reader, IUnitOfWork uo
         }
         catch (DbUpdateConcurrencyException)
         {
-            return Fail<PositionListItemDto>(
+            return Fail<Unit>(
                 code: "concurrency",
                 message: "The position was modified by another process.");
         }
         catch (DbUpdateException)
         {
-            return Fail<PositionListItemDto>(
+            return Fail<Unit>(
                 code: "conflict",
                 message: "A position with the same unique field (name/code) already exists.");
         }
 
-        return Ok(position.ToDto());
+        return Ok(Unit.Value);
     }
 }

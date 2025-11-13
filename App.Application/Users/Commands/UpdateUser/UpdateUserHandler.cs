@@ -1,6 +1,7 @@
 ﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
 using App.Application.Abstractions.Persistence.Readers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Common.Results;
 using App.Domain.Security;
 using App.Domain.Users;
@@ -9,7 +10,7 @@ using static App.Application.Common.R;
 
 namespace App.Application.Users.Commands.UpdateUser;
 
-public sealed class UpdateUserHandler(IUserReader reader, IUnitOfWork uow)
+public sealed class UpdateUserHandler(IUserReader reader, IUserRepository repo, IUnitOfWork uow)
     : ICommandHandler<UpdateUserCommand, Result<UpdateUserResult>>
 {
     public async Task<Result<UpdateUserResult>> Handle(UpdateUserCommand command, CancellationToken ct)
@@ -17,7 +18,7 @@ public sealed class UpdateUserHandler(IUserReader reader, IUnitOfWork uow)
         if (IsNoOp(command))
             return Ok(UpdateUserResult.NoChangesSpecified);
 
-        var user = await reader.GetForUpdateAsync(command.UserId, ct);
+        var user = await repo.GetForUpdateAsync(command.UserId, ct);
         if (user is null)
             return Fail<UpdateUserResult>("not_found", "User not found.");
         

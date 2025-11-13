@@ -4,12 +4,7 @@
   <div class="flex items-center justify-between pb-4">
     <div class="flex gap-4">
       <table-search v-model="nameFilter" placeholder="Search by name..." @commit="commitNameNow" />
-      <deleted-filter
-        v-model="deletedFilter"
-        label-1="Active"
-        label-2="Deleted"
-        @change="handleDeletedFilterChange"
-      />
+      <deleted-filter v-model="deletedFilter" label-1="Active" label-2="Deleted" />
     </div>
     <button
       class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
@@ -101,7 +96,7 @@
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { CirclePlus, Eye, Lock, LockOpen } from 'lucide-vue-next';
-  import { computed, onBeforeUnmount, ref, watch } from 'vue';
+  import { computed, onBeforeUnmount, ref } from 'vue';
 
   /* ------------------------------- Constants ------------------------------ */
   // Buttons
@@ -177,14 +172,7 @@
   ];
 
   /* ---------------------------- Deleted Filter State ---------------------------- */
-  const deletedFilter = ref<boolean | null>(false); // default: Active Only
-
-  const handleDeletedFilterChange = () => {
-    setQuery({
-      name: name.value || undefined,
-      isDeleted: deletedFilter.value, // keep null when "Active + Deleted"
-    });
-  };
+  const deletedFilter = ref(false); // default: show only active (not deleted)
 
   /* ------------------------------- Searching ------------------------------ */
   const {
@@ -193,7 +181,11 @@
     setNow: commitNameNow, // call on Enter
     cancel: cancelNameDebounce, // cleanup on unmount
   } = useDebouncedRef('', 500);
-  onBeforeUnmount(cancelNameDebounce);
+
+  onBeforeUnmount(() => {
+    cancelNameDebounce();
+    destroy();
+  });
 
   /* ------------------------------- Fetching ------------------------------- */
   type EmpQuery = { name?: string; isDeleted?: boolean | null };
@@ -221,17 +213,15 @@
       pageSize: response.pageSize,
     };
   };
+  const query = computed(() => ({
+    name: name.value ?? null,
+    isDeleted: deletedFilter.value,
+  }));
 
-  const { table, loading, totalCount, totalPages, pagination, setQuery, setPageSize } =
-    useDataTable<EmployeeSummaryResponse, EmpQuery>(columns, fetchEmployees, { name: undefined });
-
-  // Update query when search changes
-  watch(name, () =>
-    setQuery({
-      name: name.value || undefined,
-      isDeleted: deletedFilter.value,
-    }),
-  );
+  const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<
+    EmployeeSummaryResponse,
+    typeof query.value
+  >(columns, fetchEmployees, query);
 
   /* ------------------------------- Dialogs/UX ----------------------------- */
   const addDialogIsOpen = ref(false);

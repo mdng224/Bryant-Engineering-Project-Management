@@ -1,4 +1,5 @@
-﻿using App.Domain.Users;
+﻿using App.Application.Common.Dtos;
+using App.Domain.Users;
 
 namespace App.Application.Abstractions.Persistence.Readers;
 
@@ -8,9 +9,7 @@ public interface IUserReader
     Task<bool> ExistsByEmailAsync(string normalizedEmail, CancellationToken ct = default);
     Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken ct = default);
     Task<User?> GetActiveByIdAsync(Guid userId, CancellationToken ct = default);
-    Task<User?> GetByIdIncludingDeletedAsync(Guid id, CancellationToken ct = default);
-    Task<User?> GetForUpdateAsync(Guid id, CancellationToken ct);
-    Task<(IReadOnlyList<User> users, int totalCount)> GetPagedAsync(
+    Task<(IReadOnlyList<UserDto> items, int totalCount)> GetPagedAsync(
         int skip,
         int take,
         string? email = null,

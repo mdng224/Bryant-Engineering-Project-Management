@@ -1,5 +1,6 @@
 ﻿using App.Application.Abstractions.Persistence;
-using App.Application.Abstractions.Persistence.Readers;
+using App.Application.Abstractions.Persistence.Repositories;
+using App.Application.Common.Results;
 using App.Application.Positions.Commands.UpdatePosition;
 using App.Domain.Employees;
 using FluentAssertions;
@@ -10,25 +11,27 @@ namespace App.Tests.Application.Positions.Commands.UpdatePosition;
 
 public class UpdatePositionHandlerTests
 {
-    private readonly Mock<IPositionReader> _reader = new(MockBehavior.Strict);
+    private readonly Mock<IPositionRepository> _repo = new(MockBehavior.Strict);
     private readonly Mock<IUnitOfWork> _uow = new(MockBehavior.Strict);
 
-    private UpdatePositionHandler CreateHandler() => new(_reader.Object, _uow.Object);
+    private UpdatePositionHandler CreateHandler() => new(_repo.Object, _uow.Object);
 
     [Fact]
-    public async Task Handle_Should_Update_And_Return_PositionDto()
+    public async Task Handle_Should_Update_And_Return_Ok()
     {
         // Arrange
         var existing = new Position("Old Name", "OLD", requiresLicense: false);
         var id = existing.Id;
 
-        _reader.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
-               .ReturnsAsync(existing);
+        _repo.Setup(r => r.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
+             .ReturnsAsync(existing);
 
         // If SaveChangesAsync returns Task<int>:
-        _uow.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
-        // If it returns Task, use:
-        // _uow.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _uow.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+        // If your IUnitOfWork returns Task instead, change to:
+        // _uow.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+        //     .Returns(Task.CompletedTask);
 
         var handler = CreateHandler();
 
@@ -44,20 +47,16 @@ public class UpdatePositionHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        var dto = result.Value!;
-        dto.Id.Should().Be(id);
-        dto.Name.Should().Be("New Name");
-        dto.Code.Should().Be("NEW");
-        dto.RequiresLicense.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
 
         // Domain entity actually updated:
         existing.Name.Should().Be("New Name");
         existing.Code.Should().Be("NEW");
         existing.RequiresLicense.Should().BeTrue();
 
-        _reader.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
-        _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _reader.VerifyNoOtherCalls();
+        _repo.Verify(r => r.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _repo.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 
@@ -66,8 +65,9 @@ public class UpdatePositionHandlerTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        _reader.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
-               .ReturnsAsync((Position?)null);
+
+        _repo.Setup(r => r.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
+             .ReturnsAsync((Position?)null);
 
         var handler = CreateHandler();
 
@@ -86,9 +86,9 @@ public class UpdatePositionHandlerTests
         result.Error!.Value.Code.Should().Be("not_found");
         result.Error.Value.Message.Should().Be("Position not found.");
 
-        _reader.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
-        _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
-        _reader.VerifyNoOtherCalls();
+        _repo.Verify(r => r.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _repo.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 
@@ -99,15 +99,20 @@ public class UpdatePositionHandlerTests
         var existing = new Position("Old Name", "OLD", false);
         var id = existing.Id;
 
-        _reader.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
-               .ReturnsAsync(existing);
+        _repo.Setup(r => r.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
+             .ReturnsAsync(existing);
 
-        _uow.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+        _uow.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateConcurrencyException());
 
         var handler = CreateHandler();
 
-        var command = new UpdatePositionCommand(id, "New Name", "NEW", true);
+        var command = new UpdatePositionCommand(
+            PositionId: id,
+            Name: "New Name",
+            Code: "NEW",
+            RequiresLicense: true
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -117,9 +122,9 @@ public class UpdatePositionHandlerTests
         result.Error!.Value.Code.Should().Be("concurrency");
         result.Error.Value.Message.Should().Contain("modified by another process");
 
-        _reader.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
-        _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _reader.VerifyNoOtherCalls();
+        _repo.Verify(r => r.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _repo.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 
@@ -130,15 +135,20 @@ public class UpdatePositionHandlerTests
         var existing = new Position("Old Name", "OLD", false);
         var id = existing.Id;
 
-        _reader.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
-               .ReturnsAsync(existing);
+        _repo.Setup(r => r.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
+             .ReturnsAsync(existing);
 
-        _uow.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+        _uow.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateException("duplicate", innerException: null));
 
         var handler = CreateHandler();
 
-        var command = new UpdatePositionCommand(id, "New Name", "NEW", true);
+        var command = new UpdatePositionCommand(
+            PositionId: id,
+            Name: "New Name",
+            Code: "NEW",
+            RequiresLicense: true
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -148,9 +158,9 @@ public class UpdatePositionHandlerTests
         result.Error!.Value.Code.Should().Be("conflict");
         result.Error.Value.Message.Should().Contain("already exists");
 
-        _reader.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
-        _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _reader.VerifyNoOtherCalls();
+        _repo.Verify(r => r.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _repo.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 
@@ -161,14 +171,20 @@ public class UpdatePositionHandlerTests
         var existing = new Position("Old Name", "OLD", false);
         var id = existing.Id;
 
-        _reader.Setup(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
-               .ReturnsAsync(existing);
+        _repo.Setup(r => r.GetForUpdateAsync(id, It.IsAny<CancellationToken>()))
+             .ReturnsAsync(existing);
 
-        _uow.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+        _uow.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("weird"));
 
         var handler = CreateHandler();
-        var command = new UpdatePositionCommand(id, "New Name", "NEW", true);
+
+        var command = new UpdatePositionCommand(
+            PositionId: id,
+            Name: "New Name",
+            Code: "NEW",
+            RequiresLicense: true
+        );
 
         // Act
         Func<Task> act = () => handler.Handle(command, CancellationToken.None);
@@ -177,9 +193,9 @@ public class UpdatePositionHandlerTests
         await act.Should().ThrowAsync<InvalidOperationException>()
                  .WithMessage("*weird*");
 
-        _reader.Verify(pw => pw.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
-        _uow.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _reader.VerifyNoOtherCalls();
+        _repo.Verify(r => r.GetForUpdateAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _repo.VerifyNoOtherCalls();
         _uow.VerifyNoOtherCalls();
     }
 }

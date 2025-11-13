@@ -7,57 +7,6 @@ namespace App.Infrastructure.Persistence.Readers;
 
 public sealed class ProjectReader(AppDbContext db) : IProjectReader
 {
-    // TODO: Move this to repo maybe
-    /*
-    public async Task<Project?> GetByIdAsync(Guid id, CancellationToken ct = default)
-    {
-        var project = await db.Projects
-            .AsTracking()
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(p => p.Id == id, ct);
-        
-        return project;
-    }
-
-    public async Task<IReadOnlyList<Project>> GetByNameIncludingDeletedAsync(
-        string normalizedName,
-        CancellationToken ct = default)
-    {
-        var query = Query();
-        var project = await query
-            .Where(p => p.Name == normalizedName)
-            .ToListAsync(ct);
-
-        return project;
-    }
-
-    public async Task<Dictionary<Guid, (int Total, int Active)>> GetCountsPerClientAsync(
-        IReadOnlyCollection<Guid> clientIds,
-        CancellationToken ct = default)
-    {
-        if (clientIds.Count == 0)
-            return new Dictionary<Guid, (int Total, int Active)>();
-
-        var query = Query();
-        var result = clientIds.ToDictionary(id => id, _ => (Total: 0, Active: 0));
-        
-        var rows = await query
-            .Where(p => clientIds.Contains(p.ClientId))
-            .GroupBy(p => p.ClientId)
-            .Select(g => new
-            {
-                ClientId = g.Key,
-                Total = g.Count(),
-                Active = g.Count(p => p.DeletedAtUtc == null)
-            })
-            .ToListAsync(ct);
-        
-        foreach (var row in rows)
-            result[row.ClientId] = (row.Total, row.Active);
-
-        return result;
-    }*/
-
     public async Task<(IReadOnlyList<ProjectListItemDto> items, int totalCount)> GetPagedAsync(
         int skip,
         int take,

@@ -20,7 +20,7 @@ public static class UsersModule
         // Commands
         services.AddScoped<ICommandHandler<DeleteUserCommand, Result<Unit>>, DeleteUserHandler>();
         services.AddScoped<ICommandHandler<UpdateUserCommand, Result<UpdateUserResult>>, UpdateUserHandler>();
-        services.AddScoped<ICommandHandler<RestoreUserCommand, Result<UserDto>>, RestoreUserHandler>();
+        services.AddScoped<ICommandHandler<RestoreUserCommand, Result<Unit>>, RestoreUserHandler>();
 
         return services;
     }

@@ -188,7 +188,7 @@
     };
     const response: GetClientsResponse = await clientService.get(request);
     clientDetails.value = response.clientListItemResponses.map(clir => clir.details);
-    console.log(response);
+
     return {
       items: response.clientListItemResponses.map(clir => clir.summary), // summaries are the table rows
       totalCount: response.totalCount,
@@ -197,18 +197,16 @@
       pageSize: response.pageSize,
     };
   };
+
   const query = computed(() => ({
     name: name.value ?? null,
     isDeleted: deletedFilter.value,
   }));
 
-  // ---- 4. Table ----
-  const { table, loading, totalCount, totalPages, pagination, setPageSize, fetchNow, destroy } =
-    useDataTable<ClientSummaryResponse, typeof query.value>(
-      columns,
-      fetchClients,
-      query, // <-- reactive query
-    );
+  const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<
+    ClientSummaryResponse,
+    typeof query.value
+  >(columns, fetchClients, query);
 
   /* -------------------------------- Handlers ------------------------------ */
   const addDialogIsOpen = ref(false);

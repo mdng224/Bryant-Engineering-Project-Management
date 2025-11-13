@@ -7,16 +7,6 @@ namespace App.Infrastructure.Persistence.Readers;
 
 public sealed class PositionReader(AppDbContext db) : IPositionReader
 {
-        public async Task<Position?> GetByIdAsync(Guid id, CancellationToken ct)
-    {
-        var position = await db.Positions
-            .AsTracking()
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(p => p.Id == id, ct);
-        
-        return position;
-    }
-
     public async Task<IReadOnlyList<Position>> GetByNameIncludingDeletedAsync(
         string normalizedName,
         CancellationToken ct = default)
@@ -29,15 +19,6 @@ public sealed class PositionReader(AppDbContext db) : IPositionReader
         return positions;
     }
     
-    public async Task<Position?> GetForUpdateAsync(Guid id, CancellationToken ct)
-    {
-        var position = await db.Positions
-            .AsTracking()
-            .FirstOrDefaultAsync(p => p.Id == id, ct);
-
-        return position;
-    }
-
     public async Task<(IReadOnlyList<PositionListItemDto> items, int totalCount)> GetPagedAsync(
         int skip,
         int take,
