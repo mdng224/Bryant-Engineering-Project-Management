@@ -10,16 +10,9 @@ namespace App.Api.Features.Employees.Mappers;
 internal static class EmployeeMappers
 {
     public static GetEmployeesResponse ToGetEmployeesResponse(
-        this PagedResult<EmployeeDto> pagedResult,
-        IReadOnlyDictionary<Guid, IReadOnlyList<PositionMiniDto>> positionsByEmployee)
+        this PagedResult<EmployeeListItemDto> pagedResult)
     {
-        var employees = pagedResult.Items
-            .Select(dto =>
-            {
-                positionsByEmployee.TryGetValue(dto.Id, out var positions);
-                return dto.ToListItem(positions ?? []);
-            })
-            .ToList();
+        var employees = pagedResult.Items.Select(dto => dto.ToListItem()).ToList();
 
         return new GetEmployeesResponse(
             Employees: employees,
@@ -34,62 +27,41 @@ internal static class EmployeeMappers
     {
         var normalizedNameFilter = (request.NameFilter ?? string.Empty).ToNormalizedName();
         var pagedQuery = new PagedQuery(request.Page, request.PageSize);
-         var getEmployeesQuery = new GetEmployeesQuery(pagedQuery, normalizedNameFilter, request.IsDeleted);
+        var getEmployeesQuery = new GetEmployeesQuery(pagedQuery, normalizedNameFilter, request.IsDeleted);
          
-         return getEmployeesQuery;
+        return getEmployeesQuery;
     }
     
-    public static EmployeeResponse
-        ToEmployeeResponse(this EmployeeDto dto, IReadOnlyList<string> positionNames) =>
-        new(dto.Id,
-            dto.UserId,
-            dto.FirstName,
-            dto.LastName,
-            dto.PreferredName,
-            dto.EmploymentType,
-            dto.SalaryType,
-            dto.HireDate,
-            dto.EndDate,
-            dto.Department,
-            dto.CompanyEmail,
-            dto.WorkLocation,
-            dto.Notes,
-            dto.RecommendedRoleId,
-            dto.IsPreapproved,
-            positionNames,
-            dto.CreatedAtUtc,
-            dto.UpdatedAtUtc,
-            dto.DeletedAtUtc,
-            dto.IsActive);
-    
-    private static EmployeeListItemResponse ToListItem(this EmployeeDto dto, IReadOnlyList<PositionMiniDto> positionLookup) =>
-        new(
-            Summary: dto.ToSummaryResponse(),
-            Details: dto.ToEmployeeResponse(dto.PositionIds.ToPositionNames(positionLookup))
-        );
+    public static EmployeeResponse ToEmployeeResponse(this EmployeeListItemDto item) =>
+        new(item.Id,
+            item.UserId,
+            item.FirstName,
+            item.LastName,
+            item.PreferredName,
+            item.EmploymentType,
+            item.SalaryType,
+            item.HireDate,
+            item.EndDate,
+            item.Department,
+            item.CompanyEmail,
+            item.WorkLocation,
+            item.Notes,
+            item.RecommendedRoleId,
+            item.IsPreapproved,
+            item.PositionNames,
+            item.CreatedAtUtc,
+            item.UpdatedAtUtc,
+            item.DeletedAtUtc);
 
-    private static EmployeeSummaryResponse ToSummaryResponse(this EmployeeDto dto) =>
-        new(dto.Id,
-            dto.LastName,
-            dto.FirstName,
-            dto.PreferredName,
-            dto.Department,
-            dto.EmploymentType,
-            dto.HireDate,
-            dto.IsActive);
+    private static EmployeeListItemResponse ToListItem(this EmployeeListItemDto item) =>
+        new(Summary: item.ToSummaryResponse(), Details: item.ToEmployeeResponse());
 
-    private static List<string> ToPositionNames(
-        this IEnumerable<Guid> positionIds,
-        IReadOnlyList<PositionMiniDto> employeePositions)
-    {
-        // Build a quick lookup: PositionId -> Name
-        var map = employeePositions.Count == 0
-            ? new Dictionary<Guid, string>()
-            : employeePositions.ToDictionary(p => p.Id, p => p.Name);
-
-        return positionIds
-            .Distinct()
-            .Select(id => map.TryGetValue(id, out var name) ? name : "Unknown")
-            .ToList();
-    }
+    private static EmployeeSummaryResponse ToSummaryResponse(this EmployeeListItemDto item) =>
+        new(item.Id,
+            item.LastName,
+            item.FirstName,
+            item.PreferredName,
+            item.Department,
+            item.EmploymentType,
+            item.HireDate);
 }

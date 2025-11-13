@@ -1,6 +1,6 @@
 ﻿namespace App.Application.Common.Dtos;
 
-public sealed record EmployeeDto(
+public sealed record EmployeeListItemDto(
     Guid Id,
     Guid? UserId,
     // Identity
@@ -14,7 +14,7 @@ public sealed record EmployeeDto(
     DateTimeOffset? EndDate,
     // Organization
     string? Department,
-    IReadOnlyList<Guid> PositionIds,
+    IReadOnlyList<string> PositionNames,
     // Contact / Misc
     string? CompanyEmail,
     string? WorkLocation,
@@ -24,7 +24,5 @@ public sealed record EmployeeDto(
     // Auditing
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc,
-    DateTimeOffset? DeletedAtUtc,
-    // Convenience
-    bool IsActive
+    DateTimeOffset? DeletedAtUtc
 );

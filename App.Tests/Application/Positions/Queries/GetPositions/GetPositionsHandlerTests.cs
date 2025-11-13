@@ -1,7 +1,7 @@
 ﻿using App.Application.Abstractions.Persistence.Readers;
+using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Positions.Queries.GetPositions;
-using App.Domain.Employees;
 using FluentAssertions;
 using Moq;
 
@@ -13,13 +13,19 @@ public class GetPositionsHandlerTests
     public async Task Handle_Should_Return_Ok_With_Paged_Result_When_Positions_Exist()
     {
         // Arrange
-        // Query asks for page 2 with pageSize 1 -> skip should be 1, take 1
+        // Query asks for page 2 with pageSize 1 -> skip should be 1, take should be 1
         var pagedQuery = new PagedQuery(page: 2, pageSize: 1);
         var query = new GetPositionsQuery(pagedQuery, NameFilter: null, IsDeleted: null);
 
-        var pageItems = new List<Position>
+        var pageItems = new List<PositionListItemDto>
         {
-            new("Manager", "MGR", true)
+            new(
+                Guid.NewGuid(),
+                "Manager",
+                "MGR",
+                false,
+                null
+            )
         };
 
         var mockReader = new Mock<IPositionReader>();
@@ -82,7 +88,7 @@ public class GetPositionsHandlerTests
                 It.Is<string?>(filter => filter == null),
                 It.Is<bool?>(isDeleted => isDeleted == false),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<Position>(), totalCount: 0));
+            .ReturnsAsync((new List<PositionListItemDto>(), totalCount: 0));
 
         var handler = new GetPositionsHandler(mockReader.Object);
 
@@ -122,10 +128,12 @@ public class GetPositionsHandlerTests
             .Setup(r => r.GetPagedAsync(
                 It.Is<int>(skip => skip == 0),
                 It.Is<int>(take => take == 5),
-                It.Is<string?>(filter => filter != null && filter.Contains("project", StringComparison.OrdinalIgnoreCase)),
+                It.Is<string?>(filter =>
+                    filter != null &&
+                    filter.Contains("project", StringComparison.OrdinalIgnoreCase)),
                 It.Is<bool?>(isDeleted => isDeleted == true),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((new List<Position>(), totalCount: 0));
+            .ReturnsAsync((new List<PositionListItemDto>(), totalCount: 0));
 
         var handler = new GetPositionsHandler(mockReader.Object);
 

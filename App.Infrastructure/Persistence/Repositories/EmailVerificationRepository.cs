@@ -1,15 +1,11 @@
-﻿using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Abstractions.Persistence.Repositories;
+﻿using App.Application.Abstractions.Persistence.Repositories;
 using App.Domain.Auth;
 using App.Infrastructure.Auth;
-using Microsoft.EntityFrameworkCore;
 
 namespace App.Infrastructure.Persistence.Repositories;
 
-public sealed class EmailVerificationRepository(AppDbContext db)
-    : IEmailVerificationReader, IEmailVerificationRepository
+public sealed class EmailVerificationRepository(AppDbContext db) : IEmailVerificationRepository
 {
-    // --- Writer -------------------------------------------------------------
     public string Add(Guid userId)
     {
         var (rawToken, tokenHash) = TokenGenerator.CreateTokenPair();
@@ -21,18 +17,5 @@ public sealed class EmailVerificationRepository(AppDbContext db)
 
         db.EmailVerifications.Add(emailVerification);
         return rawToken; // send this in the verify link
-    }
-
-    // --- Reader -------------------------------------------------------------
-    public async Task<EmailVerification?> GetByTokenHashAsync(string token, CancellationToken ct = default)
-    {
-        var tokenHash = TokenGenerator.Hash(token);
-
-        return await db.EmailVerifications
-            .AsNoTracking()
-            .FirstOrDefaultAsync(ev =>
-                ev.TokenHash == tokenHash &&
-                !ev.Used &&
-                ev.ExpiresAtUtc > DateTime.UtcNow, ct);
     }
 }

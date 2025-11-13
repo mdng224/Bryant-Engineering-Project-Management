@@ -5,7 +5,6 @@ using App.Application.Abstractions.Handlers;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Common.Results;
-using App.Application.EmployeePositions.Queries;
 using App.Application.Employees.Commands.RestoreEmployee;
 using App.Application.Employees.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -36,37 +35,22 @@ public static class EmployeeEndpoints
 
     private static async Task<IResult> HandleGetEmployees(
         [AsParameters] GetEmployeesRequest request,
-        [FromServices] IQueryHandler<GetEmployeesQuery, Result<PagedResult<EmployeeDto>>> getEmployeesHandler,
-        [FromServices] IQueryHandler<GetPositionsForEmployeesQuery, Result<IReadOnlyDictionary<Guid, IReadOnlyList<PositionMiniDto>>>>
-            getPositionsForEmployeesHandler,
+        [FromServices] IQueryHandler<GetEmployeesQuery, Result<PagedResult<EmployeeListItemDto>>> handler,
         CancellationToken ct = default)
     {
-        // 1) Employees
         var query = request.ToQuery();
-        var result  = await getEmployeesHandler.Handle(query, ct);
+        var result  = await handler.Handle(query, ct);
         if (!result.IsSuccess)
             return Problem(result.Error!.Value.Message);
         
-        var employeesPage = result.Value!;
-        var employeeIds = employeesPage.Items.Select(e => e.Id).Distinct().ToArray();
-        
-        // 2) Positions lookup (prefer a dedicated lookup query or cap the size)
-        var positionsQuery = new GetPositionsForEmployeesQuery(employeeIds);
-        var positionsResult = await getPositionsForEmployeesHandler.Handle(positionsQuery, ct);
-        if (!positionsResult.IsSuccess)
-            return Problem(positionsResult.Error!.Value.Message);
-        
-        var positionsByEmployee = positionsResult.Value!; // Dict<EmployeeId, List<PositionMiniDto>>
-        
-        // 3) Map to response
-        var response = result.Value!.ToGetEmployeesResponse(positionsByEmployee);
+        var response = result.Value!.ToGetEmployeesResponse();
         
         return Ok(response);
     }
     
     private static async Task<IResult> HandleRestoreEmployee(
         [FromRoute] Guid id,
-        [FromServices] ICommandHandler<RestoreEmployeeCommand, Result<EmployeeDto>> handler,
+        [FromServices] ICommandHandler<RestoreEmployeeCommand, Result<EmployeeListItemDto>> handler,
         CancellationToken ct)
     {
         var command = new RestoreEmployeeCommand(id);
@@ -84,7 +68,8 @@ public static class EmployeeEndpoints
             };
         }
 
-        var response = result.Value!.ToEmployeeResponse([]);
+        var response = result.Value!.ToEmployeeResponse();
+        
         return Ok(response);
     }
 }

@@ -8,6 +8,5 @@ public sealed record EmployeeSummaryResponse(
     string? PreferredName,
     string? Department,              // enum as string
     string? EmploymentType,          // enum as string
-    DateTimeOffset? HireDate,
-    bool IsActive                    // derived: EndDate == null
+    DateTimeOffset? HireDate
 );

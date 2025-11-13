@@ -11,7 +11,7 @@ public static class PositionMappers
             command.Code,
             command.RequiresLicense);
     
-    public static PositionDto ToDto(this Position position) =>
+    public static PositionListItemDto ToDto(this Position position) =>
         new(
             Id: position.Id,
             Name: position.Name,

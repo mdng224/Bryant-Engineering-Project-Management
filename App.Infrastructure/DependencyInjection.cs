@@ -48,16 +48,17 @@ public static class DependencyInjection
         // --- Repositories / Data access ---
         services.AddScoped<IUserReader, UserReader>();
         services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IEmployeeReader, EmployeeRepository>();
+        services.AddScoped<IEmployeeReader, EmployeeReader>();
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<IOutboxWriter, OutboxRepository>();
-        services.AddScoped<IPositionReader, PositionRepository>();
+        services.AddScoped<IPositionReader, PositionReader>();
         services.AddScoped<IPositionRepository, PositionRepository>();
-        services.AddScoped<IEmployeePositionReader, EmployeePositionRepository>();
+        services.AddScoped<IEmployeePositionReader, EmployeePositionReader>();
         services.AddScoped<IClientReader, ClientReader>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IProjectReader, ProjectReader>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
-        services.AddScoped<IScopeReader, ScopeRepository>();
+        services.AddScoped<IScopeReader, ScopeReader>();
         
         // --- Auth helpers (hashing + token creation) ---
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
@@ -67,7 +68,7 @@ public static class DependencyInjection
         services.AddOptions<EmailSettings>().Bind(config.GetSection("EmailSettings")).ValidateOnStart();
         services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
         services.AddScoped<IEmailSender, SmtpEmailSender>();
-        services.AddScoped<IEmailVerificationReader, EmailVerificationRepository>();
+        services.AddScoped<IEmailVerificationReader, EmailVerificationReader>();
         services.AddScoped<IEmailVerificationRepository, EmailVerificationRepository>();
 
         // --- Background worker ---

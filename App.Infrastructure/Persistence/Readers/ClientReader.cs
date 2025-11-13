@@ -39,59 +39,54 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
         bool? isDeleted = null,
         CancellationToken ct = default)
     {
-        // 2) Create base client query
-        var clients = db.ReadSet<Client>().ApplyDeletedFilter(isDeleted);
+        var clientQuery = db.ReadSet<Client>().ApplyDeletedFilter(isDeleted);
         
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {
             var pattern = $"%{normalizedNameFilter}%";
-            clients = clients.Where(c =>
+            clientQuery = clientQuery.Where(c =>
                 EF.Functions.ILike(c.FirstName ?? "", pattern) ||
                 EF.Functions.ILike(c.LastName  ?? "", pattern) ||
                 EF.Functions.ILike(c.Name      ?? "", pattern));
         }
-        
-        var query = clients.Select(c => new
-        {
-            Client = c,
-            TotalProjects = db.Projects
-                .IgnoreQueryFilters()
-                .Count(p => p.ClientId == c.Id),
-            TotalActiveProjects = db.Projects
-                .Count(p => p.ClientId == c.Id) // global filter keeps only active
-        });
 
-        
-        var totalCount = await query.CountAsync(ct);
+        var totalCount = await clientQuery.CountAsync(ct);
         if (totalCount == 0 || skip >= totalCount)
             return ([], totalCount);
-
-        var orderedQuery = query
+        
+        var projectQuery = db.ReadSet<Project>();
+        var queryWithCounts = clientQuery
+            .Select(c => new
+            {
+                Client = c,
+                TotalActiveProjects = projectQuery.Count(p => p.ClientId == c.Id),
+                TotalProjects       = projectQuery.IgnoreQueryFilters().Count(p => p.ClientId == c.Id)
+            });
+        
+        var items = await queryWithCounts
             .OrderByDescending(jq => jq.TotalActiveProjects)
             .ThenByDescending(jq => jq.TotalProjects)
             .ThenBy(jq => jq.Client.Name)
-            .ThenBy(jq => jq.Client.Id);
-            
-        var items = await orderedQuery
+            .ThenBy(jq => jq.Client.Id)
             .Skip(skip)
             .Take(take)
-            .Select(clid => new ClientListItemDto(
-                clid.Client.Id,
-                clid.Client.Name,                 // required
-                clid.TotalActiveProjects,
-                clid.TotalProjects,
-                clid.Client.FirstName,
-                clid.Client.LastName,
-                clid.Client.Email,
-                clid.Client.Phone,
-                clid.Client.Address,              // owned type is fine in projection
-                clid.Client.Note,
-                clid.Client.CreatedAtUtc,
-                clid.Client.UpdatedAtUtc,
-                clid.Client.DeletedAtUtc,
-                clid.Client.CreatedById,
-                clid.Client.UpdatedById,
-                clid.Client.DeletedById))
+            .Select(x => new ClientListItemDto(
+                x.Client.Id,
+                x.Client.Name,
+                x.TotalActiveProjects,
+                x.TotalProjects,
+                x.Client.FirstName,
+                x.Client.LastName,
+                x.Client.Email,
+                x.Client.Phone,
+                x.Client.Address,
+                x.Client.Note,
+                x.Client.CreatedAtUtc,
+                x.Client.UpdatedAtUtc,
+                x.Client.DeletedAtUtc,
+                x.Client.CreatedById,
+                x.Client.UpdatedById,
+                x.Client.DeletedById))
             .ToListAsync(ct);
         
         return (items, totalCount);

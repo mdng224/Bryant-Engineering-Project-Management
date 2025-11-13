@@ -20,6 +20,5 @@ public sealed record EmployeeResponse(
     IReadOnlyList<string> PositionNames,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc,
-    DateTimeOffset? DeletedAtUtc,
-    bool IsActive
+    DateTimeOffset? DeletedAtUtc
 );

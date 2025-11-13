@@ -10,14 +10,14 @@ using static App.Application.Common.R;
 namespace App.Application.Positions.Commands.UpdatePosition;
 
 public sealed class UpdatePositionHandler(IPositionReader reader, IUnitOfWork uow)
-    : ICommandHandler<UpdatePositionCommand, Result<PositionDto>>
+    : ICommandHandler<UpdatePositionCommand, Result<PositionListItemDto>>
 {
-    public async Task<Result<PositionDto>> Handle(UpdatePositionCommand command, CancellationToken ct)
+    public async Task<Result<PositionListItemDto>> Handle(UpdatePositionCommand command, CancellationToken ct)
     {
         var positionId = command.PositionId;
         var position = await reader.GetForUpdateAsync(positionId, ct);
         if (position is null)
-            return Fail<PositionDto>(code: "not_found", message: "Position not found.");
+            return Fail<PositionListItemDto>(code: "not_found", message: "Position not found.");
 
         position.Update(command.Name, command.Code, command.RequiresLicense);
         
@@ -27,13 +27,13 @@ public sealed class UpdatePositionHandler(IPositionReader reader, IUnitOfWork uo
         }
         catch (DbUpdateConcurrencyException)
         {
-            return Fail<PositionDto>(
+            return Fail<PositionListItemDto>(
                 code: "concurrency",
                 message: "The position was modified by another process.");
         }
         catch (DbUpdateException)
         {
-            return Fail<PositionDto>(
+            return Fail<PositionListItemDto>(
                 code: "conflict",
                 message: "A position with the same unique field (name/code) already exists.");
         }

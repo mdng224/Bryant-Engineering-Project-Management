@@ -3,28 +3,25 @@ using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Common.Results;
-using App.Application.Positions.Mappers;
 using App.Domain.Common;
-using App.Domain.Employees;
 using static App.Application.Common.R;
 
 namespace App.Application.Positions.Queries.GetPositions;
 
 public sealed class GetPositionsHandler(IPositionReader reader)
-    : IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionDto>>>
+    : IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionListItemDto>>>
 {
-    public async Task<Result<PagedResult<PositionDto>>> Handle(GetPositionsQuery query, CancellationToken ct)
+    public async Task<Result<PagedResult<PositionListItemDto>>> Handle(GetPositionsQuery query, CancellationToken ct)
     {
         var (page, pageSize, skip) = query.PagedQuery;
         var normalizedNameFilter = query.NameFilter?.ToNormalizedName();
-        var (positions, total) = await reader.GetPagedAsync(skip,
+        var (items, total) = await reader.GetPagedAsync(skip,
             pageSize,
             normalizedNameFilter,
             query.IsDeleted,
             ct);
 
-        var pagedResult = new PagedResult<Position>(positions, total, page, pageSize)
-            .Map(position => position.ToDto());
+        var pagedResult = new PagedResult<PositionListItemDto>(items, total, page, pageSize);
         
         return Ok(pagedResult);
     }

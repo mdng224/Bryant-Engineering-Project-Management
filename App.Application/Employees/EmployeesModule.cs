@@ -14,10 +14,10 @@ public static class EmployeesModule
     public static IServiceCollection AddEmployeesApplication(this IServiceCollection services)
     {
         // Queries
-        services.AddScoped<IQueryHandler<GetEmployeesQuery, Result<PagedResult<EmployeeDto>>>, GetEmployeesHandler>();
+        services.AddScoped<IQueryHandler<GetEmployeesQuery, Result<PagedResult<EmployeeListItemDto>>>, GetEmployeesHandler>();
 
         // Commands
-        services.AddScoped<ICommandHandler<RestoreEmployeeCommand, Result<EmployeeDto>>, RestoreEmployeeHandler>();
+        services.AddScoped<ICommandHandler<RestoreEmployeeCommand, Result<Unit>>, RestoreEmployeeHandler>();
         
         return services;
     }

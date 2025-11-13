@@ -2,12 +2,10 @@
 using App.Domain.Projects;
 using Microsoft.EntityFrameworkCore;
 
-namespace App.Infrastructure.Persistence.Repositories;
+namespace App.Infrastructure.Persistence.Readers;
 
-public class ScopeRepository(AppDbContext db) : IScopeReader
+public class ScopeReader(AppDbContext db) : IScopeReader
 {
-    // -------------------- Readers --------------------
-
     public async Task<IReadOnlyDictionary<Guid, string>> GetNamesByIdsAsync(
         IReadOnlyList<Guid> ids,
         CancellationToken ct = default)
@@ -15,8 +13,7 @@ public class ScopeRepository(AppDbContext db) : IScopeReader
         if (ids.Count == 0)
             return new Dictionary<Guid, string>();
         
-        var query = Query();
-        var scopeNames = await query
+        var scopeNames = await db.ReadSet<Scope>()
             .Where(s => ids.Contains(s.Id))
             .Select(s => new { s.Id, s.Name })
             .ToDictionaryAsync(map => map.Id,
@@ -24,11 +21,5 @@ public class ScopeRepository(AppDbContext db) : IScopeReader
                 ct);
 
         return scopeNames;
-    }
-    
-    private IQueryable<Scope> Query(bool includeDeleted = false)
-    {
-        var query = db.Scopes.AsNoTracking();
-        return includeDeleted ? query.IgnoreQueryFilters() : query;
     }
 }

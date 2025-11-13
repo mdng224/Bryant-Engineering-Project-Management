@@ -30,7 +30,7 @@ public static class PositionMappers
         return getPositionsQuery;
     }
     
-    public static GetPositionsResponse ToResponse(this PagedResult<PositionDto> pagedResult) =>
+    public static GetPositionsResponse ToResponse(this PagedResult<PositionListItemDto> pagedResult) =>
         new(
             [
                 .. pagedResult.Items.Select(pd => pd.ToResponse())
@@ -40,10 +40,10 @@ public static class PositionMappers
             pagedResult.PageSize,
             pagedResult.TotalPages);
 
-    public static PositionResponse ToResponse(this PositionDto dto) =>
-        new(Id: dto.Id,
-            Name: dto.Name,
-            Code: dto.Code,
-            RequiresLicense: dto.RequiresLicense,
-            DeletedAtUtc: dto.DeletedAtUtc);
+    public static PositionResponse ToResponse(this PositionListItemDto listItemDto) =>
+        new(Id: listItemDto.Id,
+            Name: listItemDto.Name,
+            Code: listItemDto.Code,
+            RequiresLicense: listItemDto.RequiresLicense,
+            DeletedAtUtc: listItemDto.DeletedAtUtc);
 }

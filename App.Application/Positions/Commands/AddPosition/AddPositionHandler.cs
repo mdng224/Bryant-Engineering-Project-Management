@@ -11,9 +11,9 @@ using static App.Application.Common.R;
 namespace App.Application.Positions.Commands.AddPosition;
 
 public class AddPositionHandler(IPositionReader reader, IPositionRepository repository, IUnitOfWork uow)
-    : ICommandHandler<AddPositionCommand, Result<PositionDto>>
+    : ICommandHandler<AddPositionCommand, Result<PositionListItemDto>>
 {
-    public async Task<Result<PositionDto>> Handle(AddPositionCommand command, CancellationToken ct)
+    public async Task<Result<PositionListItemDto>> Handle(AddPositionCommand command, CancellationToken ct)
     {
         var normalizedName = command.Name.ToNormalizedName();
         var matchedPositions = await reader.GetByNameIncludingDeletedAsync(normalizedName, ct);
@@ -21,7 +21,7 @@ public class AddPositionHandler(IPositionReader reader, IPositionRepository repo
         var tombstonePosition = matchedPositions.FirstOrDefault(p => p.DeletedAtUtc is not null);
         
         if (activePosition is not null)
-            return Fail<PositionDto>(code: "conflict", message: "A position with the same name exists.");
+            return Fail<PositionListItemDto>(code: "conflict", message: "A position with the same name exists.");
         
         if (tombstonePosition is not null)
         {

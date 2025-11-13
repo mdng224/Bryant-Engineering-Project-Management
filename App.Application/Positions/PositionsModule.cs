@@ -16,13 +16,13 @@ public static class PositionsModule
     public static IServiceCollection AddPositionsApplication(this IServiceCollection services)
     {
         // Queries
-        services.AddScoped<IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionDto>>>, GetPositionsHandler>();
+        services.AddScoped<IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionListItemDto>>>, GetPositionsHandler>();
 
         // Commands
-        services.AddScoped<ICommandHandler<AddPositionCommand, Result<PositionDto>>, AddPositionHandler>();
+        services.AddScoped<ICommandHandler<AddPositionCommand, Result<PositionListItemDto>>, AddPositionHandler>();
         services.AddScoped<ICommandHandler<DeletePositionCommand, Result<Unit>>, DeletePositionHandler>();
-        services.AddScoped<ICommandHandler<UpdatePositionCommand, Result<PositionDto>>, UpdatePositionHandler>();
-        services.AddScoped<ICommandHandler<RestorePositionCommand, Result<PositionDto>>, RestorePositionHandler>();
+        services.AddScoped<ICommandHandler<UpdatePositionCommand, Result<PositionListItemDto>>, UpdatePositionHandler>();
+        services.AddScoped<ICommandHandler<RestorePositionCommand, Result<PositionListItemDto>>, RestorePositionHandler>();
         
         return services;
     }

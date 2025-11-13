@@ -63,7 +63,7 @@ public static class PositionEndpoints
     
     private static async Task<IResult> HandleAddPosition(
         [FromBody] AddProjectRequest request,
-        [FromServices] ICommandHandler<AddPositionCommand, Result<PositionDto>> handler,
+        [FromServices] ICommandHandler<AddPositionCommand, Result<PositionListItemDto>> handler,
         CancellationToken ct)
     {
         var command = request.ToCommand();
@@ -108,7 +108,7 @@ public static class PositionEndpoints
     
     private static async Task<IResult> HandleGetPositions(
         [AsParameters] GetPositionsRequest request,
-        [FromServices] IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionDto>>> handler,
+        [FromServices] IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionListItemDto>>> handler,
         CancellationToken ct)
     {
         var query  = request.ToQuery();
@@ -124,7 +124,7 @@ public static class PositionEndpoints
     
     private static async Task<IResult> HandleRestorePosition(
         [FromRoute] Guid id,
-        [FromServices] ICommandHandler<RestorePositionCommand, Result<PositionDto>> handler,
+        [FromServices] ICommandHandler<RestorePositionCommand, Result<PositionListItemDto>> handler,
         CancellationToken ct)
     {
         var command = new RestorePositionCommand(id);
@@ -149,7 +149,7 @@ public static class PositionEndpoints
     private static async Task<IResult> HandleUpdatePosition(
         [FromRoute] Guid id,
         UpdateProjectRequest request,
-        [FromServices] ICommandHandler<UpdatePositionCommand, Result<PositionDto>> handler,
+        [FromServices] ICommandHandler<UpdatePositionCommand, Result<PositionListItemDto>> handler,
         CancellationToken ct)
     {
         var command = request.ToCommand(id);
