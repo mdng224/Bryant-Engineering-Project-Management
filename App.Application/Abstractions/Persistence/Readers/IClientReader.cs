@@ -12,7 +12,7 @@ public interface IClientReader
     Task<(IReadOnlyList<ClientListItemDto> items, int totalCount)> GetPagedAsync(
         int skip,
         int take,
-        string? normalizedNameFilter = null,
-        bool? isDeleted = null,
+        string? normalizedNameFilter,
+        bool hasActiveProject,
         CancellationToken ct = default);
 }

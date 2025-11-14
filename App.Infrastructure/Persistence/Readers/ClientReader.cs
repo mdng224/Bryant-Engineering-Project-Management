@@ -35,11 +35,11 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
     public async Task<(IReadOnlyList<ClientListItemDto> items, int totalCount)> GetPagedAsync(
         int skip,
         int take,
-        string? normalizedNameFilter = null,
-        bool? isDeleted = null,
+        string? normalizedNameFilter,
+        bool hasActiveProject,
         CancellationToken ct = default)
     {
-        var clientQuery = db.ReadSet<Client>().ApplyDeletedFilter(isDeleted);
+        var clientQuery = db.ReadSet<Client>();
         
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {
@@ -49,20 +49,29 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
                 EF.Functions.ILike(c.LastName  ?? "", pattern) ||
                 EF.Functions.ILike(c.Name      ?? "", pattern));
         }
+        
 
-        var totalCount = await clientQuery.CountAsync(ct);
+        var queryWithCounts =
+            from c in clientQuery
+            join p in db.ReadSet<Project>().IgnoreQueryFilters()
+                on c.Id equals p.ClientId into projGroup
+            from pg in projGroup.DefaultIfEmpty()
+            group pg by c into g
+            select new
+            {
+                Client = g.Key,
+                TotalProjects = g.Count(p => p != null),
+                TotalActiveProjects = g.Count(p => p != null && p.DeletedAtUtc == null)
+            };
+
+        queryWithCounts = hasActiveProject
+            ? queryWithCounts.Where(x => x.TotalActiveProjects > 0)
+            : queryWithCounts.Where(x => x.TotalActiveProjects == 0);
+
+        var totalCount = await queryWithCounts.CountAsync(ct);
         if (totalCount == 0 || skip >= totalCount)
             return ([], totalCount);
-        
-        var projectQuery = db.ReadSet<Project>();
-        var queryWithCounts = clientQuery
-            .Select(c => new
-            {
-                Client = c,
-                TotalActiveProjects = projectQuery.Count(p => p.ClientId == c.Id),
-                TotalProjects       = projectQuery.IgnoreQueryFilters().Count(p => p.ClientId == c.Id)
-            });
-        
+
         var items = await queryWithCounts
             .OrderByDescending(jq => jq.TotalActiveProjects)
             .ThenByDescending(jq => jq.TotalProjects)

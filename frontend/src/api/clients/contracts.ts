@@ -18,7 +18,7 @@ export type GetClientsRequest = {
   page: number;
   pageSize: number;
   nameFilter: string | null;
-  isDeleted: boolean;
+  hasActiveProject: boolean;
 };
 
 export type GetClientsResponse = {

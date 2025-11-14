@@ -17,7 +17,7 @@ public sealed class GetClientsHandler(IClientReader clientReader)
         var normalized = query.NameFilter?.ToNormalizedName();
 
         var (items, total) = await clientReader.GetPagedAsync(
-            skip, pageSize, normalized, query.IsDeleted, ct);
+            skip, pageSize, normalized, query.HasActiveProject, ct);
         
         var pagedResult = new PagedResult<ClientListItemDto>(items, total, page, pageSize);
 

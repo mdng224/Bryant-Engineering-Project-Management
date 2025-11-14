@@ -8,12 +8,7 @@
         placeholder="Search by project name..."
         @commit="commitNameNow"
       />
-      <deleted-filter
-        v-model="deletedFilter"
-        label-1="Open"
-        label-2="Closed"
-        @change="val => setQuery({ name: name || null, isDeleted: val ?? false })"
-      />
+      <boolean-filter v-model="deletedFilter" :options="deletedOptions" />
     </div>
     <button
       class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
@@ -84,7 +79,7 @@
     type ProjectResponse,
     type ProjectSummaryResponse,
   } from '@/api/projects';
-  import DeletedFilter from '@/components/DeletedFilter.vue';
+  import BooleanFilter from '@/components/BooleanFilter.vue';
   import type { FieldDef } from '@/components/dialogs/DetailsDialog.vue';
   import DetailsDialog from '@/components/dialogs/DetailsDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
@@ -95,8 +90,9 @@
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { CirclePlus, Eye, Lock, LockOpen } from 'lucide-vue-next';
-  import { computed, onBeforeUnmount, ref, watch } from 'vue';
+  import { CheckCircle2, CirclePlus, Eye, Lock, LockOpen, Trash2 } from 'lucide-vue-next';
+
+  import { computed, onBeforeUnmount, ref } from 'vue';
 
   const actionButtonClass =
     'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
@@ -148,19 +144,21 @@
   /* ------------------------------- Filtering ------------------------------ */
   const deletedFilter = ref(false); // default: show only active (not deleted)
 
+  const deletedOptions = [
+    { value: false, label: 'Active', icon: CheckCircle2, color: 'text-emerald-400' },
+    { value: true, label: 'Deleted', icon: Trash2, color: 'text-rose-400' },
+  ];
+
   const {
     input: nameFilter, // bound to v-model
     debounced: name, // used in fetch
     setNow: commitNameNow, // call on Enter
     cancel: cancelNameDebounce, // cleanup on unmount
   } = useDebouncedRef('', 500);
-  onBeforeUnmount(cancelNameDebounce);
 
-  watch([name, deletedFilter], ([n, del]) => {
-    setQuery({
-      name: n || null,
-      isDeleted: del, // keep false as false, only null stays null
-    });
+  onBeforeUnmount(() => {
+    cancelNameDebounce();
+    destroy();
   });
 
   /* ------------------------------- Fetching ------------------------------- */
@@ -192,8 +190,11 @@
     name: name.value ?? null,
     isDeleted: deletedFilter.value,
   }));
-  const { table, loading, totalCount, totalPages, pagination, setQuery, setPageSize } =
-    useDataTable<ProjectSummaryResponse, ProjectQuery>(columns, fetchProjects, query);
+
+  const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<
+    ProjectSummaryResponse,
+    typeof query.value
+  >(columns, fetchProjects, query);
 
   /* ------------------------------- Dialogs/UX ----------------------------- */
   const addDialogIsOpen = ref(false);

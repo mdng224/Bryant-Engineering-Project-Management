@@ -4,7 +4,7 @@
   <div class="flex items-center justify-between pb-4">
     <div class="flex gap-4">
       <table-search v-model="nameFilter" placeholder="Search position name..." @commit="commit" />
-      <deleted-filter v-model="deletedFilter" label-1="Active" label-2="Deleted" />
+      <boolean-filter v-model="deletedFilter" :options="deletedOptions" />
     </div>
 
     <button
@@ -111,7 +111,7 @@
     PositionResponse,
   } from '@/api/positions/contracts';
   import { positionService } from '@/api/positions/services';
-  import DeletedFilter from '@/components/DeletedFilter.vue';
+  import BooleanFilter from '@/components/BooleanFilter.vue';
   import AddPositionDialog from '@/components/dialogs/AddPositionDialog.vue';
   import DeleteDialog from '@/components/dialogs/DeleteDialog.vue';
   import EditPositionDialog from '@/components/dialogs/EditPositionDialog.vue';
@@ -123,7 +123,7 @@
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { CirclePlus, Lock, LockOpen, Pencil } from 'lucide-vue-next';
+  import { CheckCircle2, CirclePlus, Lock, LockOpen, Pencil, Trash2 } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref } from 'vue';
 
   const errorMessage = ref<string | null>(null);
@@ -154,7 +154,12 @@
   ];
 
   /* ------------------------------- Filtering ------------------------------ */
-  const deletedFilter = ref(false); // default: show only active (not deleted)
+  const deletedFilter = ref<boolean | null>(false); // default Active (not deleted)
+
+  const deletedOptions = [
+    { value: false, label: 'Active', icon: CheckCircle2, color: 'text-emerald-400' },
+    { value: true, label: 'Inactive', icon: Trash2, color: 'text-rose-400' },
+  ];
 
   const {
     input: nameFilter, // bound to v-model
@@ -169,14 +174,14 @@
   });
 
   /* ------------------------------ Fetching ------------------------------- */
-  type PosQuery = { position: string | null; isDeleted: boolean };
+  type PosQuery = { position: string | null; deletedFilter: boolean | null };
 
   const fetchPositions = async ({ page, pageSize, query }: FetchParams<PosQuery>) => {
     const params: GetPositionsRequest = {
       page,
       pageSize,
       nameFilter: query?.position || null,
-      isDeleted: query?.isDeleted ?? false,
+      isDeleted: query?.deletedFilter ?? false,
     };
     const response: GetPositionsResponse = await positionService.get(params);
 
@@ -189,9 +194,9 @@
     };
   };
 
-  const query = computed(() => ({
+  const query = computed<PosQuery>(() => ({
     position: position.value ?? null,
-    isDeleted: deletedFilter.value,
+    deletedFilter: deletedFilter.value ?? null,
   }));
 
   const {
@@ -200,7 +205,6 @@
     totalCount,
     totalPages,
     pagination,
-    setQuery,
     setPageSize,
     fetchNow: refetch,
     destroy,

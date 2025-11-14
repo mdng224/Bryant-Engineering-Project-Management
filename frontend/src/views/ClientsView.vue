@@ -4,7 +4,7 @@
   <div class="flex items-center justify-between pb-4">
     <div class="flex gap-4">
       <table-search v-model="nameFilter" placeholder="Search client name..." @commit="commit" />
-      <deleted-filter v-model="deletedFilter" label-1="Active" label-2="Deleted" />
+      <boolean-filter v-model="hasActiveProject" :options="activeOptions" />
     </div>
 
     <button
@@ -68,7 +68,7 @@
     GetClientsResponse,
   } from '@/api/clients/contracts';
   import type { Address } from '@/api/common';
-  import DeletedFilter from '@/components/DeletedFilter.vue';
+  import BooleanFilter from '@/components/BooleanFilter.vue';
   import DetailsDialog, { type FieldDef } from '@/components/dialogs/DetailsDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
@@ -78,7 +78,7 @@
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { CirclePlus, Eye } from 'lucide-vue-next';
+  import { CheckCircle2, CirclePlus, Eye, Lock } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref } from 'vue';
 
   /* ------------------------------- Constants ------------------------------ */
@@ -153,7 +153,12 @@
   ];
 
   /* ------------------------------- Filtering ------------------------------ */
-  const deletedFilter = ref(false); // default: show only active (not deleted)
+  const hasActiveProject = ref<boolean>(true); // default Active
+
+  const activeOptions = [
+    { value: true, label: 'Active', icon: CheckCircle2, color: 'text-emerald-400' },
+    { value: false, label: 'Inactive', icon: Lock, color: 'text-rose-400' },
+  ];
 
   const {
     input: nameFilter, // bound to v-model
@@ -168,7 +173,7 @@
   });
 
   /* ------------------------------- Fetching ------------------------------- */
-  type ClientQuery = { name: string | null; isDeleted: boolean };
+  type ClientQuery = { name: string | null; hasActiveProject: boolean };
 
   const clientDetails = ref<ClientResponse[]>([]);
   const clientDetailsById = computed(() => {
@@ -184,7 +189,7 @@
       page,
       pageSize,
       nameFilter: query?.name || null,
-      isDeleted: query?.isDeleted || false,
+      hasActiveProject: query?.hasActiveProject ?? true,
     };
     const response: GetClientsResponse = await clientService.get(request);
     clientDetails.value = response.clientListItemResponses.map(clir => clir.details);
@@ -200,7 +205,7 @@
 
   const query = computed(() => ({
     name: name.value ?? null,
-    isDeleted: deletedFilter.value,
+    hasActiveProject: hasActiveProject.value,
   }));
 
   const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<

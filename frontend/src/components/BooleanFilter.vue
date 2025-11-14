@@ -35,20 +35,26 @@
 </template>
 
 <script setup lang="ts">
-  import { CheckCircle2, ChevronDown, Lock } from 'lucide-vue-next';
-  import { computed, ref, watch } from 'vue';
+  import { ChevronDown } from 'lucide-vue-next';
+  import type { Component } from 'vue';
+  import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-  const props = defineProps<{ modelValue: boolean | null; label1: string; label2: string }>();
+  type BoolOption = {
+    value: boolean | null;
+    label: string;
+    icon: Component;
+    color: string;
+  };
+
+  const props = defineProps<{
+    modelValue: boolean | null;
+    options: BoolOption[];
+  }>();
 
   const emit = defineEmits<{
     (e: 'update:modelValue', value: boolean | null): void;
     (e: 'change', value: boolean | null): void;
   }>();
-
-  const options = [
-    { value: false, label: props.label1, icon: CheckCircle2, color: 'text-emerald-400' },
-    { value: true, label: props.label2, icon: Lock, color: 'text-rose-400' },
-  ];
 
   const isOpen = ref(false);
   const localValue = ref<boolean | null>(props.modelValue ?? null);
@@ -61,7 +67,7 @@
   );
 
   const currentOption = computed(
-    () => options.find(o => o.value === localValue.value) ?? options[0],
+    () => props.options.find(o => o.value === localValue.value) ?? props.options[0],
   );
 
   const selectOption = (val: boolean | null) => {
@@ -71,11 +77,11 @@
     isOpen.value = false;
   };
 
-  // Optional: close dropdown when clicking outside
   const handleClickOutside = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
     if (!target.closest('.relative.inline-block')) isOpen.value = false;
   };
 
-  window.addEventListener('click', handleClickOutside);
+  onMounted(() => window.addEventListener('click', handleClickOutside));
+  onBeforeUnmount(() => window.removeEventListener('click', handleClickOutside));
 </script>

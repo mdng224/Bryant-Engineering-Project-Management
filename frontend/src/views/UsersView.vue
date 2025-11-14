@@ -3,12 +3,7 @@
 
   <div class="flex gap-4 pb-4">
     <table-search v-model="emailFilter" placeholder="Search email…" @commit="commit" />
-    <deleted-filter
-      v-model="deletedFilter"
-      label-1="Active"
-      label-2="Deleted"
-      @change="val => setQuery({ email: email || null, isDeleted: val ?? false })"
-    />
+    <boolean-filter v-model="deletedFilter" :options="deletedOptions" />
   </div>
 
   <p
@@ -19,7 +14,7 @@
     aria-live="assertive"
     tabindex="-1"
   >
-    <alter-triangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+    <alert-triangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
     <span>{{ errorMessage }}</span>
   </p>
 
@@ -97,7 +92,7 @@
 <script setup lang="ts">
   import { extractApiError } from '@/api/error';
   import { userService } from '@/api/users';
-  import DeletedFilter from '@/components/DeletedFilter.vue';
+  import BooleanFilter from '@/components/BooleanFilter.vue';
   import DeleteDialog from '@/components/dialogs/DeleteDialog.vue';
   import EditUserDialog from '@/components/dialogs/EditUserDialog.vue';
   import RestoreDialog from '@/components/dialogs/RestoreDialog.vue';
@@ -108,7 +103,8 @@
   import { useAuth } from '@/composables/useAuth';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { Lock, LockOpen, Pencil } from 'lucide-vue-next';
+  import { AlertTriangle, CheckCircle2, Lock, LockOpen, Pencil, Trash2 } from 'lucide-vue-next';
+
   import { computed, onBeforeUnmount, ref, watch } from 'vue';
   import type { GetUsersRequest, GetUsersResponse, UserResponse, UserStatus } from '../api/users';
   import { useDebouncedRef } from '../composables/useDebouncedRef';
@@ -175,6 +171,11 @@
 
   /* ---------------------------- Filtering ---------------------------- */
   const deletedFilter = ref(false); // default: show only active (not deleted)
+
+  const deletedOptions = [
+    { value: false, label: 'Active', icon: CheckCircle2, color: 'text-emerald-400' },
+    { value: true, label: 'Inactive', icon: Trash2, color: 'text-rose-400' },
+  ];
 
   const {
     input: emailFilter, // bind to v-model

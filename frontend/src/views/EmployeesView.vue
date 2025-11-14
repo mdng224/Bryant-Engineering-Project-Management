@@ -4,7 +4,7 @@
   <div class="flex items-center justify-between pb-4">
     <div class="flex gap-4">
       <table-search v-model="nameFilter" placeholder="Search by name..." @commit="commitNameNow" />
-      <deleted-filter v-model="deletedFilter" label-1="Active" label-2="Deleted" />
+      <boolean-filter v-model="deletedFilter" :options="deletedOptions" />
     </div>
     <button
       class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
@@ -83,7 +83,7 @@
     GetEmployeesResponse,
   } from '@/api/employees';
   import { employeeService } from '@/api/employees';
-  import DeletedFilter from '@/components/DeletedFilter.vue';
+  import BooleanFilter from '@/components/BooleanFilter.vue';
   import DetailsDialog, { type FieldDef } from '@/components/dialogs/DetailsDialog.vue';
   import EditEmployeeDialog from '@/components/dialogs/EditEmployeeDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
@@ -94,7 +94,8 @@
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { CirclePlus, Eye, Lock, LockOpen } from 'lucide-vue-next';
+  import { CheckCircle2, CirclePlus, Eye, Lock, LockOpen, Trash2 } from 'lucide-vue-next';
+
   import { computed, onBeforeUnmount, ref } from 'vue';
 
   /* ------------------------------- Constants ------------------------------ */
@@ -172,10 +173,14 @@
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
   ];
 
-  /* ---------------------------- Deleted Filter State ---------------------------- */
+  /* ------------------------------- Filtering ------------------------------ */
   const deletedFilter = ref(false); // default: show only active (not deleted)
 
-  /* ------------------------------- Searching ------------------------------ */
+  const deletedOptions = [
+    { value: false, label: 'Active', icon: CheckCircle2, color: 'text-emerald-400' },
+    { value: true, label: 'Inactive', icon: Trash2, color: 'text-rose-400' },
+  ];
+
   const {
     input: nameFilter, // bound to v-model
     debounced: name, // used in fetch

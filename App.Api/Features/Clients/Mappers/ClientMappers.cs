@@ -28,7 +28,7 @@ public static class ClientMappers
     {
         var normalizedNameFilter = (request.NameFilter ?? string.Empty).ToNormalizedName();
         var pagedQuery                = new PagedQuery(request.Page, request.PageSize);
-        var getClientsQuery           = new GetClientsQuery(pagedQuery, normalizedNameFilter, request.IsDeleted);
+        var getClientsQuery           = new GetClientsQuery(pagedQuery, normalizedNameFilter, request.HasActiveProject);
 
         return getClientsQuery;
     }
