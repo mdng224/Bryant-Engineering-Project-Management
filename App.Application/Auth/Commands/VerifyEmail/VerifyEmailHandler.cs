@@ -1,6 +1,7 @@
 ﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
 using App.Application.Abstractions.Persistence.Readers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Common.Results;
 using App.Domain.Auth;
 using App.Domain.Common;
@@ -10,9 +11,9 @@ using static App.Application.Common.R;
 namespace App.Application.Auth.Commands.VerifyEmail;
 
 public sealed class VerifyEmailHandler(
-    IEmailVerificationReader emailVerificationReader,
+    IEmailVerificationRepository emailVerificationRepo,
     IEmployeeReader employeeReader,
-    IUserReader userReader,
+    IUserRepository userRepo,
     IUnitOfWork uow) : ICommandHandler<VerifyEmailCommand, Result<VerifyEmailResult>>
 {
     public async Task<Result<VerifyEmailResult>> Handle(VerifyEmailCommand command, CancellationToken ct)
@@ -20,13 +21,13 @@ public sealed class VerifyEmailHandler(
         if (string.IsNullOrWhiteSpace(command.Token))
             return Ok(new VerifyEmailResult(VerifyEmailOutcome.Invalid));
 
-        var verification = await emailVerificationReader.GetByTokenHashAsync(command.Token, ct);
+        var verification = await emailVerificationRepo.GetForUpdateByTokenHashAsync(command.Token, ct);
         
         var outcome = DetermineOutcome(verification, DateTime.UtcNow);
         if (outcome is not VerifyEmailOutcome.Ok)
             return Ok(new VerifyEmailResult(outcome));
         
-        var user = await userReader.GetActiveByIdAsync(verification!.UserId, ct);
+        var user = await userRepo.GetForUpdateAsync(verification!.UserId, ct);
         if (user is null)
             return Ok(new VerifyEmailResult(VerifyEmailOutcome.Invalid));
 

@@ -33,14 +33,6 @@ public sealed class UserReader(AppDbContext db) : IUserReader
         return user;
     }
 
-    public async Task<User?> GetActiveByIdAsync(Guid userId, CancellationToken ct = default)
-    {
-        var user = await db.ReadSet<User>()
-            .FirstOrDefaultAsync(u => u.DeletedAtUtc == null && u.Id == userId, ct);
-
-        return user;
-    }
-
     public async Task<(IReadOnlyList<UserDto> items, int totalCount)> GetPagedAsync(
         int skip,
         int take,

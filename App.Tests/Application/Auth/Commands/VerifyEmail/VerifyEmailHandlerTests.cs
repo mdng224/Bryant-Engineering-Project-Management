@@ -1,5 +1,6 @@
 ﻿using App.Application.Abstractions.Persistence;
 using App.Application.Abstractions.Persistence.Readers;
+using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Auth.Commands.VerifyEmail;
 using App.Domain.Auth;
 using App.Domain.Employees;
@@ -12,13 +13,13 @@ namespace App.Tests.Application.Auth.Commands.VerifyEmail;
 
 public sealed class VerifyEmailHandlerTests
 {
-     private readonly Mock<IEmailVerificationReader> _verReader = new();
-    private readonly Mock<IUserReader> _userReader = new();
+    private readonly Mock<IEmailVerificationRepository> _verRepo = new();
+    private readonly Mock<IUserRepository> _userRepo = new();
     private readonly Mock<IEmployeeReader> _employeeReader = new();
     private readonly Mock<IUnitOfWork> _uow = new();
 
     private VerifyEmailHandler CreateSut() =>
-        new(_verReader.Object, _employeeReader.Object, _userReader.Object, _uow.Object);
+        new(_verRepo.Object, _employeeReader.Object, _userRepo.Object, _uow.Object);
 
     private static EmailVerification Verification(Guid userId, DateTime expiresAtUtc) =>
         new(userId, tokenHash: "hash", expiresAtUtc);
@@ -30,7 +31,8 @@ public sealed class VerifyEmailHandlerTests
         return ev;
     }
 
-    private static User PendingUser(string email) => new(email, passwordHash: "hash", roleId: RoleIds.User);
+    private static User PendingUser(string email) =>
+        new(email, passwordHash: "hash", roleId: RoleIds.User);
 
     // =============== TESTS (AAA) ===============
 
@@ -48,8 +50,8 @@ public sealed class VerifyEmailHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value!.Outcome.Should().Be(VerifyEmailOutcome.Invalid);
 
-        _verReader.VerifyNoOtherCalls();
-        _userReader.VerifyNoOtherCalls();
+        _verRepo.VerifyNoOtherCalls();
+        _userRepo.VerifyNoOtherCalls();
         _employeeReader.VerifyNoOtherCalls();
         _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -59,8 +61,8 @@ public sealed class VerifyEmailHandlerTests
     {
         // Arrange
         var sut = CreateSut();
-        _verReader.Setup(r => r.GetByTokenHashAsync("t", It.IsAny<CancellationToken>()))
-                  .ReturnsAsync((EmailVerification?)null);
+        _verRepo.Setup(r => r.GetForUpdateByTokenHashAsync("t", It.IsAny<CancellationToken>()))
+                .ReturnsAsync((EmailVerification?)null);
 
         // Act
         var result = await sut.Handle(new VerifyEmailCommand("t"), CancellationToken.None);
@@ -77,8 +79,8 @@ public sealed class VerifyEmailHandlerTests
         var sut = CreateSut();
         var ev = UsedVerification(Guid.NewGuid(), DateTime.UtcNow.AddMinutes(10));
 
-        _verReader.Setup(evr => evr.GetByTokenHashAsync("t", It.IsAny<CancellationToken>()))
-                  .ReturnsAsync(ev);
+        _verRepo.Setup(evr => evr.GetForUpdateByTokenHashAsync("t", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(ev);
 
         // Act
         var result = await sut.Handle(new VerifyEmailCommand("t"), CancellationToken.None);
@@ -95,8 +97,8 @@ public sealed class VerifyEmailHandlerTests
         var sut = CreateSut();
         var ev = Verification(Guid.NewGuid(), DateTime.UtcNow.AddSeconds(-1));
 
-        _verReader.Setup(evr => evr.GetByTokenHashAsync("t", It.IsAny<CancellationToken>()))
-                  .ReturnsAsync(ev);
+        _verRepo.Setup(evr => evr.GetForUpdateByTokenHashAsync("t", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(ev);
 
         // Act
         var result = await sut.Handle(new VerifyEmailCommand("t"), CancellationToken.None);
@@ -115,11 +117,11 @@ public sealed class VerifyEmailHandlerTests
         var ev = Verification(userId, DateTime.UtcNow.AddMinutes(5));
         var user = PendingUser("alice@company.com");
 
-        _verReader.Setup(r => r.GetByTokenHashAsync("t", It.IsAny<CancellationToken>()))
-                  .ReturnsAsync(ev);
+        _verRepo.Setup(r => r.GetForUpdateByTokenHashAsync("t", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(ev);
 
-        _userReader.Setup(ur => ur.GetActiveByIdAsync(userId, It.IsAny<CancellationToken>()))
-                   .ReturnsAsync(user);
+        _userRepo.Setup(ur => ur.GetForUpdateAsync(userId, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(user);
 
         _employeeReader.Setup(er => er.GetByCompanyEmailAsync("alice@company.com", It.IsAny<CancellationToken>()))
                        .ReturnsAsync(new Employee("Alice", "Example"));
@@ -143,11 +145,11 @@ public sealed class VerifyEmailHandlerTests
         var ev = Verification(userId, DateTime.UtcNow.AddMinutes(5));
         var user = PendingUser("bob@other.com");
 
-        _verReader.Setup(r => r.GetByTokenHashAsync("t", It.IsAny<CancellationToken>()))
-                  .ReturnsAsync(ev);
+        _verRepo.Setup(r => r.GetForUpdateByTokenHashAsync("t", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(ev);
 
-        _userReader.Setup(ur => ur.GetActiveByIdAsync(userId, It.IsAny<CancellationToken>()))
-                   .ReturnsAsync(user);
+        _userRepo.Setup(ur => ur.GetForUpdateAsync(userId, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(user);
 
         _employeeReader.Setup(er => er.GetByCompanyEmailAsync("bob@other.com", It.IsAny<CancellationToken>()))
                        .ReturnsAsync((Employee?)null);
@@ -174,10 +176,11 @@ public sealed class VerifyEmailHandlerTests
         user.MarkEmailVerified();
         user.Activate(); // ensure not PendingEmail
 
-        _verReader.Setup(evr => evr.GetByTokenHashAsync("t", It.IsAny<CancellationToken>()))
-                  .ReturnsAsync(ev);
-        _userReader.Setup(ur => ur.GetActiveByIdAsync(userId, It.IsAny<CancellationToken>()))
-                   .ReturnsAsync(user);
+        _verRepo.Setup(evr => evr.GetForUpdateByTokenHashAsync("t", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(ev);
+
+        _userRepo.Setup(ur => ur.GetForUpdateAsync(userId, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(user);
 
         // Act
         var result = await sut.Handle(new VerifyEmailCommand("t"), CancellationToken.None);

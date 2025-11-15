@@ -4,5 +4,4 @@ namespace App.Application.Abstractions.Persistence.Readers;
 
 public interface IEmailVerificationReader
 {
-    Task<EmailVerification?> GetByTokenHashAsync(string token, CancellationToken ct = default);
 }

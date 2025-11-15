@@ -69,7 +69,6 @@ public static class DependencyInjection
         services.AddOptions<EmailSettings>().Bind(config.GetSection("EmailSettings")).ValidateOnStart();
         services.Configure<EmailSettings>(config.GetSection("EmailSettings"));
         services.AddScoped<IEmailSender, SmtpEmailSender>();
-        services.AddScoped<IEmailVerificationReader, EmailVerificationReader>();
         services.AddScoped<IEmailVerificationRepository, EmailVerificationRepository>();
 
         // --- Background worker ---
