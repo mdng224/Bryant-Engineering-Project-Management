@@ -79,17 +79,12 @@
           </div>
         </div>
 
-        <!-- Error -->
-        <p
+        <app-alert
           v-if="errorMessage"
-          class="flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
-          role="alert"
-          aria-live="assertive"
-          tabindex="-1"
-        >
-          <alter-triangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
-          <span>{{ errorMessage }}</span>
-        </p>
+          :message="errorMessage"
+          variant="error"
+          :icon="AlertTriangle"
+        />
 
         <!-- Submit -->
         <button
@@ -118,13 +113,13 @@
   import type { LoginRequest } from '@/api/auth';
   import { authService } from '@/api/auth/';
   import type { ApiErrorResponse } from '@/api/error';
+  import AppAlert from '@/components/AppAlert.vue';
   import { useAuth } from '@/composables/useAuth';
   import { useAuthFields } from '@/composables/useAuthFields';
   import { isAxiosError } from 'axios';
-  import { Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
+  import { AlertTriangle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
   import { computed, nextTick, onMounted, ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-
   const route = useRoute();
   const router = useRouter();
   const { ensureAuthState } = useAuth();

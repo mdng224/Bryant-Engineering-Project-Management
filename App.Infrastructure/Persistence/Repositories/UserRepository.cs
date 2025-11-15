@@ -1,7 +1,6 @@
 ﻿using App.Application.Abstractions.Persistence.Repositories;
 using App.Domain.Common.Abstractions;
 using App.Domain.Users;
-using App.Infrastructure.Persistence.Readers;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Infrastructure.Persistence.Repositories;

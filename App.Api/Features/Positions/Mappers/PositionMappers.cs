@@ -10,12 +10,12 @@ namespace App.Api.Features.Positions.Mappers;
 
 public static class PositionMappers
 {
-    public static AddPositionCommand ToCommand(this AddProjectRequest request) =>
+    public static AddPositionCommand ToCommand(this AddPositionRequest request) =>
         new(Name: request.Name,
             Code: request.Code,
             RequiresLicense: request.RequiresLicense);
 
-    public static UpdatePositionCommand ToCommand(this UpdateProjectRequest request,
+    public static UpdatePositionCommand ToCommand(this UpdatePositionRequest request,
         Guid positionId) =>
         new(PositionId: positionId,
             Name: request.Name,
@@ -31,16 +31,13 @@ public static class PositionMappers
     }
     
     public static GetPositionsResponse ToResponse(this PagedResult<PositionListItemDto> pagedResult) =>
-        new(
-            [
-                .. pagedResult.Items.Select(pd => pd.ToResponse())
-            ],
+        new([.. pagedResult.Items.Select(pd => pd.ToResponse())],
             pagedResult.TotalCount,
             pagedResult.Page,
             pagedResult.PageSize,
             pagedResult.TotalPages);
 
-    public static PositionResponse ToResponse(this PositionListItemDto listItemDto) =>
+    private static PositionResponse ToResponse(this PositionListItemDto listItemDto) =>
         new(Id: listItemDto.Id,
             Name: listItemDto.Name,
             Code: listItemDto.Code,

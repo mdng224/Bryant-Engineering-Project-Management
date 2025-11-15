@@ -25,9 +25,9 @@ public static class PositionEndpoints
 
         // POST /positions
         positions.MapPost("", HandleAddPosition)
-            .AddEndpointFilter<Validate<AddProjectRequest>>()
+            .AddEndpointFilter<Validate<AddPositionRequest>>()
             .WithSummary("Create a new position")
-            .Accepts<AddProjectRequest>("application/json")
+            .Accepts<AddPositionRequest>("application/json")
             .Produces<PositionResponse>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status409Conflict);
@@ -36,7 +36,8 @@ public static class PositionEndpoints
         positions.MapDelete("/{id:guid}", HandleDeletePosition)
             .WithSummary("Delete a position")
             .Produces(StatusCodes.Status204NoContent)
-            .Produces(StatusCodes.Status404NotFound);
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status403Forbidden);
         
         // GET /positions?page=&pageSize=
         positions.MapGet("", HandleGetPositions)
@@ -49,41 +50,44 @@ public static class PositionEndpoints
             .Produces<PositionResponse>()
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status409Conflict);
+            .Produces(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status403Forbidden);
         
         // PATCH /positions/{id}
         positions.MapPatch("/{id:guid}", HandleUpdatePosition)
-            .AddEndpointFilter<Validate<UpdateProjectRequest>>()
+            .AddEndpointFilter<Validate<UpdatePositionRequest>>()
             .WithSummary("Update a position")
-            .Accepts<UpdateProjectRequest>("application/json")
+            .Accepts<UpdatePositionRequest>("application/json")
+            .Produces<PositionResponse>()
             .Produces<PositionResponse>()
             .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status400BadRequest);
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status403Forbidden);
     }
     
     private static async Task<IResult> HandleAddPosition(
-        [FromBody] AddProjectRequest request,
-        [FromServices] ICommandHandler<AddPositionCommand, Result<PositionListItemDto>> handler,
+        [FromBody] AddPositionRequest request,
+        [FromServices] ICommandHandler<AddPositionCommand, Result<Guid>> handler,
         CancellationToken ct)
     {
         var command = request.ToCommand();
         var result  = await handler.Handle(command, ct);
 
-        if (!result.IsSuccess)
-        {
-            var error = result.Error!.Value;
-            return error.Code switch
-            {
-                "validation" => ValidationProblem(new Dictionary<string, string[]> { ["body"] = [error.Message] }),
-                "conflict"   => Conflict(new { message = error.Message }), // e.g., duplicate Code
-                "forbidden"  => Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
-                _            => Problem(error.Message)
-            };
-        }
-        
-        var response = result.Value!.ToResponse();
+        if (result.IsSuccess)
+            return Created($"~/positions/{result.Value}", new { result.Value });
 
-        return Created($"/clients/{response.Id}", response);
+        var error = result.Error!.Value;
+        return error.Code switch
+        {
+            "validation" => ValidationProblem(
+                errors: new Dictionary<string, string[]> { ["body"] = [error.Message] }),
+            "conflict"   => Conflict(new { message = error.Message }),
+            "forbidden"  => Json(
+                new { message = error.Message },
+                statusCode: StatusCodes.Status403Forbidden),
+            _            => Problem(error.Message)
+        };
     }
     
     private static async Task<IResult> HandleDeletePosition(
@@ -118,58 +122,50 @@ public static class PositionEndpoints
             return Problem(result.Error!.Value.Message);
 
         var response = result.Value!.ToResponse();
-
         return Ok(response);
     }
     
     private static async Task<IResult> HandleRestorePosition(
         [FromRoute] Guid id,
-        [FromServices] ICommandHandler<RestorePositionCommand, Result<PositionListItemDto>> handler,
+        [FromServices] ICommandHandler<RestorePositionCommand, Result<Unit>> handler,
         CancellationToken ct)
     {
         var command = new RestorePositionCommand(id);
         var result  = await handler.Handle(command, ct);
 
-        if (!result.IsSuccess)
+        if (result.IsSuccess)
+            return NoContent();
+        
+        var error = result.Error!.Value;
+        return error.Code switch
         {
-            var error = result.Error!.Value;
-            return error.Code switch
-            {
-                "not_found" => NotFound(new { message = error.Message }),
-                "conflict"  => Conflict(new { message = error.Message }),   // unique-name/code taken
-                "forbidden" => TypedResults.Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
-                _           => Problem(error.Message)
-            };
-        }
-
-        var response = result.Value!.ToResponse();
-        return Ok(response);
+            "not_found" => NotFound(new { message = error.Message }),
+            "conflict"  => Conflict(new { message = error.Message }),   // unique-name/code taken
+            "forbidden" => TypedResults.Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
+            _           => Problem(error.Message)
+        };
     }
     
     private static async Task<IResult> HandleUpdatePosition(
         [FromRoute] Guid id,
-        UpdateProjectRequest request,
-        [FromServices] ICommandHandler<UpdatePositionCommand, Result<PositionListItemDto>> handler,
+        UpdatePositionRequest request,
+        [FromServices] ICommandHandler<UpdatePositionCommand, Result<Unit>> handler,
         CancellationToken ct)
     {
         var command = request.ToCommand(id);
         var result  = await handler.Handle(command, ct);
 
-        if (!result.IsSuccess)
-        {
-            var error = result.Error!.Value;
-            return error.Code switch
-            {
-                "not_found"  => NotFound(new { message = error.Message }),
-                "forbidden"  => Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
-                "conflict"   => Conflict(new { message = error.Message }),
-                "validation" => ValidationProblem(new Dictionary<string, string[]> { ["body"] = [error.Message] }),
-                _            => Problem(error.Message)
-            };
-        }
+        if (result.IsSuccess)
+            return NoContent();
         
-        var response = result.Value!.ToResponse();
-
-        return Ok(response);
+        var error = result.Error!.Value;
+        return error.Code switch
+        {
+            "not_found"  => NotFound(new { message = error.Message }),
+            "forbidden"  => Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
+            "conflict"   => Conflict(new { message = error.Message }),
+            "validation" => ValidationProblem(new Dictionary<string, string[]> { ["body"] = [error.Message] }),
+            _            => Problem(error.Message)
+        };
     }
 }

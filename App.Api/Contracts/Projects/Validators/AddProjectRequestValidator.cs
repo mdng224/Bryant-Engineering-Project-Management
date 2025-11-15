@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace App.Api.Contracts.Projects.Validators;
 
-public sealed class AddProjectRequestValidator : AbstractValidator<AddProjectRequest>
+public sealed class AddProjectRequestValidator : AbstractValidator<AddPositionRequest>
 {
     public AddProjectRequestValidator()
     {

@@ -1,6 +1,6 @@
 ﻿namespace App.Api.Contracts.Positions.Requests;
 
-public sealed record UpdateProjectRequest(
+public sealed record AddPositionRequest(
     string Name,
     string Code,
     bool RequiresLicense);

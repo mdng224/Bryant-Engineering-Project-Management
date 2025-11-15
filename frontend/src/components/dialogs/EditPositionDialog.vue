@@ -1,5 +1,5 @@
 <template>
-  <app-dialog :open="open" title="Add Position" width="max-w-lg" @close="emit('close')">
+  <app-dialog :open="open" title="Edit Position" width="max-w-lg" @close="emit('close')">
     <app-alert v-if="errorMessage" :message="errorMessage" variant="error" :icon="AlertTriangle" />
 
     <!-- Fields -->
@@ -52,6 +52,7 @@
         type="submit"
         class="flex gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
         :disabled="saving || !isValid || bothEmpty"
+        @click="handleUpdate"
       >
         <Save class="block h-4 w-4 shrink-0 self-center" />
         {{ saving ? 'Saving...' : 'Save' }}
@@ -131,7 +132,7 @@
     emit('close');
   };
 
-  const handleOnSubmit = async (): Promise<void> => {
+  const handleUpdate = async (): Promise<void> => {
     if (!isValid.value || bothEmpty.value || saving.value) return;
 
     saving.value = true;
@@ -141,12 +142,13 @@
       const id = props.selectedPosition?.id;
       if (!id) return;
 
-      const payload: UpdatePositionRequest = {
+      const request: UpdatePositionRequest = {
         name: model.name.trim(),
         code: model.code.trim(),
         requiresLicense: !!model.requiresLicense,
       };
-      await positionService.update(id, payload);
+      console.log(id, request);
+      await positionService.update(id, request);
       emit('save');
       emit('close');
     } catch (e: unknown) {

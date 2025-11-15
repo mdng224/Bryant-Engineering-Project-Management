@@ -64,6 +64,7 @@
   import AppDialog from '../ui/AppDialog.vue';
 
   import { extractApiError } from '@/api/error';
+  import type { AddPositionRequest } from '@/api/positions';
   import { positionService } from '@/api/positions/services';
   import { ref, watch } from 'vue';
 
@@ -73,7 +74,7 @@
   const errorMessage = ref<string | null>(null);
   const submitting = ref(false);
   const touched = ref(false);
-  const form = ref({ name: '', code: '', requiresLicense: false });
+  const form = ref<AddPositionRequest>({ name: '', code: '', requiresLicense: false });
 
   watch(
     () => props.open,

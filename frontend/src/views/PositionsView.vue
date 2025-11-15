@@ -16,17 +16,7 @@
     </button>
   </div>
 
-  <span
-    v-if="errorMessage"
-    ref="errorEl"
-    class="mb-4 flex items-center gap-2 rounded-lg border border-rose-800 bg-rose-900/30 px-3.5 py-2 text-sm leading-tight text-rose-200"
-    role="alert"
-    aria-live="assertive"
-    tabindex="-1"
-  >
-    <alter-triangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
-    <span>{{ errorMessage }}</span>
-  </span>
+  <app-alert v-if="errorMessage" :message="errorMessage" variant="error" :icon="AlertTriangle" />
 
   <data-table
     :table="table as unknown as import('@tanstack/vue-table').Table<unknown>"
@@ -111,6 +101,7 @@
     PositionResponse,
   } from '@/api/positions/contracts';
   import { positionService } from '@/api/positions/services';
+  import AppAlert from '@/components/AppAlert.vue';
   import BooleanFilter from '@/components/BooleanFilter.vue';
   import AddPositionDialog from '@/components/dialogs/AddPositionDialog.vue';
   import DeleteDialog from '@/components/dialogs/DeleteDialog.vue';
@@ -123,7 +114,15 @@
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { CheckCircle2, CirclePlus, Lock, LockOpen, Pencil, Trash2 } from 'lucide-vue-next';
+  import {
+    AlertTriangle,
+    CheckCircle2,
+    CirclePlus,
+    Lock,
+    LockOpen,
+    Pencil,
+    Trash2,
+  } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref } from 'vue';
 
   const errorMessage = ref<string | null>(null);
@@ -238,6 +237,7 @@
     if (!id) return;
 
     try {
+      console.log(id);
       await positionService.restore(id);
       await refetch();
     } catch (err: unknown) {
