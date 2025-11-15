@@ -81,8 +81,8 @@ public static class DbSeeder
                 return Client.Seed(
                     clientName:       cs.ClientName ?? "Unknown",
                     namePrefix:       cs.NamePrefix,
-                    firstName:        cs.FirstName,
-                    lastName:         cs.LastName,
+                    firstName:        cs.FirstName ?? "Unknown",
+                    lastName:         cs.LastName ?? "Unknown",
                     nameSuffix:       cs.NameSuffix,
                     email:            cs.Email,
                     phone:            cs.Phone,

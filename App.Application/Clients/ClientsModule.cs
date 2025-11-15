@@ -1,4 +1,5 @@
 ﻿using App.Application.Abstractions.Handlers;
+using App.Application.Clients.Commands.AddClient;
 using App.Application.Clients.Queries;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
@@ -15,6 +16,7 @@ public static class ClientsModule
         services.AddScoped<IQueryHandler<GetClientsQuery, Result<PagedResult<ClientListItemDto>>>, GetClientsHandler>();
 
         // Commands
+        services.AddScoped<ICommandHandler<AddClientCommand, Result<Guid>>, AddClientHandler>();
 
         return services;
     }

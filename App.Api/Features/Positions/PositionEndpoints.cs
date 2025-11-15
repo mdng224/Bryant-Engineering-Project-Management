@@ -83,7 +83,7 @@ public static class PositionEndpoints
         
         var response = result.Value!.ToResponse();
 
-        return Created($"/positions/{response.Id}", response);
+        return Created($"/clients/{response.Id}", response);
     }
     
     private static async Task<IResult> HandleDeletePosition(

@@ -1,11 +1,10 @@
-﻿using App.Application.Abstractions;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Messaging;
 using App.Application.Abstractions.Persistence;
+using App.Application.Abstractions.Persistence.Exceptions;
 using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Abstractions.Security;
-using App.Application.Common;
 using App.Application.Common.Results;
 using App.Domain.Common;
 using App.Domain.Security;
@@ -29,25 +28,20 @@ public sealed class RegisterHandler(
     public async Task<Result<RegisterResult>> Handle(RegisterCommand command, CancellationToken ct)
     {
         var normalizedEmail = command.Email.ToNormalizedEmail();
-
         if (await userReader.ExistsByEmailAsync(normalizedEmail, ct))
             return Fail<RegisterResult>(ConflictCode, EmailInUse);
 
         var passwordHash = passwordHasher.Hash(command.Password);
         var user = new User(normalizedEmail, passwordHash, RoleIds.User); // IsActive defaults (false) in domain
         
-        userRepository.Add(user);
-        
-        var userRegisteredEvent = new UserRegistered(user.Id, user.Email, user.Status);
-        outboxWriter.Add(userRegisteredEvent);
-        
         try
         {
-            await uow.SaveChangesAsync(ct); // single atomic commit
+            userRepository.Add(user);
+            outboxWriter.Add(new UserRegistered(user.Id, user.Email, user.Status));
+            await uow.SaveChangesAsync(ct);
         }
-        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        catch (UniqueConstraintViolationException)
         {
-            // covers email uniqueness race with another request
             return Fail<RegisterResult>(ConflictCode, EmailInUse);
         }
         

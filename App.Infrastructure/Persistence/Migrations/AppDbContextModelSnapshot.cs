@@ -87,10 +87,12 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasColumnName("created_by_id");
 
                     b.Property<DateTimeOffset?>("DeletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("deleted_at_utc");
 
                     b.Property<Guid?>("DeletedById")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by_id");
 
                     b.Property<string>("Email")
                         .HasMaxLength(254)
@@ -98,16 +100,19 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasColumnName("email");
 
                     b.Property<string>("FirstName")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("first_name");
 
                     b.Property<string>("LastName")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("last_name");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
@@ -146,7 +151,10 @@ namespace App.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email");
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("ux_clients_email_active")
+                        .HasFilter("email IS NOT NULL AND deleted_at_utc IS NULL");
 
                     b.HasIndex("Name");
 
@@ -158,7 +166,7 @@ namespace App.Infrastructure.Persistence.Migrations
 
                     b.ToTable("clients", null, t =>
                         {
-                            t.HasCheckConstraint("ck_clients_company_or_person", " (btrim(coalesce(name, '')) <> '')  OR (btrim(coalesce(first_name,  '')) <> '')  OR (btrim(coalesce(last_name,   '')) <> '') ");
+                            t.HasCheckConstraint("ck_clients_all_names_required", " btrim(coalesce(name, ''))       <> ''  AND btrim(coalesce(first_name, '')) <> ''  AND btrim(coalesce(last_name, '')) <> '' ");
                         });
                 });
 

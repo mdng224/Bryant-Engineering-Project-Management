@@ -9,11 +9,11 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     // --- Constructors --------------------------------------------------------
     private Client() { } // EF
 
-    private Client(
+    public Client(
         string name,
         string? namePrefix,
-        string? firstName,
-        string? lastName,
+        string firstName,
+        string lastName,
         string? nameSuffix,
         string? email,
         string? phone,
@@ -38,8 +38,8 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     // Company / person
     public string Name        { get; private set; } = null!;  // company or household name (client_name)
     public string? NamePrefix { get; private set; }  // name_prefix (e.g., Mr., Ms., Dr.)
-    public string? FirstName  { get; private set; }  // first_name
-    public string? LastName   { get; private set; }  // last_name
+    public string FirstName  { get; private set; }  // first_name
+    public string LastName   { get; private set; }  // last_name
     public string? NameSuffix { get; private set; }  // name_suffix (e.g., Jr., III)
     
     // Contact
@@ -74,8 +74,8 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     public static Client Seed(
         string clientName,
         string? namePrefix,
-        string? firstName,
-        string? lastName,
+        string firstName,
+        string lastName,
         string? nameSuffix,
         string? email,
         string? phone,
@@ -120,10 +120,10 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     }
 
     public void ChangeContactInfo(
-        string? name,
+        string name,
         string? namePrefix,
-        string? firstName,
-        string? lastName,
+        string firstName,
+        string lastName,
         string? nameSuffix,
         string? email,
         string? phone)
@@ -147,33 +147,40 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     
     // --- Internals ------------------------------------------------------------
     private void SetContactInfoInternal(
-        string? name,
+        string name,
         string? namePrefix,
-        string? firstName,
-        string? lastName,
+        string firstName,
+        string lastName,
         string? nameSuffix,
         string? email,
         string? phone)
     {
-        var newCompany   = NullIfBlank(name);
+        // Company / client name
+        var newClientName = NullIfBlank(name);
+        if (newClientName is null)
+            throw new InvalidOperationException("Client name is required.");
+
+        // First / last names
+        var newFirst = firstName.ToNormalizedName();
+        if (string.IsNullOrWhiteSpace(newFirst))
+            throw new InvalidOperationException("First name is required.");
+
+        var newLast = lastName.ToNormalizedName();
+        if (string.IsNullOrWhiteSpace(newLast))
+            throw new InvalidOperationException("Last name is required.");
+        
         var newPrefix    = NullIfBlank(namePrefix);
-        var newFirst     = firstName?.ToNormalizedName();
-        var newLast      = lastName?.ToNormalizedName();
         var newSuffix    = NullIfBlank(nameSuffix);
         var newEmail     = string.IsNullOrWhiteSpace(email) ? null : email.ToNormalizedEmail();
         var newPhone     = phone.ToNormalizedPhone();
 
-        // Rule: if both names are blank, company must be provided.
-        if (newFirst is null && newLast is null && newCompany is null)
-            throw new InvalidOperationException("Company name is required when both FirstName and LastName are blank.");
-
-        if (Name       != newCompany) Name       = newCompany;
-        if (NamePrefix != newPrefix)  NamePrefix = newPrefix;
-        if (FirstName  != newFirst)   FirstName  = newFirst;
-        if (LastName   != newLast)    LastName   = newLast;
-        if (NameSuffix != newSuffix)  NameSuffix = newSuffix;
-        if (Email      != newEmail)   Email      = newEmail;
-        if (Phone      != newPhone)   Phone      = newPhone;
+        if (Name       != newClientName) Name       = newClientName;
+        if (NamePrefix != newPrefix)     NamePrefix = newPrefix;
+        if (FirstName  != newFirst)      FirstName  = newFirst;
+        if (LastName   != newLast)       LastName   = newLast;
+        if (NameSuffix != newSuffix)     NameSuffix = newSuffix;
+        if (Email      != newEmail)      Email      = newEmail;
+        if (Phone      != newPhone)      Phone      = newPhone;
     }
 
     private void SetAddressInternal(Address? address)

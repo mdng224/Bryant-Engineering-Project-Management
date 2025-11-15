@@ -1,5 +1,4 @@
-﻿// File: App.Application/Auth/Commands/VerifyEmail/VerifyEmailOutcomeExtensions.cs
-namespace App.Application.Auth.Commands.VerifyEmail;
+﻿namespace App.Application.Auth.Commands.VerifyEmail;
 
 public static class VerifyEmailOutcomeExtensions
 {

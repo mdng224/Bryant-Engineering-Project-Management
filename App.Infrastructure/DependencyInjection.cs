@@ -55,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IPositionRepository, PositionRepository>();
         services.AddScoped<IEmployeePositionReader, EmployeePositionReader>();
         services.AddScoped<IClientReader, ClientReader>();
+        services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IProjectReader, ProjectReader>();
         services.AddScoped<IProjectRepository, ProjectRepository>();

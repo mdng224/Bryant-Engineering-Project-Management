@@ -1,5 +1,6 @@
 ﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence;
+using App.Application.Abstractions.Persistence.Exceptions;
 using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Abstractions.Persistence.Repositories;
 using App.Application.Common.Results;
@@ -10,9 +11,11 @@ using static App.Application.Common.R;
 namespace App.Application.Positions.Commands.AddPosition;
 
 public class AddPositionHandler(IPositionReader reader, IPositionRepository repository, IUnitOfWork uow)
-    : ICommandHandler<AddPositionCommand, Result<Unit>>
+    : ICommandHandler<AddPositionCommand, Result<Guid>>
 {
-    public async Task<Result<Unit>> Handle(AddPositionCommand command, CancellationToken ct)
+    private const string NameConflictCode = "conflict";
+    private const string NameConflictMessage = "A position with this name exists.";
+    public async Task<Result<Guid>> Handle(AddPositionCommand command, CancellationToken ct)
     {
         var normalizedName = command.Name.ToNormalizedName();
         var matchedPositions = await reader.GetByNameIncludingDeletedAsync(normalizedName, ct);
@@ -20,21 +23,37 @@ public class AddPositionHandler(IPositionReader reader, IPositionRepository repo
         var tombstonePosition = matchedPositions.FirstOrDefault(p => p.DeletedAtUtc is not null);
         
         if (activePosition is not null)
-            return Fail<Unit>(code: "conflict", message: "A position with the same name exists.");
+            return Fail<Guid>(NameConflictCode, NameConflictMessage);
         
         if (tombstonePosition is not null)
         {
             tombstonePosition.RestoreAndUpdate(command.Name, command.Code, command.RequiresLicense);
             repository.Update(tombstonePosition);
-            await uow.SaveChangesAsync(ct);
-            
-            return Ok(Unit.Value);
+
+            try
+            {
+                await uow.SaveChangesAsync(ct);
+            }
+            catch (UniqueConstraintViolationException)
+            {
+                return Fail<Guid>(NameConflictCode, NameConflictMessage);
+            }
+
+            return Ok(tombstonePosition.Id);
         }
         
         var position = command.ToDomain();
-        repository.Add(position);
-        await uow.SaveChangesAsync(ct);
+
+        try
+        {
+            repository.Add(position);
+            await uow.SaveChangesAsync(ct);
+        }
+        catch (UniqueConstraintViolationException)
+        {
+            return Fail<Guid>(NameConflictCode, NameConflictMessage);
+        }
         
-        return Ok(Unit.Value);
+        return Ok(position.Id);
     }
 }

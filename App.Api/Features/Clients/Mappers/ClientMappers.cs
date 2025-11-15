@@ -1,5 +1,6 @@
 ﻿using App.Api.Contracts.Clients.Requests;
 using App.Api.Contracts.Clients.Responses;
+using App.Application.Clients.Commands.AddClient;
 using App.Application.Clients.Queries;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
@@ -9,6 +10,20 @@ namespace App.Api.Features.Clients.Mappers;
 
 public static class ClientMappers
 {
+    public static AddClientCommand ToCommand(this AddClientRequest request) =>
+        new(
+            Name:             request.Name,
+            NamePrefix:       request.NamePrefix,
+            FirstName:        request.FirstName,
+            LastName:         request.LastName,
+            NameSuffix:       request.NameSuffix,
+            Email:            request.Email,
+            Phone:            request.Phone,
+            Address:          request.Address,
+            Note:             request.Note,
+            ClientCategoryId: request.ClientCategoryId,
+            ClientTypeId:     request.ClientTypeId);
+    
     public static GetClientsResponse ToGetClientsResponse(this PagedResult<ClientListItemDto> pagedResult)
     {
         var clientListItemResponse = pagedResult.Items

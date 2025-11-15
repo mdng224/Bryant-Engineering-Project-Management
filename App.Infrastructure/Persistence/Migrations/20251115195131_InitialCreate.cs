@@ -29,10 +29,10 @@ namespace App.Infrastructure.Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     name_prefix = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
-                    first_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    last_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    first_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    last_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     name_suffix = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
                     email = table.Column<string>(type: "character varying(254)", maxLength: 254, nullable: true),
                     phone = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
@@ -47,15 +47,15 @@ namespace App.Infrastructure.Persistence.Migrations
                     project_code = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
                     created_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     updated_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
-                    DeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    deleted_at_utc = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
                     created_by_id = table.Column<Guid>(type: "uuid", nullable: true),
                     updated_by_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    DeletedById = table.Column<Guid>(type: "uuid", nullable: true)
+                    deleted_by_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_clients", x => x.Id);
-                    table.CheckConstraint("ck_clients_company_or_person", " (btrim(coalesce(name, '')) <> '')  OR (btrim(coalesce(first_name,  '')) <> '')  OR (btrim(coalesce(last_name,   '')) <> '') ");
+                    table.CheckConstraint("ck_clients_all_names_required", " btrim(coalesce(name, ''))       <> ''  AND btrim(coalesce(first_name, '')) <> ''  AND btrim(coalesce(last_name, '')) <> '' ");
                 });
 
             migrationBuilder.CreateTable(
@@ -324,11 +324,6 @@ namespace App.Infrastructure.Persistence.Migrations
                 columns: new[] { "client_category_id", "client_type_id" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_clients_email",
-                table: "clients",
-                column: "email");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_clients_last_name_first_name",
                 table: "clients",
                 columns: new[] { "last_name", "first_name" });
@@ -342,6 +337,13 @@ namespace App.Infrastructure.Persistence.Migrations
                 name: "IX_clients_project_code",
                 table: "clients",
                 column: "project_code");
+
+            migrationBuilder.CreateIndex(
+                name: "ux_clients_email_active",
+                table: "clients",
+                column: "email",
+                unique: true,
+                filter: "email IS NOT NULL AND deleted_at_utc IS NULL");
 
             migrationBuilder.CreateIndex(
                 name: "ix_email_verifications_expires_at",

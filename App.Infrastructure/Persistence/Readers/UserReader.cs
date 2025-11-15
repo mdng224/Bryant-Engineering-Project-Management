@@ -19,11 +19,10 @@ public sealed class UserReader(AppDbContext db) : IUserReader
         return activeAdminCount;
     }
 
-    public async Task<bool> ExistsByEmailAsync(string normalizedEmail, CancellationToken ct = default)
+    public Task<bool> ExistsByEmailAsync(string normalizedEmail, CancellationToken ct = default)
     {
-        var userExists = await db.ReadSet<User>().AnyAsync(u => u.Email == normalizedEmail, ct);
-
-        return userExists;
+        return db.ReadSet<User>()
+            .AnyAsync(u => u.Email == normalizedEmail && u.DeletedAtUtc == null, ct);
     }
 
     public async Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken ct = default)

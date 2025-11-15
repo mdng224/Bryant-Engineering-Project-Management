@@ -8,29 +8,10 @@ namespace App.Infrastructure.Persistence.Readers;
 
 public sealed class ClientReader(AppDbContext db) : IClientReader
 {
-    /*
-    public async Task<IReadOnlyDictionary<Guid, string>> GetNamesByIdsAsync(
-        IReadOnlyList<Guid> ids,
-        CancellationToken ct = default)
+    public async Task<bool> EmailExistsAsync(string normalizedEmail, CancellationToken ct = default)
     {
-        if (ids.Count == 0)
-            return new Dictionary<Guid, string>();
-        var query = Query();
-
-        var clientIdNameMap = await query
-            .Where(c => ids.Contains(c.Id))
-            .Select(c => new
-            {
-                c.Id,
-                c.Name
-            })
-            .ToDictionaryAsync(
-                map => mac.Id,
-                map => mac.Name,
-                ct);
-
-        return clientIdNameMap;
-    }*/
+        return await db.ReadSet<Client>().AnyAsync(c => c.Email == normalizedEmail, ct);
+    }
     
     public async Task<(IReadOnlyList<ClientListItemDto> items, int totalCount)> GetPagedAsync(
         int skip,

@@ -1,7 +1,9 @@
 ﻿using App.Api.Contracts.Clients.Requests;
 using App.Api.Contracts.Clients.Responses;
 using App.Api.Features.Clients.Mappers;
+using App.Api.Filters;
 using App.Application.Abstractions.Handlers;
+using App.Application.Clients.Commands.AddClient;
 using App.Application.Clients.Commands.RestoreClient;
 using App.Application.Clients.Queries;
 using App.Application.Common.Dtos;
@@ -18,7 +20,16 @@ public static class ClientEndpoints
     {
         var clients = app.MapGroup("/clients")
             .WithTags("Clients");
-
+        
+        // POST /clients
+        clients.MapPost("", HandleAddClient)
+            .AddEndpointFilter<Validate<AddClientRequest>>()
+            .WithSummary("Create a new position")
+            .Accepts<AddClientRequest>("application/json")
+            .Produces<ClientResponse>(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status409Conflict);
+        
         // GET /clients?page=&pageSize=
         clients.MapGet("", HandleGetClients)
             .WithSummary("List all clients (paginated)")
@@ -33,6 +44,30 @@ public static class ClientEndpoints
             .Produces(StatusCodes.Status409Conflict);
     }
 
+    private static async Task<IResult> HandleAddClient(
+        [FromBody] AddClientRequest request,
+        [FromServices] ICommandHandler<AddClientCommand, Result<Guid>> handler,
+        CancellationToken ct)
+    {
+        var command = request.ToCommand();
+        var result  = await handler.Handle(command, ct);
+
+        if (!result.IsSuccess)
+        {
+            var error = result.Error!.Value;
+            return error.Code switch
+            {
+                "validation" => ValidationProblem(new Dictionary<string, string[]> { ["body"] = [error.Message] }),
+                "conflict"   => Conflict(new { message = error.Message }), // e.g., duplicate Code
+                "forbidden"  => Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
+                _            => Problem(error.Message)
+            };
+        }
+        
+        var id = result.Value;
+        return Created($"/clients/{id}", new { id });
+    }
+    
     private static async Task<IResult> HandleGetClients(
         [AsParameters] GetClientsRequest request,
         [FromServices] IQueryHandler<GetClientsQuery, Result<PagedResult<ClientListItemDto>>> handler,

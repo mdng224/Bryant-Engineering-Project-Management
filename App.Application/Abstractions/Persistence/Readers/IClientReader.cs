@@ -4,11 +4,7 @@ namespace App.Application.Abstractions.Persistence.Readers;
 
 public interface IClientReader
 {
-    /*
-    Task<IReadOnlyDictionary<Guid, string>> GetNamesByIdsAsync(
-        IReadOnlyList<Guid> ids,
-        CancellationToken ct = default);
-*/
+    Task<bool> EmailExistsAsync(string name, CancellationToken ct = default);
     Task<(IReadOnlyList<ClientListItemDto> items, int totalCount)> GetPagedAsync(
         int skip,
         int take,

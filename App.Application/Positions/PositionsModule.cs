@@ -19,7 +19,7 @@ public static class PositionsModule
         services.AddScoped<IQueryHandler<GetPositionsQuery, Result<PagedResult<PositionListItemDto>>>, GetPositionsHandler>();
 
         // Commands
-        services.AddScoped<ICommandHandler<AddPositionCommand, Result<Unit>>, AddPositionHandler>();
+        services.AddScoped<ICommandHandler<AddPositionCommand, Result<Guid>>, AddPositionHandler>();
         services.AddScoped<ICommandHandler<DeletePositionCommand, Result<Unit>>, DeletePositionHandler>();
         services.AddScoped<ICommandHandler<UpdatePositionCommand, Result<Unit>>, UpdatePositionHandler>();
         services.AddScoped<ICommandHandler<RestorePositionCommand, Result<Unit>>, RestorePositionHandler>();
