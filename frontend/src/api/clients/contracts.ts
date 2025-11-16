@@ -14,6 +14,20 @@ type ClientBase = {
   phone: string | null;
 };
 
+export type AddClientRequest = {
+  name: string | null;
+  namePrefix: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  nameSuffix: string | null;
+  email: string | null;
+  phone: string | null;
+  address: Address | null;
+  note: string | null;
+};
+
+export type AddClientResponse = {};
+
 export type GetClientsRequest = {
   page: number;
   pageSize: number;

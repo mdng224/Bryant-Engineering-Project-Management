@@ -37,6 +37,9 @@
 
   <table-footer :table :totalCount :totalPages :pagination :setPageSize />
 
+  <!-- Dialogs -->
+  <add-client-dialog :open="addDialogIsOpen" @close="addDialogIsOpen = false" @saved="refetch" />
+
   <details-dialog
     :open="openDetailsDialog"
     title="Client Details"
@@ -69,6 +72,7 @@
   } from '@/api/clients/contracts';
   import type { Address } from '@/api/common';
   import BooleanFilter from '@/components/BooleanFilter.vue';
+  import AddClientDialog from '@/components/dialogs/AddClientDialog.vue';
   import DetailsDialog, { type FieldDef } from '@/components/dialogs/DetailsDialog.vue';
   import CellRenderer from '@/components/table/CellRenderer.vue';
   import DataTable from '@/components/table/DataTable.vue';
@@ -208,10 +212,16 @@
     hasActiveProject: hasActiveProject.value,
   }));
 
-  const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<
-    ClientSummaryResponse,
-    typeof query.value
-  >(columns, fetchClients, query);
+  const {
+    table,
+    loading,
+    totalCount,
+    totalPages,
+    pagination,
+    setPageSize,
+    fetchNow: refetch,
+    destroy,
+  } = useDataTable<ClientSummaryResponse, typeof query.value>(columns, fetchClients, query);
 
   /* -------------------------------- Handlers ------------------------------ */
   const addDialogIsOpen = ref(false);

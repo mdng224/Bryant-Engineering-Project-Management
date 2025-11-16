@@ -1,5 +1,5 @@
 <template>
-  <app-dialog :open="open" title="Edit Position" width="max-w-lg" @close="emit('close')">
+  <app-dialog :open title="Edit Position" width="max-w-lg" @close="emit('close')">
     <app-alert v-if="errorMessage" :message="errorMessage" variant="error" :icon="AlertTriangle" />
 
     <!-- Fields -->

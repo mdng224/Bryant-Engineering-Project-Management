@@ -26,9 +26,10 @@ public static class ClientEndpoints
             .AddEndpointFilter<Validate<AddClientRequest>>()
             .WithSummary("Create a new position")
             .Accepts<AddClientRequest>("application/json")
-            .Produces<ClientResponse>(StatusCodes.Status201Created)
+            .Produces<Guid>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .Produces(StatusCodes.Status409Conflict);
+            .Produces(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status403Forbidden);
         
         // GET /clients?page=&pageSize=
         clients.MapGet("", HandleGetClients)
@@ -38,10 +39,10 @@ public static class ClientEndpoints
         // POST /clients/{id}/restore
         clients.MapPost("/{id:guid}/restore", HandleRestoreClient)
             .WithSummary("Restore a soft-deleted client")
-            .Produces<ClientResponse>()
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status409Conflict);
+            .Produces(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status403Forbidden);
     }
 
     private static async Task<IResult> HandleAddClient(
@@ -52,20 +53,17 @@ public static class ClientEndpoints
         var command = request.ToCommand();
         var result  = await handler.Handle(command, ct);
 
-        if (!result.IsSuccess)
+        if (result.IsSuccess)
+            return Created($"/clients/{result.Value}", result.Value);
+
+        var error = result.Error!.Value;
+        return error.Code switch
         {
-            var error = result.Error!.Value;
-            return error.Code switch
-            {
-                "validation" => ValidationProblem(new Dictionary<string, string[]> { ["body"] = [error.Message] }),
-                "conflict"   => Conflict(new { message = error.Message }), // e.g., duplicate Code
-                "forbidden"  => Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
-                _            => Problem(error.Message)
-            };
-        }
-        
-        var id = result.Value;
-        return Created($"/clients/{id}", new { id });
+            "validation" => ValidationProblem(new Dictionary<string, string[]> { ["body"] = [error.Message] }),
+            "conflict"   => Conflict(new { message = error.Message }), // e.g., duplicate Code
+            "forbidden"  => Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
+            _            => Problem(error.Message)
+        };
     }
     
     private static async Task<IResult> HandleGetClients(
@@ -79,31 +77,27 @@ public static class ClientEndpoints
             return Problem(result.Error!.Value.Message);
 
         var response = result.Value!.ToGetClientsResponse();
-        
         return Ok(response);
     }
     
     private static async Task<IResult> HandleRestoreClient(
         [FromRoute] Guid id,
-        [FromServices] ICommandHandler<RestoreClientCommand, Result<ClientListItemDto>> handler,
+        [FromServices] ICommandHandler<RestoreClientCommand, Result<Guid>> handler,
         CancellationToken ct)
     {
         var command = new RestoreClientCommand(id);
         var result = await handler.Handle(command, ct);
 
-        if (!result.IsSuccess)
-        {
-            var error = result.Error!.Value;
-            return error.Code switch
-            {
-                "not_found" => NotFound(new { message = error.Message }),
-                "conflict"  => Conflict(new { message = error.Message }),   // unique-name/code taken
-                "forbidden" => TypedResults.Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
-                _           => Problem(error.Message)
-            };
-        }
+        if (result.IsSuccess)
+            return NoContent();
 
-        var response = result.Value!.ToSummaryResponse();
-        return Ok(response);
+        var error = result.Error!.Value;
+        return error.Code switch
+        {
+            "not_found" => NotFound(new { message = error.Message }),
+            "conflict"  => Conflict(new { message = error.Message }),   // unique-name/code taken
+            "forbidden" => TypedResults.Json(new { message = error.Message }, statusCode: StatusCodes.Status403Forbidden),
+            _           => Problem(error.Message)
+        };
     }
 }

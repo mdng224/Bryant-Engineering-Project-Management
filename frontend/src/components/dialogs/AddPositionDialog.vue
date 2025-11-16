@@ -1,6 +1,6 @@
 <template>
   <app-dialog
-    :open="open"
+    :open
     title="Add Position"
     width="max-w-lg"
     :loading="submitting"

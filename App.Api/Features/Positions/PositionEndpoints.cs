@@ -28,9 +28,10 @@ public static class PositionEndpoints
             .AddEndpointFilter<Validate<AddPositionRequest>>()
             .WithSummary("Create a new position")
             .Accepts<AddPositionRequest>("application/json")
-            .Produces<PositionResponse>(StatusCodes.Status201Created)
+            .Produces<Guid>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
-            .Produces(StatusCodes.Status409Conflict);
+            .Produces(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status403Forbidden);
         
         // DELETE /positions/{id}
         positions.MapDelete("/{id:guid}", HandleDeletePosition)
@@ -47,7 +48,6 @@ public static class PositionEndpoints
         // POST /positions/{id}/restore
         positions.MapPost("/{id:guid}/restore", HandleRestorePosition)
             .WithSummary("Restore a soft-deleted position")
-            .Produces<PositionResponse>()
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status409Conflict)
@@ -58,8 +58,7 @@ public static class PositionEndpoints
             .AddEndpointFilter<Validate<UpdatePositionRequest>>()
             .WithSummary("Update a position")
             .Accepts<UpdatePositionRequest>("application/json")
-            .Produces<PositionResponse>()
-            .Produces<PositionResponse>()
+            .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status409Conflict)
@@ -75,7 +74,7 @@ public static class PositionEndpoints
         var result  = await handler.Handle(command, ct);
 
         if (result.IsSuccess)
-            return Created($"~/positions/{result.Value}", new { result.Value });
+            return Created($"~/positions/{result.Value}", result.Value);
 
         var error = result.Error!.Value;
         return error.Code switch
@@ -148,7 +147,7 @@ public static class PositionEndpoints
     
     private static async Task<IResult> HandleUpdatePosition(
         [FromRoute] Guid id,
-        UpdatePositionRequest request,
+        [FromBody] UpdatePositionRequest request,
         [FromServices] ICommandHandler<UpdatePositionCommand, Result<Unit>> handler,
         CancellationToken ct)
     {
