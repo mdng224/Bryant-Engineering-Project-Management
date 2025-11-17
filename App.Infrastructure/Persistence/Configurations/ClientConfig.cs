@@ -39,8 +39,8 @@ public sealed class ClientConfig : IEntityTypeConfiguration<Client>
         b.Property(c => c.ProjectCode).HasColumnName("project_code").HasMaxLength(32);
 
         // --- Classification (nullable to allow imperfect CSV matches) -------
-        b.Property(c => c.ClientCategoryId).HasColumnName("client_category_id");
-        b.Property(c => c.ClientTypeId).HasColumnName("client_type_id");
+        b.Property(c => c.CategoryId).HasColumnName("client_category_id");
+        b.Property(c => c.TypeId).HasColumnName("client_type_id");
 
         // --- Owned types ----------------------------------------------------
         b.OwnsAddress();
@@ -58,6 +58,6 @@ public sealed class ClientConfig : IEntityTypeConfiguration<Client>
             .HasDatabaseName("ux_clients_email_active")
             .HasFilter("email IS NOT NULL AND deleted_at_utc IS NULL");
         b.HasIndex(c => c.ProjectCode);
-        b.HasIndex(c => new { c.ClientCategoryId, c.ClientTypeId });
+        b.HasIndex(c => new { ClientCategoryId = c.CategoryId, ClientTypeId = c.TypeId });
     }
 }

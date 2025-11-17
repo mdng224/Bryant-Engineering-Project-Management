@@ -44,7 +44,7 @@ public static class ProjectEndpoints
         if (!result.IsSuccess)
             return Problem(result.Error!.Value.Message);
 
-        var response = result.Value!.ToGetProjectsResponse();
+        var response = result.Value!.ToResponse();
 
         return Ok(response);
     }

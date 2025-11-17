@@ -5,8 +5,8 @@ using App.Api.Filters;
 using App.Application.Abstractions.Handlers;
 using App.Application.Clients.Commands.AddClient;
 using App.Application.Clients.Commands.RestoreClient;
-using App.Application.Clients.Queries;
-using App.Application.Common.Dtos;
+using App.Application.Clients.Queries.GetClients;
+using App.Application.Common.Dtos.Clients;
 using App.Application.Common.Pagination;
 using App.Application.Common.Results;
 using Microsoft.AspNetCore.Mvc;
@@ -76,7 +76,7 @@ public static class ClientEndpoints
         if (!result.IsSuccess)
             return Problem(result.Error!.Value.Message);
 
-        var response = result.Value!.ToGetClientsResponse();
+        var response = result.Value!.ToResponse();
         return Ok(response);
     }
     

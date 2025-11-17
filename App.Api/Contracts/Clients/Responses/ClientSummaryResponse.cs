@@ -9,5 +9,7 @@ public sealed record ClientSummaryResponse(
     string? FirstName,
     string? LastName,
     string? Email,
-    string? Phone
+    string? Phone,
+    string? CategoryName,
+    string? TypeName
 );

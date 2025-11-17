@@ -9,7 +9,7 @@ namespace App.Api.Features.Projects.Mappers;
 
 public static class ProjectMappers
 {
-    public static GetProjectsResponse ToGetProjectsResponse(this PagedResult<ProjectListItemDto> pagedResult)
+    public static GetProjectsResponse ToResponse(this PagedResult<ProjectListItemDto> pagedResult)
     {
         var projectListItemResponses = pagedResult.Items.Select(pd => pd.ToListItem()).ToList();
 

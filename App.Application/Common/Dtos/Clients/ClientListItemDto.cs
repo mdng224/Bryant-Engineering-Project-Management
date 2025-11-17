@@ -1,6 +1,6 @@
 ﻿using App.Domain.Common;
 
-namespace App.Application.Common.Dtos;
+namespace App.Application.Common.Dtos.Clients;
 
 public sealed record ClientListItemDto(
     Guid Id,
@@ -13,6 +13,8 @@ public sealed record ClientListItemDto(
     string? Phone,
     Address? Address,
     string? Note,
+    string? CategoryName,
+    string? TypeName,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc,
     DateTimeOffset? DeletedAtUtc,

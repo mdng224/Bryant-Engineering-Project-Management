@@ -53,6 +53,7 @@ public static class WebApplicationExtensions
         app.MapVerificationEndpoints();
         app.MapClientEndpoints();
         app.MapProjectEndpoints();
+        app.MapClientLookupEndpoints();
         
         return app;
     }

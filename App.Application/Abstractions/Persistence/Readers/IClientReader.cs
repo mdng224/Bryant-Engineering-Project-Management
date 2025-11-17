@@ -1,4 +1,5 @@
 ﻿using App.Application.Common.Dtos;
+using App.Application.Common.Dtos.Clients;
 
 namespace App.Application.Abstractions.Persistence.Readers;
 
@@ -10,5 +11,7 @@ public interface IClientReader
         int take,
         string? normalizedNameFilter,
         bool hasActiveProject,
+        Guid? categoryId,
+        Guid? typeId,
         CancellationToken ct = default);
 }

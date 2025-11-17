@@ -4,13 +4,21 @@ import api from '..';
 import type {
   AddClientRequest,
   AddClientResponse,
+  GetClientLookupsResponse,
   GetClientsRequest,
   GetClientsResponse,
 } from './contracts';
 import { ClientsRoutes } from './routes';
 
+/* ------------------------------ GET (list) ------------------------------ */
 const get = async (params: GetClientsRequest): Promise<GetClientsResponse> => {
   const { data } = await api.get<GetClientsResponse>(ClientsRoutes.list, { params });
+  return data;
+};
+
+/* ------------------------------ GET (lookups) ------------------------------ */
+const getLookups = async (): Promise<GetClientLookupsResponse> => {
+  const { data } = await api.get<GetClientLookupsResponse>(ClientsRoutes.lookups);
   return data;
 };
 
@@ -25,4 +33,4 @@ const restore = async (id: string): Promise<void> => {
   await api.post<string>(ClientsRoutes.restore(id));
 };
 
-export const clientService = { add, get, restore };
+export const clientService = { add, get, getLookups, restore };

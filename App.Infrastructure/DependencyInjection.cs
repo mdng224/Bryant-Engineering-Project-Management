@@ -60,6 +60,8 @@ public static class DependencyInjection
         services.AddScoped<IProjectReader, ProjectReader>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IScopeReader, ScopeReader>();
+        services.AddScoped<IClientTypeReader, ClientTypeReader>();
+        services.AddScoped<IClientCategoryReader, ClientCategoryReader>();
         
         // --- Auth helpers (hashing + token creation) ---
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();

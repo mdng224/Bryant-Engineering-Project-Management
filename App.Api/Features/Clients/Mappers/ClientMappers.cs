@@ -1,8 +1,10 @@
 ﻿using App.Api.Contracts.Clients.Requests;
 using App.Api.Contracts.Clients.Responses;
+using App.Api.Contracts.Clients.Responses.Lookups;
 using App.Application.Clients.Commands.AddClient;
-using App.Application.Clients.Queries;
-using App.Application.Common.Dtos;
+using App.Application.Clients.Queries.GetClients;
+using App.Application.Common.Dtos.Clients;
+using App.Application.Common.Dtos.Clients.Lookups;
 using App.Application.Common.Pagination;
 using App.Domain.Common;
 
@@ -24,7 +26,7 @@ public static class ClientMappers
             ClientCategoryId: request.ClientCategoryId,
             ClientTypeId:     request.ClientTypeId);
     
-    public static GetClientsResponse ToGetClientsResponse(this PagedResult<ClientListItemDto> pagedResult)
+    public static GetClientsResponse ToResponse(this PagedResult<ClientListItemDto> pagedResult)
     {
         var clientListItemResponse = pagedResult.Items
             .Select(cd => cd.ToListItem())
@@ -42,44 +44,63 @@ public static class ClientMappers
     public static GetClientsQuery ToQuery(this GetClientsRequest request)
     {
         var normalizedNameFilter = (request.NameFilter ?? string.Empty).ToNormalizedName();
-        var pagedQuery                = new PagedQuery(request.Page, request.PageSize);
-        var getClientsQuery           = new GetClientsQuery(pagedQuery, normalizedNameFilter, request.HasActiveProject);
+        var pagedQuery      = new PagedQuery(request.Page, request.PageSize);
+        var getClientsQuery = new GetClientsQuery(
+            pagedQuery,
+            normalizedNameFilter,
+            request.HasActiveProject,
+            request.CategoryId,
+            request.TypeId);
 
         return getClientsQuery;
     }
-    
-    public static ClientSummaryResponse ToSummaryResponse(this ClientListItemDto listItemDto) =>
-        new(
-            Id:                  listItemDto.Id,
-            Name:                listItemDto.Name,
-            TotalActiveProjects: listItemDto.TotalActiveProjects,
-            TotalProjects:       listItemDto.TotalProjects,
-            FirstName:        listItemDto.FirstName,
-            LastName:         listItemDto.LastName,
-            Email:               listItemDto.Email,
-            Phone:               listItemDto.Phone);
-    
-    private static ClientListItemResponse ToListItem(this ClientListItemDto listItemDto) =>
-        new(
-            Summary: listItemDto.ToSummaryResponse(),
-            Details: listItemDto.ToClientResponse());
 
-    private static ClientResponse ToClientResponse(this ClientListItemDto listItemDto) =>
+    public static IReadOnlyList<ClientCategoryResponse> ToResponses(this IReadOnlyList<ClientCategoryDto> dtos) =>
+        dtos.Select(ccd => ccd.ToResponse()).ToList();
+    
+    public static IReadOnlyList<ClientTypeResponse> ToResponses(this IReadOnlyList<ClientTypeDto> dtos) =>
+        dtos.Select(ccd => ccd.ToResponse()).ToList();
+    
+    // -- HELPERS --
+    private static ClientCategoryResponse ToResponse(this ClientCategoryDto dto) => new(dto.Id, dto.Name);
+    private static ClientTypeResponse ToResponse(this ClientTypeDto dto) =>
+        new(dto.Id, dto.Name, dto.Description, dto.CategoryId);
+    
+    private static ClientSummaryResponse ToSummaryResponse(this ClientListItemDto dto) =>
         new(
-            Id:                  listItemDto.Id,
-            Name:                listItemDto.Name,
-            TotalActiveProjects: listItemDto.TotalActiveProjects,
-            TotalProjects:       listItemDto.TotalProjects,
-            FirstName:        listItemDto.FirstName,
-            LastName:         listItemDto.LastName,
-            Email:               listItemDto.Email,
-            Phone:               listItemDto.Phone,
-            Address:             listItemDto.Address,
-            Note:                listItemDto.Note,
-            CreatedAtUtc:        listItemDto.CreatedAtUtc,
-            UpdatedAtUtc:        listItemDto.UpdatedAtUtc,
-            DeletedAtUtc:        listItemDto.DeletedAtUtc,
-            CreatedById:         listItemDto.CreatedById,
-            UpdatedById:         listItemDto.UpdatedById,
-            DeletedById:         listItemDto.DeletedById);
+            Id:                  dto.Id,
+            Name:                dto.Name,
+            TotalActiveProjects: dto.TotalActiveProjects,
+            TotalProjects:       dto.TotalProjects,
+            FirstName:           dto.FirstName,
+            LastName:            dto.LastName,
+            Email:               dto.Email,
+            Phone:               dto.Phone,
+            CategoryName:        dto.CategoryName,
+            TypeName:            dto.TypeName);
+    
+    private static ClientListItemResponse ToListItem(this ClientListItemDto dto) =>
+        new(Summary: dto.ToSummaryResponse(),
+            Details: dto.ToClientResponse());
+
+    private static ClientResponse ToClientResponse(this ClientListItemDto dto) =>
+        new(
+            Id:                  dto.Id,
+            Name:                dto.Name,
+            TotalActiveProjects: dto.TotalActiveProjects,
+            TotalProjects:       dto.TotalProjects,
+            FirstName:           dto.FirstName,
+            LastName:            dto.LastName,
+            Email:               dto.Email,
+            Phone:               dto.Phone,
+            Address:             dto.Address,
+            Note:                dto.Note,
+            CategoryName:        dto.CategoryName,
+            TypeName:            dto.TypeName,
+            CreatedAtUtc:        dto.CreatedAtUtc,
+            UpdatedAtUtc:        dto.UpdatedAtUtc,
+            DeletedAtUtc:        dto.DeletedAtUtc,
+            CreatedById:         dto.CreatedById,
+            UpdatedById:         dto.UpdatedById,
+            DeletedById:         dto.DeletedById);
 }

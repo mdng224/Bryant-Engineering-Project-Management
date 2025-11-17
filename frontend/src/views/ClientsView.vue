@@ -5,6 +5,28 @@
     <div class="flex gap-4">
       <table-search v-model="nameFilter" placeholder="Search client name..." @commit="commit" />
       <boolean-filter v-model="hasActiveProject" :options="activeOptions" />
+
+      <!-- Client Category Filter -->
+      <select
+        v-model="selectedCategoryId"
+        class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-100"
+      >
+        <option :value="null">All Categories</option>
+        <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+          {{ cat.name }}
+        </option>
+      </select>
+
+      <!-- Client Type Filter -->
+      <select
+        v-model="selectedTypeId"
+        class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-100"
+      >
+        <option :value="null">All Types</option>
+        <option v-for="t in filteredTypes" :key="t.id" :value="t.id">
+          {{ t.name }}
+        </option>
+      </select>
     </div>
 
     <button
@@ -66,7 +88,10 @@
   import type { ClientResponse } from '@/api/clients';
   import { clientService } from '@/api/clients';
   import type {
+    ClientCategoryDto,
     ClientSummaryResponse,
+    ClientTypeDto,
+    GetClientLookupsResponse,
     GetClientsRequest,
     GetClientsResponse,
   } from '@/api/clients/contracts';
@@ -83,7 +108,7 @@
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { CheckCircle2, CirclePlus, Eye, Lock } from 'lucide-vue-next';
-  import { computed, onBeforeUnmount, ref } from 'vue';
+  import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
   /* ------------------------------- Constants ------------------------------ */
   // Buttons
@@ -158,6 +183,16 @@
 
   /* ------------------------------- Filtering ------------------------------ */
   const hasActiveProject = ref<boolean>(true); // default Active
+  const categories = ref<ClientCategoryDto[]>([]);
+  const types = ref<ClientTypeDto[]>([]);
+  const selectedCategoryId = ref<string | null>(null);
+  const selectedTypeId = ref<string | null>(null);
+
+  const filteredTypes = computed(() =>
+    selectedCategoryId.value
+      ? types.value.filter(t => t.categoryId === selectedCategoryId.value)
+      : types.value,
+  );
 
   const activeOptions = [
     { value: true, label: 'Active', icon: CheckCircle2, color: 'text-emerald-400' },
@@ -176,8 +211,17 @@
     destroy();
   });
 
+  watch(selectedCategoryId, () => {
+    selectedTypeId.value = null;
+  });
+
   /* ------------------------------- Fetching ------------------------------- */
-  type ClientQuery = { name: string | null; hasActiveProject: boolean };
+  type ClientQuery = {
+    name: string | null;
+    hasActiveProject: boolean;
+    categoryId: string | null;
+    typeId: string | null;
+  };
 
   const clientDetails = ref<ClientResponse[]>([]);
   const clientDetailsById = computed(() => {
@@ -194,6 +238,8 @@
       pageSize,
       nameFilter: query?.name || null,
       hasActiveProject: query?.hasActiveProject ?? true,
+      categoryId: query?.categoryId ?? null,
+      typeId: query?.typeId ?? null,
     };
     const response: GetClientsResponse = await clientService.get(request);
     clientDetails.value = response.clientListItemResponses.map(clir => clir.details);
@@ -210,6 +256,8 @@
   const query = computed(() => ({
     name: name.value ?? null,
     hasActiveProject: hasActiveProject.value,
+    categoryId: selectedCategoryId.value,
+    typeId: selectedTypeId.value,
   }));
 
   const {
@@ -240,4 +288,18 @@
     selectedClient.value = detail;
     editClientDialogIsOpen.value = !!detail;
   };
+
+  /* -------------------------------------------------------------- */
+
+  onMounted(async () => {
+    // Only fetch if we don't have data yet in this component instance
+    if (categories.value.length === 0 || types.value.length === 0) {
+      console.log('getting lookups...');
+      const lookups: GetClientLookupsResponse = await clientService.getLookups();
+      categories.value = lookups.categories;
+      types.value = lookups.types;
+    } else {
+      console.log('look ups already exist...');
+    }
+  });
 </script>

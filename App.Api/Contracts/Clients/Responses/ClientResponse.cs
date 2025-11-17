@@ -13,6 +13,8 @@ public sealed record ClientResponse(
     string? Phone,
     Address? Address,
     string? Note,
+    string? CategoryName,
+    string? TypeName,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc,
     DateTimeOffset? DeletedAtUtc,

@@ -19,8 +19,8 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         string? phone,
         Address? address,
         string? note,
-        Guid? clientCategoryId,
-        Guid? clientTypeId,
+        Guid? categoryId,
+        Guid? typeId,
         string? projectCode // legacy optional
     )
     {
@@ -28,8 +28,8 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         SetContactInfoInternal(name, namePrefix, firstName, lastName, nameSuffix, email, phone);
         SetAddressInternal(address);
         SetNoteInternal(note);
-        ClientCategoryId = clientCategoryId;
-        ClientTypeId = clientTypeId;
+        CategoryId = categoryId;
+        TypeId = typeId;
         ProjectCode = projectCode?.Trim();
     }
     
@@ -38,8 +38,8 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     // Company / person
     public string Name        { get; private set; } = null!;  // company or household name (client_name)
     public string? NamePrefix { get; private set; }  // name_prefix (e.g., Mr., Ms., Dr.)
-    public string FirstName  { get; private set; }  // first_name
-    public string LastName   { get; private set; }  // last_name
+    public string FirstName { get; private set; } = null!;  // first_name
+    public string LastName { get; private set; } = null!;  // last_name
     public string? NameSuffix { get; private set; }  // name_suffix (e.g., Jr., III)
     
     // Contact
@@ -47,12 +47,13 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     public string? Phone { get; private set; }       // phone
     public Address? Address      { get; private set; }
     public string? Note          { get; private set; }
-    // Classification from CSV
-    public Guid? ClientCategoryId { get; private set; }  // from "CLIENT CATEGORY" lookup
-    public Guid? ClientTypeId     { get; private set; }  // from "CLIENT TYPE" lookup
+    
+    // Lookups
+    public Guid? CategoryId { get; private set; }  // from "CLIENT CATEGORY" lookup
+    public Guid? TypeId     { get; private set; }  // from "CLIENT TYPE" lookup
 
     // Legacy linkage (optional)
-    public string? ProjectCode { get; private set; }     // legacy: how clients/projects were linked (may be null)
+    public string? ProjectCode { get; private set; }     // legacy: how clients/projects were linked (maybe null)
 
     // 🔁 Navigation (optional for EF, useful for domain logic)
     private readonly List<Project> _projects = [];
@@ -106,8 +107,8 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
             phone:          phone,
             address:        address,
             note:           note,
-            clientCategoryId: clientCategoryId,
-            clientTypeId:     clientTypeId,
+            categoryId: clientCategoryId,
+            typeId:     clientTypeId,
             projectCode:    legacyProjectCode
         );
     }

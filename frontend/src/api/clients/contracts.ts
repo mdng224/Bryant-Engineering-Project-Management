@@ -2,6 +2,23 @@
 
 import type { Address } from '../common';
 
+export interface ClientCategoryDto {
+  id: string;
+  name: string;
+}
+
+export interface ClientTypeDto {
+  id: string;
+  name: string;
+  description: string;
+  categoryId: string;
+}
+
+export interface GetClientLookupsResponse {
+  categories: ClientCategoryDto[];
+  types: ClientTypeDto[];
+}
+
 // Client is required to have Name or contact first
 type ClientBase = {
   id: string;
@@ -33,6 +50,8 @@ export type GetClientsRequest = {
   pageSize: number;
   nameFilter: string | null;
   hasActiveProject: boolean;
+  categoryId: string | null;
+  typeId: string | null;
 };
 
 export type GetClientsResponse = {
