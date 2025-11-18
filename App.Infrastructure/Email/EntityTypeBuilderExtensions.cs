@@ -7,18 +7,26 @@ namespace App.Infrastructure.Email;
 
 public static class EntityTypeBuilderExtensions
 {
+    /// <summary>
+    /// Configures the owned <see cref="Address"/> value object.
+    /// 
+    /// All address columns are nullable because the address itself is optional.  
+    /// The domain enforces an "all-or-nothing" rule (either null, or a fully 
+    /// populated address with Line1/City/State/PostalCode). EF does not enforce
+    /// this; completeness is validated in the entity's factory/mutators.
+    /// </summary>
     public static void OwnsAddress<T>(this EntityTypeBuilder<T> builder)
         where T : class
     {
         builder.OwnsOne<Address>(
             nameof(Address),
-            a =>
+            add =>
             {
-                a.Property(p => p.Line1).HasColumnName("Address_Line_1").HasMaxLength(64);
-                a.Property(p => p.Line2).HasColumnName("Address_Line_2").HasMaxLength(64);
-                a.Property(p => p.City).HasMaxLength(50);
-                a.Property(p => p.State).HasMaxLength(50);
-                a.Property(p => p.PostalCode).HasMaxLength(15);
+                add.Property(a => a.Line1).HasColumnName("line_1").HasMaxLength(64).IsRequired(false);
+                add.Property(a => a.Line2).HasColumnName("line_2").HasMaxLength(64).IsRequired(false);
+                add.Property(a => a.City).HasColumnName("city").HasMaxLength(50).IsRequired(false);
+                add.Property(a => a.State).HasColumnName("state").HasMaxLength(50).IsRequired(false);
+                add.Property(a => a.PostalCode).HasColumnName("postal_code").HasMaxLength(15).IsRequired(false);
             });
     }
     

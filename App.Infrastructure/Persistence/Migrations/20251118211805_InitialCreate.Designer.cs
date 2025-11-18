@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251118014502_InitialCreate")]
+    [Migration("20251118211805_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -689,25 +689,28 @@ namespace App.Infrastructure.Persistence.Migrations
 
                             b1.Property<string>("City")
                                 .HasMaxLength(50)
-                                .HasColumnType("character varying(50)");
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("city");
 
                             b1.Property<string>("Line1")
                                 .HasMaxLength(64)
                                 .HasColumnType("character varying(64)")
-                                .HasColumnName("Address_Line_1");
+                                .HasColumnName("line_1");
 
                             b1.Property<string>("Line2")
                                 .HasMaxLength(64)
                                 .HasColumnType("character varying(64)")
-                                .HasColumnName("Address_Line_2");
+                                .HasColumnName("line_2");
 
                             b1.Property<string>("PostalCode")
                                 .HasMaxLength(15)
-                                .HasColumnType("character varying(15)");
+                                .HasColumnType("character varying(15)")
+                                .HasColumnName("postal_code");
 
                             b1.Property<string>("State")
                                 .HasMaxLength(50)
-                                .HasColumnType("character varying(50)");
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("state");
 
                             b1.HasKey("ClientId");
 
@@ -750,25 +753,28 @@ namespace App.Infrastructure.Persistence.Migrations
 
                             b1.Property<string>("City")
                                 .HasMaxLength(50)
-                                .HasColumnType("character varying(50)");
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("city");
 
                             b1.Property<string>("Line1")
                                 .HasMaxLength(64)
                                 .HasColumnType("character varying(64)")
-                                .HasColumnName("Address_Line_1");
+                                .HasColumnName("line_1");
 
                             b1.Property<string>("Line2")
                                 .HasMaxLength(64)
                                 .HasColumnType("character varying(64)")
-                                .HasColumnName("Address_Line_2");
+                                .HasColumnName("line_2");
 
                             b1.Property<string>("PostalCode")
                                 .HasMaxLength(15)
-                                .HasColumnType("character varying(15)");
+                                .HasColumnType("character varying(15)")
+                                .HasColumnName("postal_code");
 
                             b1.Property<string>("State")
                                 .HasMaxLength(50)
-                                .HasColumnType("character varying(50)");
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("state");
 
                             b1.HasKey("EmployeeId");
 

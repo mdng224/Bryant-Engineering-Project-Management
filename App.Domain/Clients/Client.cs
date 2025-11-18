@@ -202,6 +202,9 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
                 "Address must be fully provided (line1, city, state, postal code) or not provided at all."
             );
         }
+        
+        if (state.Trim().Length != 2)
+            throw new InvalidOperationException("State must be a 2-letter code (e.g., KY).");
 
         // Now safe to normalize (we know required ones are not null/whitespace)
         var normalizedLine1      = line1.ToNormalizedAddressLine();

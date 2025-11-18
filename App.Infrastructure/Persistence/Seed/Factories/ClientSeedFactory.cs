@@ -1,5 +1,6 @@
 ﻿using CsvHelper.Configuration;
 using System.Globalization;
+using App.Domain.Common;
 using CsvHelper;
 
 namespace App.Infrastructure.Persistence.Seed.Factories;
@@ -75,9 +76,10 @@ public class ClientSeedFactory
             BadDataFound = null,
             MissingFieldFound = null,
             DetectColumnCountChanges = true,
+            
 
             // Make header matching forgiving (so "CLIENT CATEGORY" == "client category")
-            PrepareHeaderForMatch = args => args.Header.Trim().ToLowerInvariant() ?? string.Empty
+            PrepareHeaderForMatch = args => args.Header.Trim().ToLowerInvariant()
         };
 
         using var csv = new CsvReader(reader, config);
@@ -85,13 +87,23 @@ public class ClientSeedFactory
 
         foreach (var row in csv.GetRecords<ClientCsvRow>())
         {
+            var clientName  = string.IsNullOrWhiteSpace(row.ClientName)
+                ? "Unknown"
+                : row.ClientName.ToProperCase();
+            var firstName = string.IsNullOrWhiteSpace(row.FirstName)
+                ? "Unknown"
+                : row.FirstName.ToProperCase();
+            var lastName = string.IsNullOrWhiteSpace(row.LastName)
+                ? "Unknown"
+                : row.LastName.ToProperCase();
+            
             yield return new ClientSeed(
-                ClientName:     Collapse(row.ClientName),
+                ClientName:     clientName,
                 ClientCategory: Collapse(row.ClientCategory),
                 ClientType:     Collapse(row.ClientType),
                 NamePrefix:     NullIfWhiteSpace(row.NamePrefix),
-                FirstName:      Collapse(row.FirstName),
-                LastName:       Collapse(row.LastName),
+                FirstName:      firstName,
+                LastName:       lastName,
                 NameSuffix:     NullIfWhiteSpace(row.NameSuffix),
                 Email:          NormalizeEmail(row.Email),
                 Phone:          NormalizePhone(row.Phone),

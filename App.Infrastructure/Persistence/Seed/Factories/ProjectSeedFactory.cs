@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using App.Domain.Common;
 using CsvHelper;
 using CsvHelper.Configuration;
 
@@ -54,7 +55,7 @@ internal static class ProjectSeedFactory
             MissingFieldFound = null,
             BadDataFound = null,
             DetectColumnCountChanges = true,
-            PrepareHeaderForMatch = h => h.Header.Trim().ToLowerInvariant() ?? string.Empty
+            PrepareHeaderForMatch = h => h.Header.Trim().ToLowerInvariant()
         };
 
         using var csv = new CsvReader(reader, cfg);
@@ -62,14 +63,36 @@ internal static class ProjectSeedFactory
 
         foreach (var row in csv.GetRecords<ProjectCsvRow>())
         {
-            var code     = Collapse(row.ProjectCode)     ?? throw new InvalidOperationException("Project code required.");
-            var name          = Collapse(row.ProjectName)     ?? "Unknown";
-            var client   = Collapse(row.ClientNameFinal) ?? "Unknown";
-            var scope    = Collapse(row.Scope)           ?? "Unknown";
-            var pm       = Collapse(row.PM)              ?? "Unknown";
-            var status   = Collapse(row.Status)          ?? "Unknown";
-            var location = Collapse(row.Location)        ?? "Unknown";
-            var type     = Collapse(row.Type)            ?? "Unknown";
+            var code = Collapse(row.ProjectCode)
+                       ?? throw new InvalidOperationException("Project code required.");
+
+            var name = string.IsNullOrWhiteSpace(row.ProjectName)
+                ? "Unknown"
+                : row.ProjectName.ToProperCase();
+
+            var client = string.IsNullOrWhiteSpace(row.ClientNameFinal)
+                ? "Unknown"
+                : Collapse(row.ClientNameFinal)!;
+
+            var scope = string.IsNullOrWhiteSpace(row.Scope)
+                ? "Unknown"
+                : Collapse(row.Scope)!;
+
+            var pm = string.IsNullOrWhiteSpace(row.PM)
+                ? "Unknown"
+                : row.PM.ToProperCase();
+
+            var status = string.IsNullOrWhiteSpace(row.Status)
+                ? "Unknown"
+                : Collapse(row.Status)!;
+
+            var location = string.IsNullOrWhiteSpace(row.Location)
+                ? "Unknown"
+                : row.Location.ToProperCase();
+
+            var type = string.IsNullOrWhiteSpace(row.Type)
+                ? "Unknown"
+                : Collapse(row.Type)!;
 
             yield return new ProjectSeed(code, name, client, scope, pm, status, location, type);
         }

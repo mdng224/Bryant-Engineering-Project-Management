@@ -17,6 +17,25 @@ public static class Normalize
 
         return string.IsNullOrEmpty(digits) ? null : digits;
     }
+    
+    public static string ToProperCase(this string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return value;
+
+        // Collapse first
+        var cleaned = CollapseSpaces(value.Trim());
+
+        // Only apply TitleCase if the whole string is uppercase (CSV noise)
+        var looksMachineUpper = cleaned.All(c => !char.IsLetter(c) || char.IsUpper(c));
+
+        if (!looksMachineUpper)
+            return cleaned;
+
+        // Convert to lower, then Title Case
+        var lower = cleaned.ToLowerInvariant();
+        var textInfo = System.Globalization.CultureInfo.InvariantCulture.TextInfo;
+        return textInfo.ToTitleCase(lower);
+    }
 
     // --- Address-ish fields --------------------------------------------------
     public static string? ToNormalizedAddressLine(this string? value) =>

@@ -267,7 +267,10 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
                 "Address must be fully provided (line1, city, state, postal code) or not provided at all."
             );
         }
-
+        
+        if (state.Trim().Length != 2)
+            throw new InvalidOperationException("State must be a 2-letter code (e.g., KY).");
+        
         // Normalize after we've verified the required fields
         var normalizedLine1      = line1.ToNormalizedAddressLine();
         var normalizedLine2      = line2.ToNormalizedAddressLine();
