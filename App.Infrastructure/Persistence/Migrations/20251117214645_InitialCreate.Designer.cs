@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251115195131_InitialCreate")]
+    [Migration("20251117214645_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -73,13 +73,9 @@ namespace App.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("ClientCategoryId")
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid")
                         .HasColumnName("client_category_id");
-
-                    b.Property<Guid?>("ClientTypeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("client_type_id");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamptz")
@@ -144,6 +140,10 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(32)")
                         .HasColumnName("project_code");
 
+                    b.Property<Guid?>("TypeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("client_type_id");
+
                     b.Property<DateTimeOffset>("UpdatedAtUtc")
                         .HasColumnType("timestamptz")
                         .HasColumnName("updated_at_utc");
@@ -163,7 +163,7 @@ namespace App.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ProjectCode");
 
-                    b.HasIndex("ClientCategoryId", "ClientTypeId");
+                    b.HasIndex("CategoryId", "TypeId");
 
                     b.HasIndex("LastName", "FirstName");
 

@@ -91,9 +91,10 @@
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { CheckCircle2, CirclePlus, Eye, Lock, LockOpen, Trash2 } from 'lucide-vue-next';
-
   import { computed, onBeforeUnmount, ref } from 'vue';
+  import { useRoute } from 'vue-router'; // 👈 NEW
 
+  const route = useRoute();
   const actionButtonClass =
     'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
 
@@ -142,9 +143,10 @@
   ];
 
   /* ------------------------------- Filtering ------------------------------ */
-  const deletedFilter = ref(false); // default: show only active (not deleted)
+  const deletedFilter = ref(null); // default: show only active (not deleted)
 
   const deletedOptions = [
+    { value: null, label: 'All', icon: Eye, color: 'text-indigo-300' },
     { value: false, label: 'Active', icon: CheckCircle2, color: 'text-emerald-400' },
     { value: true, label: 'Deleted', icon: Trash2, color: 'text-rose-400' },
   ];
@@ -161,8 +163,38 @@
     destroy();
   });
 
+  /* --------------------------- Route → filter mapping -------------------- */
+
+  type ProjectStatus = 'active' | 'inactive' | 'all';
+
+  const statusFromRoute = computed<ProjectStatus | undefined>(() => {
+    const raw = route.query.status;
+    if (!raw) return undefined;
+    const s = String(raw).toLowerCase();
+    if (s === 'active') return 'active';
+    if (s === 'inactive') return 'inactive';
+    if (s === 'all') return 'all';
+    return undefined;
+  });
+
+  const clientIdFromRoute = computed<string | null>(() => {
+    const raw = route.query.clientId;
+    return raw ? String(raw) : null;
+  });
+
+  const mapStatusToIsDeleted = (status: ProjectStatus | undefined): boolean | null => {
+    if (status === 'active') return false;
+    if (status === 'inactive') return true;
+    if (status === 'all') return null; // no deleted filter
+    return null;
+  };
+
   /* ------------------------------- Fetching ------------------------------- */
-  type ProjectQuery = { name: string | null; isDeleted: boolean };
+  type ProjectQuery = {
+    name: string | null;
+    isDeleted: boolean | null;
+    clientId: string | null;
+  };
 
   const projectDetails = ref<ProjectResponse[]>([]);
   const projectDetailsById = computed(() => new Map(projectDetails.value.map(p => [p.id, p])));
@@ -172,12 +204,14 @@
       page,
       pageSize,
       nameFilter: query?.name || null,
-      isDeleted: query?.isDeleted ?? false,
+      isDeleted: query?.isDeleted ?? null,
+      clientId: query?.clientId ?? null,
     };
     const response: GetProjectsResponse = await projectService.get(request);
+
     // Cache details for action dialogs
     projectDetails.value = response.projectListItemResponses.map(plir => plir.details);
-    console.log(response);
+
     return {
       items: response.projectListItemResponses.map(plir => plir.summary), // summaries are the table rows
       totalCount: response.totalCount,
@@ -186,16 +220,29 @@
       pageSize: response.pageSize,
     };
   };
-  const query = computed(() => ({
-    name: name.value ?? null,
-    isDeleted: deletedFilter.value,
-  }));
+
+  const query = computed<ProjectQuery>(() => {
+    const status = statusFromRoute.value;
+    const clientId = clientIdFromRoute.value;
+
+    const isDeletedFromStatus = mapStatusToIsDeleted(status);
+
+    const effectiveIsDeleted =
+      status !== undefined
+        ? isDeletedFromStatus // coming from Clients page
+        : deletedFilter.value; // user UI selection, including null
+
+    return {
+      name: name.value ?? null,
+      isDeleted: effectiveIsDeleted,
+      clientId,
+    };
+  });
 
   const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<
     ProjectSummaryResponse,
-    typeof query.value
+    ProjectQuery
   >(columns, fetchProjects, query);
-
   /* ------------------------------- Dialogs/UX ----------------------------- */
   const addDialogIsOpen = ref(false);
   const deleteDialogIsOpen = ref(false);

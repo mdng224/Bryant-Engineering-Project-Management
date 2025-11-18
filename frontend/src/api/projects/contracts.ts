@@ -16,7 +16,8 @@ export type GetProjectsRequest = {
   page: number;
   pageSize: number;
   nameFilter: string | null;
-  isDeleted: boolean;
+  isDeleted: boolean | null;
+  clientId: string | null;
 };
 
 export type GetProjectsResponse = {

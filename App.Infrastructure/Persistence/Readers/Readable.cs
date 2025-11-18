@@ -14,11 +14,11 @@ internal static class Readable
     public static IQueryable<T> ApplyDeletedFilter<T>(this IQueryable<T> query, bool? isDeleted)
         where T : class, ISoftDeletable
     {
-        // Default (null) means "active" — i.e. DeletedAtUtc == null
         return isDeleted switch
         {
-            true          => query.IgnoreQueryFilters().Where(x => x.DeletedAtUtc != null),  // Show deleted
-            false or null => query.Where(x => x.DeletedAtUtc == null) // Show active (default)
+            true          => query.IgnoreQueryFilters().Where(x => x.DeletedAtUtc != null),
+            false         => query.Where(x => x.DeletedAtUtc == null),
+            null          => query.IgnoreQueryFilters(),  // ALL
         };
     }
     

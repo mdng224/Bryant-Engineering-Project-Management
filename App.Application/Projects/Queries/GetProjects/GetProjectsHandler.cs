@@ -17,7 +17,12 @@ public sealed class GetProjectsHandler(IProjectReader projectReader)
         var normalizedNameFilter = query.NameFilter?.ToNormalizedName();
 
         var (items, total) = await projectReader.GetPagedAsync(
-            skip, pageSize, normalizedNameFilter, query.IsDeleted, ct);
+            skip,
+            pageSize,
+            normalizedNameFilter,
+            query.IsDeleted,
+            query.ClientId,
+            ct);
 
         var pagedResult = new PagedResult<ProjectListItemDto>(items, total, page, pageSize);
         

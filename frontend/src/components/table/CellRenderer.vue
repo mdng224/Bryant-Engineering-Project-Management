@@ -21,6 +21,16 @@
 
   <slot v-else-if="kind === 'actions'"></slot>
 
+  <button
+    v-else-if="kind === 'link'"
+    type="button"
+    class="text-xs font-medium text-indigo-400 underline-offset-2 hover:text-indigo-300 hover:underline disabled:cursor-default disabled:opacity-40"
+    :disabled="isLinkDisabled"
+    @click="handleLinkClick"
+  >
+    {{ asNumber }}
+  </button>
+
   <span v-else>{{ asString }}</span>
 </template>
 
@@ -29,9 +39,16 @@
   import type { Cell } from '@tanstack/table-core';
   import { computed } from 'vue';
 
+  const LEGAL_SUFFIXES = ['llc', 'pllc', 'llp', 'lp', 'inc', 'co', 'pc', 'ltd', 'corp'];
+
   type ColMeta =
     | { kind: 'text' | 'datetime' | 'boolean' | 'actions' }
-    | { kind: 'badge'; classFor?: (value: string) => string };
+    | { kind: 'badge'; classFor?: (value: string) => string }
+    | {
+        kind: 'link';
+        onClick?: (ctx: { cell: Cell<unknown, unknown>; value: unknown }) => void;
+        disableWhenZero?: boolean;
+      };
 
   const props = defineProps<{ cell: Cell<unknown, unknown> }>();
   const meta = props.cell.column.columnDef.meta as ColMeta | undefined;
@@ -42,6 +59,10 @@
 
   const asString = computed(() => (rawVal == null ? '' : String(rawVal)));
   const asBoolean = computed(() => Boolean(rawVal));
+  const asNumber = computed(() => {
+    const n = Number(rawVal);
+    return Number.isNaN(n) ? null : n;
+  });
 
   const normalizeEmpty = (v: unknown) => {
     if (v === null || v === undefined) return '—';
@@ -54,12 +75,18 @@
   const toTitleCase = (s: string) =>
     s.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
-  const displayText = computed(() => {
+  const displayText = computed((): string => {
     const normalized = normalizeEmpty(rawVal);
-    return normalized === '—' ? normalized : toTitleCase(normalized);
+    if (normalized === '—') return normalized;
+
+    // Title case first
+    const titled = toTitleCase(normalized);
+
+    // Then correct legal suffixes
+    return fixLegalSuffixes(titled);
   });
 
-  const displayDate = computed(() => {
+  const displayDate = computed((): string => {
     const v = rawVal == null ? null : String(rawVal);
     if (!v) return '—';
     return formatUtc(v);
@@ -70,4 +97,27 @@
     const fn = meta.classFor;
     return fn ? fn(asString.value) : 'bg-slate-800/60 text-slate-300';
   });
+
+  const isLinkDisabled = computed(() => {
+    if (meta?.kind !== 'link') return false;
+    if (!meta.disableWhenZero) return false;
+    const n = asNumber.value;
+    return n === null || n === 0;
+  });
+
+  const handleLinkClick = (): void => {
+    if (meta?.kind !== 'link') return;
+    if (isLinkDisabled.value) return;
+    meta.onClick?.({ cell: props.cell, value: rawVal });
+  };
+
+  const fixLegalSuffixes = (s: string): string => {
+    return s
+      .split(/\s+/)
+      .map(word => {
+        const lower = word.toLowerCase();
+        return LEGAL_SUFFIXES.includes(lower) ? lower.toUpperCase() : word;
+      })
+      .join(' ');
+  };
 </script>

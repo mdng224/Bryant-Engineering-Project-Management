@@ -21,8 +21,115 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
         Guid? typeId,
         CancellationToken ct = default)
     {
-        var clientQuery = db.ReadSet<Client>();
+        // 1. Build filtered client query
+        var clientQuery = BuildClientQuery(
+            normalizedNameFilter,
+            hasActiveProject,
+            categoryId,
+            typeId);
+
+        // 2. Count (simple query)
+        var totalCount = await clientQuery.CountAsync(ct);
+        if (totalCount == 0 || skip >= totalCount)
+            return ([], totalCount);
         
+        // 3. Decorate with joins + counts
+        var categories = db.ReadSet<ClientCategory>();
+        var projects = db.ReadSet<Project>().IgnoreQueryFilters();
+        var types      = db.ReadSet<ClientType>();
+        
+        var queryWithCounts =
+            from c in clientQuery
+            join cat in categories on c.CategoryId equals cat.Id into catGroup
+            from cat in catGroup.DefaultIfEmpty()
+            join t in types on c.TypeId equals t.Id into typeGroup
+            from type in typeGroup.DefaultIfEmpty()
+            join p in projects on c.Id equals p.ClientId into projGroup
+            from pg in projGroup.DefaultIfEmpty()
+            group new { c, cat, type, pg } by new
+            {
+                c.Id,
+                c.Name,
+                c.FirstName,
+                c.LastName,
+                c.Email,
+                c.Phone,
+                c.Address,
+                c.Note,
+                c.CreatedAtUtc,
+                c.UpdatedAtUtc,
+                c.DeletedAtUtc,
+                c.CreatedById,
+                c.UpdatedById,
+                c.DeletedById,
+                CategoryName = cat != null ? cat.Name : null,
+                TypeName     = type != null ? type.Name : null
+            }
+            into g
+            select new
+            {
+                ClientId           = g.Key.Id,
+                ClientName         = g.Key.Name,
+                g.Key.FirstName,
+                g.Key.LastName,
+                g.Key.Email,
+                g.Key.Phone,
+                g.Key.Address,
+                g.Key.Note,
+                g.Key.CreatedAtUtc,
+                g.Key.UpdatedAtUtc,
+                g.Key.DeletedAtUtc,
+                g.Key.CreatedById,
+                g.Key.UpdatedById,
+                g.Key.DeletedById,
+                g.Key.CategoryName,
+                g.Key.TypeName,
+                TotalProjects       = g.Count(x => x.pg != null),
+                TotalActiveProjects = g.Count(x => x.pg != null && x.pg.DeletedAtUtc == null)
+            };
+        
+        // 4. Order, page, map to DTO
+        var items = await queryWithCounts
+            .OrderByDescending(jq => jq.TotalActiveProjects)
+            .ThenByDescending(jq => jq.TotalProjects)
+            .ThenBy(jq => jq.ClientName)
+            .ThenBy(jq => jq.ClientId)
+            .Skip(skip)
+            .Take(take)
+            .Select(x => new ClientListItemDto(
+                x.ClientId,
+                x.ClientName,
+                x.TotalActiveProjects,
+                x.TotalProjects,
+                x.FirstName,
+                x.LastName,
+                x.Email,
+                x.Phone,
+                x.Address,
+                x.Note,
+                x.CategoryName,
+                x.TypeName,
+                x.CreatedAtUtc,
+                x.UpdatedAtUtc,
+                x.DeletedAtUtc,
+                x.CreatedById,
+                x.UpdatedById,
+                x.DeletedById))
+            .ToListAsync(ct);
+        
+        return (items, totalCount);
+    }
+    
+    private IQueryable<Client> BuildClientQuery(
+        string? normalizedNameFilter,
+        bool hasActiveProject,
+        Guid? categoryId,
+        Guid? typeId)
+    {
+        var clientQuery = db.ReadSet<Client>();
+        var projects    = db.ReadSet<Project>().IgnoreQueryFilters();
+
+        // Name filter
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {
             var pattern = $"%{normalizedNameFilter}%";
@@ -31,73 +138,19 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
                 EF.Functions.ILike(c.LastName  ?? "", pattern) ||
                 EF.Functions.ILike(c.Name      ?? "", pattern));
         }
-        
+
+        // Category / type filters
         if (categoryId is not null)
             clientQuery = clientQuery.Where(c => c.CategoryId == categoryId);
+
         if (typeId is not null)
             clientQuery = clientQuery.Where(c => c.TypeId == typeId);
 
-        var queryWithCounts =
-            from c in clientQuery
-            join cat in db.ReadSet<ClientCategory>() on c.CategoryId equals (Guid?)cat.Id into catGroup
-            from cat in catGroup.DefaultIfEmpty()
-            join t in db.ReadSet<ClientType>() on c.TypeId equals (Guid?)t.Id into typeGroup
-            from type in typeGroup.DefaultIfEmpty()
-            join p in db.ReadSet<Project>().IgnoreQueryFilters()
-                on c.Id equals p.ClientId into projGroup
-            from pg in projGroup.DefaultIfEmpty()
-            group new { c, cat, type, pg } by new
-            {
-                Client      = c,
-                CategoryName = cat != null ? cat.Name : null,
-                TypeName     = type != null ? type.Name : null
-            }
-            into g
-            select new
-            {
-                g.Key.Client,
-                g.Key.CategoryName,
-                g.Key.TypeName,
-                TotalProjects = g.Count(x => x.pg != null),
-                TotalActiveProjects = g.Count(x => x.pg != null && x.pg.DeletedAtUtc == null)
-            };
+        // Active / inactive project filter
+        clientQuery = hasActiveProject
+            ? clientQuery.Where(c => projects.Any(p => p.ClientId == c.Id && p.DeletedAtUtc == null))
+            : clientQuery.Where(c => !projects.Any(p => p.ClientId == c.Id && p.DeletedAtUtc == null));
 
-        queryWithCounts = hasActiveProject
-            ? queryWithCounts.Where(x => x.TotalActiveProjects > 0)
-            : queryWithCounts.Where(x => x.TotalActiveProjects == 0);
-
-        var totalCount = await queryWithCounts.CountAsync(ct);
-        if (totalCount == 0 || skip >= totalCount)
-            return ([], totalCount);
-
-        var items = await queryWithCounts
-            .OrderByDescending(jq => jq.TotalActiveProjects)
-            .ThenByDescending(jq => jq.TotalProjects)
-            .ThenBy(jq => jq.Client.Name)
-            .ThenBy(jq => jq.Client.Id)
-            .Skip(skip)
-            .Take(take)
-            .Select(x => new ClientListItemDto(
-                x.Client.Id,
-                x.Client.Name,
-                x.TotalActiveProjects,
-                x.TotalProjects,
-                x.Client.FirstName,
-                x.Client.LastName,
-                x.Client.Email,
-                x.Client.Phone,
-                x.Client.Address,
-                x.Client.Note,
-                x.CategoryName,
-                x.TypeName,
-                x.Client.CreatedAtUtc,
-                x.Client.UpdatedAtUtc,
-                x.Client.DeletedAtUtc,
-                x.Client.CreatedById,
-                x.Client.UpdatedById,
-                x.Client.DeletedById))
-            .ToListAsync(ct);
-        
-        return (items, totalCount);
+        return clientQuery;
     }
 }

@@ -18,6 +18,7 @@ public static class DbSeeder
         await SeedIfEmptyAsync(db, EmployeeSeedFactory.All, ct);
         await SeedIfEmptyAsync(db, ClientCategorySeedFactory.All, ct);
         await SeedIfEmptyAsync(db, ClientTypeSeedFactory.All, ct);
+        await db.SaveChangesAsync(ct);   // ✅ Save the above before we seed clients (which need category/type)
         await SeedClientIfNotEmptyAsync(db, ct);
         await SeedIfEmptyAsync(db, ScopeSeedFactory.All, ct);
         await db.SaveChangesAsync(ct);  // ✅ Save the above before we seed projects (which need Clients + Scopes)

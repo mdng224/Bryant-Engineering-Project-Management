@@ -106,7 +106,13 @@
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
-  import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
+  import router from '@/router';
+  import {
+    createColumnHelper,
+    type Cell,
+    type ColumnDef,
+    type ColumnHelper,
+  } from '@tanstack/vue-table';
   import { CheckCircle2, CirclePlus, Eye, Lock } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
@@ -128,9 +134,12 @@
   const fields: FieldDef[] = [
     fieldDef('totalActiveProjects', 'Total Active Projects'),
     fieldDef('totalProjects', 'Total Projects'),
-
     fieldDef('firstName', 'Contact First Name'),
     fieldDef('lastName', 'Contact Last Name'),
+    fieldDef('email', 'Email'),
+    fieldDef('phone', 'Phone Number'),
+    fieldDef('categoryName', 'Client Category'),
+    fieldDef('typeName', 'Client Type'),
     {
       key: 'address.line1',
       label: 'Address Line 1',
@@ -171,13 +180,38 @@
     col.accessor('name', { header: 'Client Name', meta: { kind: 'text' as const } }),
     col.accessor('totalActiveProjects', {
       header: 'Active Projects',
-      meta: { kind: 'text' as const },
+      meta: {
+        kind: 'link' as const,
+        disableWhenZero: true,
+        onClick: ({ cell }: { cell: Cell<ClientSummaryResponse, unknown> }) => {
+          const row = cell.row.original as ClientSummaryResponse;
+          router.push({
+            name: 'projects',
+            query: { clientId: row.id, status: 'active' },
+          });
+        },
+      },
     }),
-    col.accessor('totalProjects', { header: 'Total Projects', meta: { kind: 'text' as const } }),
+
+    col.accessor('totalProjects', {
+      header: 'Total Projects',
+      meta: {
+        kind: 'link' as const,
+        disableWhenZero: true,
+        onClick: ({ cell }: { cell: Cell<ClientSummaryResponse, unknown> }) => {
+          const row = cell.row.original as ClientSummaryResponse;
+          router.push({
+            name: 'projects',
+            query: { clientId: row.id, status: 'all' },
+          });
+        },
+      },
+    }),
     col.accessor('lastName', { header: 'Last Name', meta: { kind: 'text' as const } }),
     col.accessor('firstName', { header: 'First Name', meta: { kind: 'text' as const } }),
-    col.accessor('email', { header: 'Email', meta: { kind: 'text' as const } }),
     col.accessor('phone', { header: 'Phone', meta: { kind: 'text' as const } }),
+    col.accessor('categoryName', { header: 'Category', meta: { kind: 'text' as const } }),
+    col.accessor('typeName', { header: 'Type', meta: { kind: 'text' as const } }),
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
   ];
 
@@ -241,6 +275,7 @@
       categoryId: query?.categoryId ?? null,
       typeId: query?.typeId ?? null,
     };
+    console.log(request);
     const response: GetClientsResponse = await clientService.get(request);
     clientDetails.value = response.clientListItemResponses.map(clir => clir.details);
 
@@ -292,14 +327,11 @@
   /* -------------------------------------------------------------- */
 
   onMounted(async () => {
-    // Only fetch if we don't have data yet in this component instance
+    // TODO: Move this to pinia
     if (categories.value.length === 0 || types.value.length === 0) {
-      console.log('getting lookups...');
       const lookups: GetClientLookupsResponse = await clientService.getLookups();
       categories.value = lookups.categories;
       types.value = lookups.types;
-    } else {
-      console.log('look ups already exist...');
     }
   });
 </script>

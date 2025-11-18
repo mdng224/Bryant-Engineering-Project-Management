@@ -29,6 +29,8 @@ type ClientBase = {
   lastName: string | null;
   email: string | null;
   phone: string | null;
+  categoryName: string | null;
+  typeName: string | null;
 };
 
 export type AddClientRequest = {

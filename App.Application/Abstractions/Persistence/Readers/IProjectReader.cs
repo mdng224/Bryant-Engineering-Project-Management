@@ -13,7 +13,8 @@ public interface IProjectReader
         IReadOnlyCollection<Guid> clientIds, CancellationToken ct = default);*/
     Task<(IReadOnlyList<ProjectListItemDto> items, int totalCount)> GetPagedAsync(int skip,
         int take,
-        string? normalizedNameFilter = null,
-        bool? isDeleted = null,
+        string? normalizedNameFilter,
+        bool? isDeleted,
+        Guid? clientId,
         CancellationToken ct = default);
 }

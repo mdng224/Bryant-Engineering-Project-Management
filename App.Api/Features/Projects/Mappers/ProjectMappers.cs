@@ -24,7 +24,11 @@ public static class ProjectMappers
     {
         var normalizedNameFilter = (request.NameFilter ?? string.Empty).ToNormalizedName();
         var pagedQuery = new PagedQuery(request.Page, request.PageSize);
-        var getProjectsQuery = new GetProjectsQuery(pagedQuery, normalizedNameFilter, request.IsDeleted);
+        var getProjectsQuery = new GetProjectsQuery(
+            pagedQuery,
+            normalizedNameFilter,
+            request.IsDeleted,
+            request.ClientId);
 
         return getProjectsQuery;
     }
