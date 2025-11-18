@@ -32,27 +32,6 @@
           >
             <eye class="h-4 w-4" />
           </button>
-
-          <!-- Delete button -->
-          <button
-            v-if="!cell.row.original.deletedAtUtc"
-            class="rounded-md bg-indigo-600 p-1.5 transition hover:bg-rose-200"
-            aria-label="delete position"
-            @click="handleOpenDeleteDialog(cell.row.original as ProjectSummaryResponse)"
-          >
-            {{ cell.row.original.deletedAtUtc }}
-            <Lock class="h-4 w-4 text-rose-500 hover:text-rose-400" />
-          </button>
-
-          <!-- Reactivate button -->
-          <button
-            v-else
-            class="rounded-md bg-indigo-600 p-1.5 text-emerald-200 transition hover:bg-green-200"
-            aria-label="reactivate position"
-            @click="handleOpenReactivateDialog(cell.row.original as ProjectSummaryResponse)"
-          >
-            <lock-open class="h-4 w-4 hover:text-green-400" />
-          </button>
         </span>
       </template>
       <cell-renderer :cell />
@@ -90,7 +69,7 @@
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { CheckCircle2, CirclePlus, Eye, Lock, LockOpen, Trash2 } from 'lucide-vue-next';
+  import { CheckCircle2, CirclePlus, Eye, Trash2 } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref } from 'vue';
   import { useRoute } from 'vue-router'; // 👈 NEW
 

@@ -39,8 +39,6 @@
   import type { Cell } from '@tanstack/table-core';
   import { computed } from 'vue';
 
-  const LEGAL_SUFFIXES = ['llc', 'pllc', 'llp', 'lp', 'inc', 'co', 'pc', 'ltd', 'corp'];
-
   type ColMeta =
     | { kind: 'text' | 'datetime' | 'boolean' | 'actions' }
     | { kind: 'badge'; classFor?: (value: string) => string }
@@ -112,6 +110,8 @@
   };
 
   const fixLegalSuffixes = (s: string): string => {
+    const LEGAL_SUFFIXES = ['llc', 'pllc', 'llp', 'lp', 'inc', 'co', 'pc', 'ltd', 'corp', 'psc'];
+
     return s
       .split(/\s+/)
       .map(word => {

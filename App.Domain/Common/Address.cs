@@ -1,9 +1,9 @@
 ﻿namespace App.Domain.Common;
 
 public sealed record Address(
-    string? Line1,
+    string Line1,
     string? Line2,
-    string? City,
-    string? State,
-    string? PostalCode
+    string City,
+    string State,
+    string PostalCode
 );

@@ -57,8 +57,12 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
     public bool IsDeleted => DeletedAtUtc.HasValue;
 
     // inside App.Domain.Employees.Employee
-    internal Employee(Guid id, string firstName, string lastName, Guid? userId = null, DateTimeOffset? hireDate = null)
-        : this(firstName, lastName, userId, hireDate)
+    internal Employee(
+        Guid id,
+        string firstName,
+        string lastName,
+        Guid? userId = null,
+        DateTimeOffset? hireDate = null) : this(firstName, lastName, userId, hireDate)
     {
         Id = id; // overwrite the v7 with your deterministic seed id
     }
@@ -125,36 +129,14 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
         RecommendedRoleId = roleId;
     }
 
+    /// <summary>
+    /// Sets the employee's address with an all-or-nothing rule:
+    /// either null (no address) or a fully specified address (line1, city, state, postalCode).
+    /// </summary>
     public void SetAddress(Address? address)
     {
         EnsureNotDeleted();
-
-        // if null — clear the address
-        switch (address)
-        {
-            case null when Address is null:
-                return;
-            case null when Address is not null:
-                Address = null;
-        
-                return;
-        }
-
-        // Normalize input values
-        var line1 = address!.Line1.ToNormalizedAddressLine();
-        var line2 = address.Line2.ToNormalizedAddressLine();
-        var city = address.City.ToNormalizedCity();
-        var state = address.State.ToNormalizedState();
-        var postalCode = address.PostalCode.ToNormalizedPostal();
-
-        // Construct a new normalized address value object
-        var newAddress = new Address(line1, line2, city, state, postalCode);
-
-        // Only update if something actually changed
-        if (Address == newAddress)
-            return;
-
-        Address = newAddress;
+        ApplyAddress(address);
     }
     
     public void SetPreapproved(bool isPreapproved)
@@ -232,5 +214,73 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
     {
         if (DeletedAtUtc is not null)
             throw new InvalidOperationException("Cannot mutate a soft-deleted employee.");
+    }
+    
+    private void ApplyAddress(Address? address)
+    {
+        if (address is null)
+        {
+            if (Address is null) return;
+            Address = null;
+            return;
+        }
+
+        // Re-apply normalization + all-or-nothing semantics using raw strings.
+        var newAddress = CreateAddressOrNull(
+            address.Line1,
+            address.Line2,
+            address.City,
+            address.State,
+            address.PostalCode
+        );
+
+        if (Address == newAddress) return;
+
+        Address = newAddress;
+    }
+    
+    private static Address? CreateAddressOrNull(
+        string? line1,
+        string? line2,
+        string? city,
+        string? state,
+        string? postalCode)
+    {
+        // If everything is blank => no address
+        if (string.IsNullOrWhiteSpace(line1)
+            && string.IsNullOrWhiteSpace(line2)
+            && string.IsNullOrWhiteSpace(city)
+            && string.IsNullOrWhiteSpace(state)
+            && string.IsNullOrWhiteSpace(postalCode))
+        {
+            return null;
+        }
+
+        // All-or-nothing: if any address info is provided,
+        // all required fields must be present.
+        if (string.IsNullOrWhiteSpace(line1)
+            || string.IsNullOrWhiteSpace(city)
+            || string.IsNullOrWhiteSpace(state)
+            || string.IsNullOrWhiteSpace(postalCode))
+        {
+            throw new InvalidOperationException(
+                "Address must be fully provided (line1, city, state, postal code) or not provided at all."
+            );
+        }
+
+        // Normalize after we've verified the required fields
+        var normalizedLine1      = line1.ToNormalizedAddressLine();
+        var normalizedLine2      = line2.ToNormalizedAddressLine();
+        var normalizedCity       = city.ToNormalizedCity();
+        var normalizedState      = state.ToNormalizedState();
+        var normalizedPostalCode = postalCode.ToNormalizedPostal();
+
+        return new Address(
+            normalizedLine1!,
+            normalizedLine2,
+            normalizedCity!,
+            normalizedState!,
+            normalizedPostalCode!
+        );
     }
 }

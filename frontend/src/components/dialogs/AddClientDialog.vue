@@ -2,7 +2,7 @@
   <app-dialog
     :open
     title="Add Client"
-    width="max-w-2xl"
+    width="max-w-5xl"
     :loading="submitting"
     @close="emit('close')"
   >
@@ -14,6 +14,43 @@
         <span class="text-rose-400">*</span>
         Required field. Email or phone is also required.
       </p>
+
+      <!-- Client category & type (required)-->
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-sm text-slate-200">
+            Client Category
+            <span class="text-rose-400">*</span>
+          </label>
+          <select
+            v-model="form.clientCategoryId"
+            class="w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-slate-100"
+            required
+          >
+            <option value="">Select category...</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+              {{ cat.name }}
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-sm text-slate-200">
+            Client Type
+            <span class="text-rose-400">*</span>
+          </label>
+          <select
+            v-model="form.clientTypeId"
+            class="w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-slate-100"
+            required
+          >
+            <option value="">Select type...</option>
+            <option v-for="t in filteredTypes" :key="t.id" :value="t.id">
+              {{ t.name }}
+            </option>
+          </select>
+        </div>
+      </div>
 
       <!-- Client name (required) -->
       <div>
@@ -27,6 +64,7 @@
           class="w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-white"
           :class="{ 'border-red-600': touched && !form.name }"
           autocomplete="off"
+          placeholder="Acme Construction"
           required
         />
       </div>
@@ -48,12 +86,23 @@
             First Name
             <span class="text-rose-400">*</span>
           </label>
-          <input v-model.trim="form.firstName" type="text" :class="formClass" required />
+          <input
+            v-model.trim="form.firstName"
+            type="text"
+            :class="formClass"
+            required
+            placeholder="John"
+          />
         </div>
 
         <div>
           <label :class="labelClass">Middle Name</label>
-          <input v-model.trim="form.middleName" type="text" :class="formClass" />
+          <input
+            v-model.trim="form.middleName"
+            type="text"
+            :class="formClass"
+            placeholder="A. (optional)"
+          />
         </div>
 
         <div>
@@ -61,7 +110,13 @@
             Last Name
             <span class="text-rose-400">*</span>
           </label>
-          <input v-model.trim="form.lastName" type="text" :class="formClass" required />
+          <input
+            v-model.trim="form.lastName"
+            type="text"
+            :class="formClass"
+            required
+            placeholder="Smith"
+          />
         </div>
 
         <div>
@@ -113,52 +168,119 @@
         </p>
       </div>
 
-      <!-- Client category & type -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div>
-          <label class="mb-1 block text-sm text-slate-200">
-            Client Category
-            <span class="text-rose-400">*</span>
-          </label>
-          <select
-            v-model="form.clientCategoryId"
-            class="w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-slate-100"
-            required
-          >
-            <option value="">Select category...</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-              {{ cat.name }}
-            </option>
-          </select>
-        </div>
-
-        <div>
-          <label class="mb-1 block text-sm text-slate-200">
-            Client Type
-            <span class="text-rose-400">*</span>
-          </label>
-          <select
-            v-model="form.clientTypeId"
-            class="w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-slate-100"
-            required
-          >
-            <option value="">Select type...</option>
-            <option v-for="t in filteredTypes" :key="t.id" :value="t.id">
-              {{ t.name }}
-            </option>
-          </select>
-        </div>
-      </div>
-
       <!-- Notes -->
       <div>
-        <label class="mb-1 block text-sm text-slate-200">Notes</label>
+        <label class="mb-1 block pt-2 text-sm text-slate-200">Notes</label>
         <textarea
           v-model.trim="form.note"
           rows="3"
           class="w-full resize-y rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-white"
           placeholder="Optional notes about this client..."
         />
+      </div>
+
+      <!-- Address (optional to add, all-or-nothing once enabled) -->
+      <div class="border-b border-t border-slate-700 py-6">
+        <div class="mb-2 flex items-center justify-between">
+          <h3 class="text-sm font-medium text-slate-200">Address</h3>
+
+          <button
+            v-if="!showAddress"
+            type="button"
+            class="text-xs font-medium text-indigo-400 hover:text-indigo-300"
+            @click="enableAddress"
+          >
+            + Add address
+          </button>
+
+          <button
+            v-else
+            type="button"
+            class="text-xs font-medium text-slate-400 hover:text-slate-100"
+            @click="clearAddress"
+          >
+            Remove address
+          </button>
+        </div>
+
+        <div v-if="showAddress" class="space-y-3">
+          <p class="text-xs text-slate-400">
+            Address is optional, but if added, all fields except Line 2 are required.
+          </p>
+
+          <div>
+            <label :class="labelClass">
+              Address Line 1
+              <span class="text-rose-400">*</span>
+            </label>
+            <input
+              v-model.trim="form.address!.line1"
+              type="text"
+              autocomplete="address-line1"
+              placeholder="123 Main St"
+              required
+              :class="[formClass, { 'border-red-600': touched && !form.address?.line1 }]"
+            />
+          </div>
+
+          <div>
+            <label :class="labelClass">Address Line 2</label>
+            <input
+              v-model.trim="form.address!.line2"
+              type="text"
+              autocomplete="address-line2"
+              placeholder="Apt 4B (optional)"
+              :class="formClass"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label :class="labelClass">
+                City
+                <span class="text-rose-400">*</span>
+              </label>
+              <input
+                v-model.trim="form.address!.city"
+                type="text"
+                autocomplete="address-level2"
+                placeholder="Owensboro"
+                required
+                :class="[formClass, { 'border-red-600': touched && !form.address?.city }]"
+              />
+            </div>
+
+            <div>
+              <label :class="labelClass">
+                State
+                <span class="text-rose-400">*</span>
+              </label>
+              <input
+                v-model.trim="form.address!.state"
+                type="text"
+                autocomplete="address-level1"
+                placeholder="KY"
+                required
+                :class="[formClass, { 'border-red-600': touched && !form.address?.state }]"
+              />
+            </div>
+
+            <div>
+              <label :class="labelClass">
+                Postal Code
+                <span class="text-rose-400">*</span>
+              </label>
+              <input
+                v-model.trim="form.address!.postalCode"
+                type="text"
+                autocomplete="postal-code"
+                required
+                placeholder="42303"
+                :class="[formClass, { 'border-red-600': touched && !form.address?.postalCode }]"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </form>
 
@@ -178,21 +300,14 @@
 </template>
 
 <script setup lang="ts">
-  // Vue
-  import { computed, onMounted, ref, watch } from 'vue';
-
-  // Icons & UI
-  import AppAlert from '@/components/AppAlert.vue';
-  import { AlertTriangle, Plus } from 'lucide-vue-next';
-  import AppDialog from '../ui/AppDialog.vue';
-
-  // API & types
   import type { AddClientRequest } from '@/api/clients';
   import { clientService } from '@/api/clients/services';
   import { extractApiError } from '@/api/error';
-
-  // Composables
+  import AppAlert from '@/components/AppAlert.vue';
   import { useClientLookups } from '@/composables/useClientLookups';
+  import { AlertTriangle, Plus } from 'lucide-vue-next';
+  import { computed, onMounted, ref, watch } from 'vue';
+  import AppDialog from '../ui/AppDialog.vue';
 
   const labelClass = 'mb-1 block text-sm font-medium text-slate-200';
   const formClass = 'w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-white';
@@ -201,9 +316,25 @@
   const emit = defineEmits<{ (e: 'close'): void; (e: 'saved'): void }>();
 
   const errorMessage = ref<string | null>(null);
+  const showAddress = ref(false);
   const submitting = ref(false);
   const touched = ref(false);
-
+  const enableAddress = () => {
+    if (!form.value.address) {
+      form.value.address = {
+        line1: '',
+        line2: '',
+        city: '',
+        state: '',
+        postalCode: '',
+      };
+    }
+    showAddress.value = true;
+  };
+  const clearAddress = () => {
+    showAddress.value = false;
+    form.value.address = null;
+  };
   const form = ref<AddClientRequest>({
     name: '',
     namePrefix: '',

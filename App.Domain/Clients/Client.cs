@@ -27,7 +27,7 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     {
         Id = Guid.CreateVersion7();
         SetContactInfoInternal(name, namePrefix, firstName, middleName, lastName, nameSuffix, email, phone);
-        SetAddressInternal(address);
+        ApplyAddress(address);
         SetNoteInternal(note);
         CategoryId = categoryId;
         TypeId = typeId;
@@ -117,7 +117,7 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     public void SetAddress(Address? address)
     {
         EnsureNotDeleted();
-        SetAddressInternal(address);
+        ApplyAddress(address);
     }
 
     public void SetLegacyProjectCode(string? code)
@@ -181,7 +181,7 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         string? state,
         string? postalCode)
     {
-        // if everything is blank => null
+        // If everything is blank => no address
         if (string.IsNullOrWhiteSpace(line1)
             && string.IsNullOrWhiteSpace(line2)
             && string.IsNullOrWhiteSpace(city)
@@ -191,7 +191,19 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
             return null;
         }
 
-        // normalize using your existing extension methods
+        // All-or-nothing: if *any* address info is provided,
+        // then all required fields (Line1, City, State, PostalCode) must be present.
+        if (string.IsNullOrWhiteSpace(line1)
+            || string.IsNullOrWhiteSpace(city)
+            || string.IsNullOrWhiteSpace(state)
+            || string.IsNullOrWhiteSpace(postalCode))
+        {
+            throw new InvalidOperationException(
+                "Address must be fully provided (line1, city, state, postal code) or not provided at all."
+            );
+        }
+
+        // Now safe to normalize (we know required ones are not null/whitespace)
         var normalizedLine1      = line1.ToNormalizedAddressLine();
         var normalizedLine2      = line2.ToNormalizedAddressLine();
         var normalizedCity       = city.ToNormalizedCity();
@@ -199,15 +211,15 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         var normalizedPostalCode = postalCode.ToNormalizedPostal();
 
         return new Address(
-            normalizedLine1,
+            normalizedLine1!,
             normalizedLine2,
-            normalizedCity,
-            normalizedState,
-            normalizedPostalCode
+            normalizedCity!,
+            normalizedState!,
+            normalizedPostalCode!
         );
     }
-    
-    private void SetAddressInternal(Address? address)
+
+    private void ApplyAddress(Address? address)
     {
         if (address is null)
         {
@@ -216,6 +228,8 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
             return;
         }
 
+        // Re-run through the same normalization + all-or-nothing logic.
+        // This will throw if someone tries to pass a partial address.
         var newAddress = CreateAddressOrNull(
             address.Line1,
             address.Line2,

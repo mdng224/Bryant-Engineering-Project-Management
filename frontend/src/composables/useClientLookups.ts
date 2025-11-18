@@ -13,13 +13,14 @@ const types = ref<ClientTypeDto[]>([]);
 const loaded = ref(false);
 const loading = ref(false);
 
-export function useClientLookups() {
+export const useClientLookups = () => {
   const loadLookups = async () => {
     if (loaded.value || loading.value) return;
 
     loading.value = true;
     try {
       const lookups: GetClientLookupsResponse = await clientService.getLookups();
+
       categories.value = lookups.categories;
       types.value = lookups.types;
       loaded.value = true;
@@ -39,4 +40,4 @@ export function useClientLookups() {
     loadLookups,
     getTypesForCategory,
   };
-}
+};
