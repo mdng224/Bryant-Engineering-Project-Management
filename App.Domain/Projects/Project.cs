@@ -7,36 +7,6 @@ namespace App.Domain.Projects;
 
 public sealed class Project : IAuditableEntity, ISoftDeletable
 {
-    // --- Key ------------------------------------------------------------------
-    public Guid Id { get; private set; }
-    
-    // --- Core Fields ----------------------------------------------------------
-    public string Name   { get; private set; }
-    public string Code   { get; private set; } // legacy (e.g., "01-2632")
-    public int Year        { get; private init; }
-    public int Number      { get; private init; }
-    public string NewCode  => $"{Year}-{Number}";
-    public string Manager  { get; private set; }
-    public string Type     { get; private set; }
-    public string Location  { get; private set; }
-    
-    // 🔗 FKs + navigation
-    public Guid ClientId { get; private set; }
-    public Client Client { get; private set; } = null!;
-
-    public Guid ScopeId { get; private set; }
-    public Scope Scope  { get; private set; }
-    
-    // --- Auditing ----------------------------------------------------------
-    public DateTimeOffset CreatedAtUtc  { get; private set; }
-    public DateTimeOffset UpdatedAtUtc  { get; private set; }
-    public DateTimeOffset? DeletedAtUtc { get; private set; }
-    public Guid? CreatedById            { get; private set; }
-    public Guid? UpdatedById            { get; private set; }
-    public Guid? DeletedById            { get; private set; }
-    public bool IsDeleted => DeletedAtUtc.HasValue;
-    
-    // --- Constructors --------------------------------------------------------
     private Project(
         Guid clientId,
         Guid scopeId,
@@ -63,6 +33,33 @@ public sealed class Project : IAuditableEntity, ISoftDeletable
         DeletedAtUtc = deletedAtUtc;
         DeletedById = deletedById;
     }
+    
+    public Guid Id { get; private set; }
+    public string Name   { get; private set; }
+    public string Code   { get; private set; } // legacy (e.g., "01-2632")
+    public int Year        { get; private init; }
+    public int Number      { get; private init; }
+    public string NewCode  => $"{Year}-{Number}";
+    public string Manager  { get; private set; }
+    public string Type     { get; private set; }
+    public string Location  { get; private set; }
+    
+    // 🔗 FKs + navigation
+    public Guid ClientId { get; private set; }
+    public Client Client { get; private set; } = null!;
+
+    public Guid ScopeId { get; private set; }
+    public Scope Scope { get; private set; } = null!;
+    
+    // --- Auditing ----------------------------------------------------------
+    public DateTimeOffset CreatedAtUtc  { get; private set; }
+    public DateTimeOffset UpdatedAtUtc  { get; private set; }
+    public DateTimeOffset? DeletedAtUtc { get; private set; }
+    public Guid? CreatedById            { get; private set; }
+    public Guid? UpdatedById            { get; private set; }
+    public Guid? DeletedById            { get; private set; }
+    public bool IsDeleted => DeletedAtUtc.HasValue;
+
 
     // --- Factory --------------------------------------------------------------
     public static Project Seed(

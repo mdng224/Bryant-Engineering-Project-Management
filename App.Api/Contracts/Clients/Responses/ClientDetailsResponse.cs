@@ -2,7 +2,7 @@
 
 namespace App.Api.Contracts.Clients.Responses;
 
-public sealed record ClientResponse(
+public sealed record ClientDetailsResponse(
     Guid Id,
     string? Name,
     int TotalActiveProjects,

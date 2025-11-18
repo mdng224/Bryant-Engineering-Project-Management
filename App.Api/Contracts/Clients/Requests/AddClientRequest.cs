@@ -6,6 +6,7 @@ public sealed record AddClientRequest(
     string Name,
     string? NamePrefix,
     string FirstName,
+    string? MiddleName,
     string LastName,
     string? NameSuffix,
     string? Email,

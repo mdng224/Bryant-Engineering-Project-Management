@@ -17,6 +17,7 @@ public static class ClientMappers
             Name:             request.Name,
             NamePrefix:       request.NamePrefix,
             FirstName:        request.FirstName,
+            MiddleName:       request.MiddleName,
             LastName:         request.LastName,
             NameSuffix:       request.NameSuffix,
             Email:            request.Email,
@@ -80,10 +81,10 @@ public static class ClientMappers
             TypeName:            dto.TypeName);
     
     private static ClientListItemResponse ToListItem(this ClientListItemDto dto) =>
-        new(Summary: dto.ToSummaryResponse(),
-            Details: dto.ToClientResponse());
+        new(ClientSummaryResponse: dto.ToSummaryResponse(),
+            ClientDetailsResponse: dto.ToClientResponse());
 
-    private static ClientResponse ToClientResponse(this ClientListItemDto dto) =>
+    private static ClientDetailsResponse ToClientResponse(this ClientListItemDto dto) =>
         new(
             Id:                  dto.Id,
             Name:                dto.Name,

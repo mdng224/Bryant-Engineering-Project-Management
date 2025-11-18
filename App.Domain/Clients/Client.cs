@@ -13,6 +13,7 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         string name,
         string? namePrefix,
         string firstName,
+        string? middleName,
         string lastName,
         string? nameSuffix,
         string? email,
@@ -25,7 +26,7 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     )
     {
         Id = Guid.CreateVersion7();
-        SetContactInfoInternal(name, namePrefix, firstName, lastName, nameSuffix, email, phone);
+        SetContactInfoInternal(name, namePrefix, firstName, middleName, lastName, nameSuffix, email, phone);
         SetAddressInternal(address);
         SetNoteInternal(note);
         CategoryId = categoryId;
@@ -39,6 +40,7 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     public string Name        { get; private set; } = null!;  // company or household name (client_name)
     public string? NamePrefix { get; private set; }  // name_prefix (e.g., Mr., Ms., Dr.)
     public string FirstName { get; private set; } = null!;  // first_name
+    public string? MiddleName { get; private set; }
     public string LastName { get; private set; } = null!;  // last_name
     public string? NameSuffix { get; private set; }  // name_suffix (e.g., Jr., III)
     
@@ -76,6 +78,7 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         string clientName,
         string? namePrefix,
         string firstName,
+        string? middleName,
         string lastName,
         string? nameSuffix,
         string? email,
@@ -91,16 +94,13 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         string? legacyProjectCode = null
     )
     {
-        var address = (line1, line2, city, state, postalCode) switch
-        {
-            (null or "", null or "", null or "", null or "", null or "") => null,
-            _ => new Address(line1, line2, city, state, postalCode)
-        };
+        var address = CreateAddressOrNull(line1, line2, city, state, postalCode);
 
         return new Client(
             name:           clientName,
             namePrefix:     namePrefix,
             firstName:      firstName,
+            middleName:     middleName,
             lastName:       lastName,
             nameSuffix:     nameSuffix,
             email:          email,
@@ -118,19 +118,6 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     {
         EnsureNotDeleted();
         SetAddressInternal(address);
-    }
-
-    public void ChangeContactInfo(
-        string name,
-        string? namePrefix,
-        string firstName,
-        string lastName,
-        string? nameSuffix,
-        string? email,
-        string? phone)
-    {
-        EnsureNotDeleted();
-        SetContactInfoInternal(name, namePrefix, firstName, lastName, nameSuffix, email, phone);
     }
 
     public void SetLegacyProjectCode(string? code)
@@ -151,6 +138,7 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         string name,
         string? namePrefix,
         string firstName,
+        string? middleName,
         string lastName,
         string? nameSuffix,
         string? email,
@@ -174,16 +162,51 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
         var newSuffix    = NullIfBlank(nameSuffix);
         var newEmail     = string.IsNullOrWhiteSpace(email) ? null : email.ToNormalizedEmail();
         var newPhone     = phone.ToNormalizedPhone();
-
+        var newMiddle    = middleName?.ToNormalizedName();
+        
         if (Name       != newClientName) Name       = newClientName;
         if (NamePrefix != newPrefix)     NamePrefix = newPrefix;
         if (FirstName  != newFirst)      FirstName  = newFirst;
+        if (MiddleName != newMiddle)     MiddleName = newMiddle;
         if (LastName   != newLast)       LastName   = newLast;
         if (NameSuffix != newSuffix)     NameSuffix = newSuffix;
         if (Email      != newEmail)      Email      = newEmail;
         if (Phone      != newPhone)      Phone      = newPhone;
     }
 
+    private static Address? CreateAddressOrNull(
+        string? line1,
+        string? line2,
+        string? city,
+        string? state,
+        string? postalCode)
+    {
+        // if everything is blank => null
+        if (string.IsNullOrWhiteSpace(line1)
+            && string.IsNullOrWhiteSpace(line2)
+            && string.IsNullOrWhiteSpace(city)
+            && string.IsNullOrWhiteSpace(state)
+            && string.IsNullOrWhiteSpace(postalCode))
+        {
+            return null;
+        }
+
+        // normalize using your existing extension methods
+        var normalizedLine1      = line1.ToNormalizedAddressLine();
+        var normalizedLine2      = line2.ToNormalizedAddressLine();
+        var normalizedCity       = city.ToNormalizedCity();
+        var normalizedState      = state.ToNormalizedState();
+        var normalizedPostalCode = postalCode.ToNormalizedPostal();
+
+        return new Address(
+            normalizedLine1,
+            normalizedLine2,
+            normalizedCity,
+            normalizedState,
+            normalizedPostalCode
+        );
+    }
+    
     private void SetAddressInternal(Address? address)
     {
         if (address is null)
@@ -193,13 +216,14 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
             return;
         }
 
-        var line1      = address.Line1.ToNormalizedAddressLine();
-        var line2      = address.Line2.ToNormalizedAddressLine();
-        var city       = address.City.ToNormalizedCity();
-        var state      = address.State.ToNormalizedState();
-        var postalCode = address.PostalCode.ToNormalizedPostal();
+        var newAddress = CreateAddressOrNull(
+            address.Line1,
+            address.Line2,
+            address.City,
+            address.State,
+            address.PostalCode
+        );
 
-        var newAddress = new Address(line1, line2, city, state, postalCode);
         if (Address == newAddress) return;
         Address = newAddress;
     }

@@ -7,10 +7,16 @@ namespace App.Domain.Users;
 /// <summary>Application user with credentials; audited and soft-deletable.</summary>
 public sealed class User : IAuditableEntity, ISoftDeletable
 {
-    // --- Key ------------------------------------------------------------------
+    private User() { }
+    public User(string email, string passwordHash, Guid roleId)
+    {
+        Id = Guid.CreateVersion7();
+        Email = Guard.AgainstNullOrWhiteSpace(email, nameof(email)).ToNormalizedEmail();
+        PasswordHash = Guard.AgainstNullOrWhiteSpace(passwordHash, nameof(passwordHash));
+        RoleId = Guard.AgainstDefault(roleId, nameof(roleId));
+        Status = UserStatus.PendingEmail;
+    }
     public Guid Id { get; private set; }
-
-    // --- Core Fields ----------------------------------------------------------
     public Employee? Employee { get; private set; } = null!; // 1:1 back-nav
     public string Email { get; private set; } = null!;  // Normalized (trimmed) on creation.
     public string PasswordHash { get; private set; } = null!;  // Secure password hash (BCrypt). Never stored in plain text.
@@ -23,24 +29,11 @@ public sealed class User : IAuditableEntity, ISoftDeletable
     public DateTimeOffset CreatedAtUtc  { get; private set; }
     public DateTimeOffset UpdatedAtUtc  { get; private set; }
     public DateTimeOffset? DeletedAtUtc { get; private set; }
-
     public Guid? CreatedById            { get; private set; }
     public Guid? UpdatedById            { get; private set; }
     public Guid? DeletedById            { get; private set; }
-
     public bool IsDeleted => DeletedAtUtc.HasValue;
 
-    // --- Constructors --------------------------------------------------------
-    private User() { }
-
-    public User(string email, string passwordHash, Guid roleId)
-    {
-        Id = Guid.CreateVersion7();
-        Email = Guard.AgainstNullOrWhiteSpace(email, nameof(email)).ToNormalizedEmail();
-        PasswordHash = Guard.AgainstNullOrWhiteSpace(passwordHash, nameof(passwordHash));
-        RoleId = Guard.AgainstDefault(roleId, nameof(roleId));
-        Status = UserStatus.PendingEmail;
-    }
 
     // --- Mutators  -------------------------------------------------------------
     public void Activate()

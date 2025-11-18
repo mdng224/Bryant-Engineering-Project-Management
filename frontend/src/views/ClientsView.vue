@@ -71,12 +71,6 @@
     @close="openDetailsDialog = false"
   />
   <!--
-  <ViewClientDialog
-    :open="viewClientDialogIsOpen"
-    :selected-client
-    @close="viewClientDialogIsOpen = false"
-  />
-
   <EditClientDialog
     :open="editClientDialogIsOpen"
     :selected-client
@@ -85,16 +79,13 @@
 </template>
 
 <script setup lang="ts">
-  import type { ClientResponse } from '@/api/clients';
-  import { clientService } from '@/api/clients';
-  import type {
-    ClientCategoryDto,
-    ClientSummaryResponse,
-    ClientTypeDto,
-    GetClientLookupsResponse,
-    GetClientsRequest,
-    GetClientsResponse,
-  } from '@/api/clients/contracts';
+  import {
+    clientService,
+    type ClientDetailsResponse,
+    type ClientSummaryResponse,
+    type GetClientsRequest,
+    type GetClientsResponse,
+  } from '@/api/clients';
   import type { Address } from '@/api/common';
   import BooleanFilter from '@/components/BooleanFilter.vue';
   import AddClientDialog from '@/components/dialogs/AddClientDialog.vue';
@@ -103,6 +94,7 @@
   import DataTable from '@/components/table/DataTable.vue';
   import TableFooter from '@/components/table/TableFooter.vue';
   import TableSearch from '@/components/TableSearch.vue';
+  import { useClientLookups } from '@/composables/useClientLookups';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
@@ -122,7 +114,7 @@
     'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
 
   /* ------------------------------- Details ------------------------------ */
-  const fieldDef = <K extends keyof ClientResponse>(
+  const fieldDef = <K extends keyof ClientDetailsResponse>(
     key: K,
     label: string,
     type: 'text' | 'date' | 'mono' | 'multiline' = 'text',
@@ -135,6 +127,7 @@
     fieldDef('totalActiveProjects', 'Total Active Projects'),
     fieldDef('totalProjects', 'Total Projects'),
     fieldDef('firstName', 'Contact First Name'),
+    fieldDef('middleName', 'Contact Middle Name'),
     fieldDef('lastName', 'Contact Last Name'),
     fieldDef('email', 'Email'),
     fieldDef('phone', 'Phone Number'),
@@ -217,16 +210,10 @@
 
   /* ------------------------------- Filtering ------------------------------ */
   const hasActiveProject = ref<boolean>(true); // default Active
-  const categories = ref<ClientCategoryDto[]>([]);
-  const types = ref<ClientTypeDto[]>([]);
+  const { categories, types, loadLookups, getTypesForCategory } = useClientLookups();
+  const filteredTypes = computed(() => getTypesForCategory(selectedCategoryId.value));
   const selectedCategoryId = ref<string | null>(null);
   const selectedTypeId = ref<string | null>(null);
-
-  const filteredTypes = computed(() =>
-    selectedCategoryId.value
-      ? types.value.filter(t => t.categoryId === selectedCategoryId.value)
-      : types.value,
-  );
 
   const activeOptions = [
     { value: true, label: 'Active', icon: CheckCircle2, color: 'text-emerald-400' },
@@ -257,9 +244,9 @@
     typeId: string | null;
   };
 
-  const clientDetails = ref<ClientResponse[]>([]);
+  const clientDetails = ref<ClientDetailsResponse[]>([]);
   const clientDetailsById = computed(() => {
-    const map = new Map<string, ClientResponse>();
+    const map = new Map<string, ClientDetailsResponse>();
     for (const item of clientDetails.value) {
       map.set(item.id, item);
     }
@@ -275,12 +262,11 @@
       categoryId: query?.categoryId ?? null,
       typeId: query?.typeId ?? null,
     };
-    console.log(request);
     const response: GetClientsResponse = await clientService.get(request);
-    clientDetails.value = response.clientListItemResponses.map(clir => clir.details);
+    clientDetails.value = response.clientListItemResponses.map(clir => clir.clientDetailsResponse);
 
     return {
-      items: response.clientListItemResponses.map(clir => clir.summary), // summaries are the table rows
+      items: response.clientListItemResponses.map(clir => clir.clientSummaryResponse),
       totalCount: response.totalCount,
       totalPages: response.totalPages,
       page: response.page,
@@ -310,7 +296,7 @@
   const addDialogIsOpen = ref(false);
   const editClientDialogIsOpen = ref(false);
   const openDetailsDialog = ref(false);
-  const selectedClient = ref<ClientResponse | null>(null);
+  const selectedClient = ref<ClientDetailsResponse | null>(null);
 
   const handleView = (id: string): void => {
     const detail = clientDetailsById.value.get(id) ?? null;
@@ -324,14 +310,5 @@
     editClientDialogIsOpen.value = !!detail;
   };
 
-  /* -------------------------------------------------------------- */
-
-  onMounted(async () => {
-    // TODO: Move this to pinia
-    if (categories.value.length === 0 || types.value.length === 0) {
-      const lookups: GetClientLookupsResponse = await clientService.getLookups();
-      categories.value = lookups.categories;
-      types.value = lookups.types;
-    }
-  });
+  onMounted(loadLookups);
 </script>

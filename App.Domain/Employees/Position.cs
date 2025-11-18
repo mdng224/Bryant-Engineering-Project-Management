@@ -5,6 +5,15 @@ namespace App.Domain.Employees;
 
 public sealed class Position : IAuditableEntity, ISoftDeletable
 {
+    // --- Constructors -------------------------------------------------------
+    private Position() { }
+    
+    public Position(string name, string? code = null, bool requiresLicense = false)
+    {
+        Id = Guid.CreateVersion7();
+        SetCore(name, code, requiresLicense);
+    }
+    
     // --- Key ----------------------------------------------------------------
     public Guid Id                     { get; private set; }
     
@@ -22,15 +31,6 @@ public sealed class Position : IAuditableEntity, ISoftDeletable
     public Guid? UpdatedById            { get; private set; }
     public Guid? DeletedById            { get; private set; }
     public bool IsDeleted => DeletedAtUtc.HasValue;
-    
-    // --- Constructors -------------------------------------------------------
-    private Position() { }
-    
-    public Position(string name, string? code = null, bool requiresLicense = false)
-    {
-        Id = Guid.CreateVersion7();
-        SetCore(name, code, requiresLicense);
-    }
 
     // --- Seeding helper -----------------------------------------------------
     public static Position CreateSeed(Guid id, string name, string? code = null, bool requiresLicense = false)

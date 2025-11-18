@@ -13,6 +13,7 @@ public static class ClientMappers
             name: command.Name,
             namePrefix: command.NamePrefix,
             firstName: command.FirstName,
+            middleName: command.MiddleName,
             lastName: command.LastName,
             nameSuffix:  command.NameSuffix,
             email: command.Email,

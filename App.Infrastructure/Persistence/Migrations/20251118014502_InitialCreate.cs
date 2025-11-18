@@ -32,6 +32,7 @@ namespace App.Infrastructure.Persistence.Migrations
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     name_prefix = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
                     first_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    MiddleName = table.Column<string>(type: "text", nullable: true),
                     last_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     name_suffix = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
                     email = table.Column<string>(type: "character varying(254)", maxLength: 254, nullable: true),

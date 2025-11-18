@@ -10,9 +10,17 @@
 
     <!-- FORM -->
     <form id="add-client-form" class="space-y-4" @submit.prevent="submit">
+      <p class="text-xs text-slate-400">
+        <span class="text-rose-400">*</span>
+        Required field. Email or phone is also required.
+      </p>
+
       <!-- Client name (required) -->
       <div>
-        <label :class="labelClass">Client Name</label>
+        <label :class="labelClass">
+          Client Name
+          <span class="text-rose-400">*</span>
+        </label>
         <input
           v-model.trim="form.name"
           type="text"
@@ -23,8 +31,8 @@
         />
       </div>
 
-      <!-- Person name pieces (optional) -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+      <!-- Person name pieces -->
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-5">
         <div>
           <label :class="labelClass">Prefix</label>
           <input
@@ -35,13 +43,24 @@
           />
         </div>
 
-        <div class="sm:col-span-2">
-          <label :class="labelClass">First Name</label>
+        <div>
+          <label :class="labelClass">
+            First Name
+            <span class="text-rose-400">*</span>
+          </label>
           <input v-model.trim="form.firstName" type="text" :class="formClass" />
         </div>
 
         <div>
-          <label :class="labelClass">Last Name</label>
+          <label :class="labelClass">Middle Name</label>
+          <input v-model.trim="form.middleName" type="text" :class="formClass" />
+        </div>
+
+        <div>
+          <label :class="labelClass">
+            Last Name
+            <span class="text-rose-400">*</span>
+          </label>
           <input v-model.trim="form.lastName" type="text" :class="formClass" />
         </div>
 
@@ -59,25 +78,73 @@
       <!-- Contact info -->
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-          <label class="mb-1 block text-sm text-slate-200">Email</label>
+          <label class="mb-1 block text-sm text-slate-200">
+            Email
+            <span class="text-rose-400" title="Email or phone required">*</span>
+          </label>
           <input
             v-model.trim="form.email"
             type="email"
-            :class="formClass"
+            :class="[formClass, { 'border-red-600': touched && !form.email && !form.phone }]"
             placeholder="name@example.com"
             autocomplete="email"
           />
         </div>
 
         <div>
-          <label class="mb-1 block text-sm text-slate-200">Phone</label>
+          <label class="mb-1 block text-sm text-slate-200">
+            Phone
+            <span class="text-rose-400" title="Email or phone required">*</span>
+          </label>
           <input
             v-model.trim="form.phone"
             type="tel"
-            :class="formClass"
+            :class="[formClass, { 'border-red-600': touched && !form.email && !form.phone }]"
             placeholder="(555) 555-5555"
             autocomplete="tel"
           />
+        </div>
+      </div>
+
+      <div>
+        <p class="mb-2 text-xs italic text-slate-400">
+          <span class="text-rose-400">*</span>
+          At least one contact method is required: email or phone.
+        </p>
+      </div>
+
+      <!-- Client category & type -->
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-sm text-slate-200">
+            Client Category
+            <span class="text-rose-400">*</span>
+          </label>
+          <select
+            v-model="form.clientCategoryId"
+            class="w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-slate-100"
+          >
+            <option value="">Select category...</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+              {{ cat.name }}
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-sm text-slate-200">
+            Client Type
+            <span class="text-rose-400">*</span>
+          </label>
+          <select
+            v-model="form.clientTypeId"
+            class="w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-slate-100"
+          >
+            <option value="">Select type...</option>
+            <option v-for="t in filteredTypes" :key="t.id" :value="t.id">
+              {{ t.name }}
+            </option>
+          </select>
         </div>
       </div>
 
@@ -109,35 +176,52 @@
 </template>
 
 <script setup lang="ts">
+  // Vue
+  import { computed, onMounted, ref, watch } from 'vue';
+
+  // Icons & UI
   import AppAlert from '@/components/AppAlert.vue';
   import { AlertTriangle, Plus } from 'lucide-vue-next';
   import AppDialog from '../ui/AppDialog.vue';
 
+  // API & types
   import type { AddClientRequest } from '@/api/clients';
   import { clientService } from '@/api/clients/services';
   import { extractApiError } from '@/api/error';
-  import { ref, watch } from 'vue';
+
+  // Composables
+  import { useClientLookups } from '@/composables/useClientLookups';
 
   const labelClass = 'mb-1 block text-sm font-medium text-slate-200';
   const formClass = 'w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-white';
+
   const props = defineProps<{ open: boolean }>();
   const emit = defineEmits<{ (e: 'close'): void; (e: 'saved'): void }>();
 
   const errorMessage = ref<string | null>(null);
   const submitting = ref(false);
   const touched = ref(false);
+
   const form = ref<AddClientRequest>({
     name: '',
     namePrefix: '',
     firstName: '',
+    middleName: '',
     lastName: '',
     nameSuffix: '',
     email: '',
     phone: '',
     address: null,
     note: '',
+    clientCategoryId: '',
+    clientTypeId: '',
   });
 
+  // Lookups (shared composable)
+  const { categories, loadLookups, getTypesForCategory } = useClientLookups();
+  const filteredTypes = computed(() => getTypesForCategory(form.value.clientCategoryId || null));
+
+  // Reset when dialog opens
   watch(
     () => props.open,
     isOpen => {
@@ -146,12 +230,15 @@
           name: '',
           namePrefix: '',
           firstName: '',
+          middleName: '',
           lastName: '',
           nameSuffix: '',
           email: '',
           phone: '',
           address: null,
           note: '',
+          clientCategoryId: '',
+          clientTypeId: '',
         };
         submitting.value = false;
         touched.value = false;
@@ -161,12 +248,49 @@
     { immediate: true },
   );
 
-  const submit = async () => {
+  onMounted(loadLookups);
+
+  const errors = {
+    name: 'Please fill out Client Name.',
+    firstName: 'Please fill out First Name.',
+    lastName: 'Please fill out Last Name.',
+    contact: 'Please enter either an email or a phone number.',
+    category: 'Please select a client category.',
+    type: 'Please select a client type.',
+    unexpected: 'An unexpected error occurred.',
+  };
+
+  const submit = async (): Promise<void> => {
     touched.value = true;
     errorMessage.value = null;
 
     if (!form.value.name) {
-      errorMessage.value = 'Please fill out Client Name.';
+      errorMessage.value = errors.name;
+      return;
+    }
+
+    if (!form.value.firstName) {
+      errorMessage.value = errors.firstName;
+      return;
+    }
+
+    if (!form.value.lastName) {
+      errorMessage.value = errors.lastName;
+      return;
+    }
+
+    if (!form.value.email && !form.value.phone) {
+      errorMessage.value = errors.contact;
+      return;
+    }
+
+    if (!form.value.clientCategoryId) {
+      errorMessage.value = errors.category;
+      return;
+    }
+
+    if (!form.value.clientTypeId) {
+      errorMessage.value = errors.type;
       return;
     }
 
@@ -178,9 +302,8 @@
       emit('saved');
       emit('close');
     } catch (e) {
-      let msg = extractApiError(e, 'name');
-      errorMessage.value =
-        !msg || msg === 'An unexpected error occurred.' ? 'An unexpected error occurred.' : msg;
+      const msg = extractApiError(e, 'name');
+      errorMessage.value = msg || errors.unexpected;
     } finally {
       submitting.value = false;
     }

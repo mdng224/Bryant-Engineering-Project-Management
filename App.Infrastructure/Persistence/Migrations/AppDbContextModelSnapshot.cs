@@ -107,6 +107,9 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("last_name");
 
+                    b.Property<string>("MiddleName")
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)

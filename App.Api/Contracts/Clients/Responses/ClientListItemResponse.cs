@@ -2,6 +2,6 @@
 
 // One row in the table
 public sealed record ClientListItemResponse(
-    ClientSummaryResponse Summary,
-    ClientResponse Details
+    ClientSummaryResponse ClientSummaryResponse,
+    ClientDetailsResponse ClientDetailsResponse
 );

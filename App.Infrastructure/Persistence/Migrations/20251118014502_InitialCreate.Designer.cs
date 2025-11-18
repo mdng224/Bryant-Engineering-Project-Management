@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251117214645_InitialCreate")]
+    [Migration("20251118014502_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -109,6 +109,9 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("last_name");
+
+                    b.Property<string>("MiddleName")
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()

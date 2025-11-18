@@ -83,6 +83,7 @@ public static class DbSeeder
                     clientName:       cs.ClientName ?? "Unknown",
                     namePrefix:       cs.NamePrefix,
                     firstName:        cs.FirstName ?? "Unknown",
+                    middleName:       null,
                     lastName:         cs.LastName ?? "Unknown",
                     nameSuffix:       cs.NameSuffix,
                     email:            cs.Email,

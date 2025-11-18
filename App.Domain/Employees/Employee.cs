@@ -6,53 +6,6 @@ namespace App.Domain.Employees;
 /// <summary>Represents a company employee linked (optionally) 1:1 to a User.</summary>
 public sealed class Employee : IAuditableEntity, ISoftDeletable
 {
-    // --- Key ----------------------------------------------------------------
-    public Guid Id { get; private set; } 
-    
-    // --- Link to User -------------------------------------------------------
-    public Users.User? User { get; private set; }
-    public Guid? UserId { get; private set; }
-    
-    // --- Identity -----------------------------------------------------------
-    public string FirstName { get; private set; } = null!;
-    public string LastName { get; private set; } = null!;
-    public string? PreferredName { get; private set; }
-    
-    // --- Employment --------------------------------------------------------
-    public EmploymentType? EmploymentType { get; private set; }   // FullTime / PartTime
-    public SalaryType?     SalaryType     { get; private set; }   // Salary / Hourly
-    public DateTimeOffset? HireDate       { get; private set; }
-    public DateTimeOffset? EndDate        { get; private set; }   // null => active
-    
-    // --- Organization -------------------------------------------------------
-    public DepartmentType? Department { get; private set; }
-    private readonly List<EmployeePosition> _positions = [];
-    public IReadOnlyCollection<EmployeePosition> Positions => _positions.AsReadOnly();
-    
-
-    // --- Contact / Misc ----------------------------------------------------
-    public Address?  Address       { get; private set; }
-    public string?   CompanyEmail  { get; private set; } // may auto-link at registration
-    public string?   WorkLocation  { get; private set; }
-    public string?   Notes         { get; private set; }
-
-    /// <summary>Role to apply if/when a User is created for this employee.</summary>
-    public Guid? RecommendedRoleId { get; private set; }
-
-    /// <summary>If true, a registering user with matching CompanyEmail can be auto-activated.</summary>
-    public bool IsPreapproved      { get; private set; }
-    
-    // --- Auditing ----------------------------------------------------------
-    public DateTimeOffset CreatedAtUtc  { get; private set; }
-    public DateTimeOffset UpdatedAtUtc  { get; private set; }
-    public DateTimeOffset? DeletedAtUtc { get; private set; }
-
-    public Guid? CreatedById            { get; private set; }
-    public Guid? UpdatedById            { get; private set; }
-    public Guid? DeletedById            { get; private set; }
-
-    public bool IsDeleted => DeletedAtUtc.HasValue;
-
     // --- Constructors -------------------------------------------------------
     private Employee() { }
     public Employee(string firstName, string lastName, Guid? userId = null, DateTimeOffset? hireDate = null)
@@ -68,6 +21,41 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
         HireDate = hireDate;
     }
     
+    public Guid Id { get; private set; } 
+    
+    public Users.User? User { get; private set; }
+    public Guid? UserId { get; private set; }
+    
+    public string FirstName { get; private set; } = null!;
+    public string LastName { get; private set; } = null!;
+    public string? PreferredName { get; private set; }
+    
+    public EmploymentType? EmploymentType { get; private set; }   // FullTime / PartTime
+    public SalaryType?     SalaryType     { get; private set; }   // Salary / Hourly
+    public DateTimeOffset? HireDate       { get; private set; }
+    public DateTimeOffset? EndDate        { get; private set; }   // null => active
+    
+    public DepartmentType? Department { get; private set; }
+    private readonly List<EmployeePosition> _positions = [];
+    public IReadOnlyCollection<EmployeePosition> Positions => _positions.AsReadOnly();
+    
+
+    public Address?  Address       { get; private set; }
+    public string?   CompanyEmail  { get; private set; } // may auto-link at registration
+    public string?   WorkLocation  { get; private set; }
+    public string?   Notes         { get; private set; }
+    public Guid? RecommendedRoleId { get; private set; }
+    public bool IsPreapproved      { get; private set; }
+    
+    public DateTimeOffset CreatedAtUtc  { get; private set; }
+    public DateTimeOffset UpdatedAtUtc  { get; private set; }
+    public DateTimeOffset? DeletedAtUtc { get; private set; }
+    public Guid? CreatedById            { get; private set; }
+    public Guid? UpdatedById            { get; private set; }
+    public Guid? DeletedById            { get; private set; }
+
+    public bool IsDeleted => DeletedAtUtc.HasValue;
+
     // inside App.Domain.Employees.Employee
     internal Employee(Guid id, string firstName, string lastName, Guid? userId = null, DateTimeOffset? hireDate = null)
         : this(firstName, lastName, userId, hireDate)
