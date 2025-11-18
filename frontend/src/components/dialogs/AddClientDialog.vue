@@ -48,7 +48,7 @@
             First Name
             <span class="text-rose-400">*</span>
           </label>
-          <input v-model.trim="form.firstName" type="text" :class="formClass" />
+          <input v-model.trim="form.firstName" type="text" :class="formClass" required />
         </div>
 
         <div>
@@ -61,7 +61,7 @@
             Last Name
             <span class="text-rose-400">*</span>
           </label>
-          <input v-model.trim="form.lastName" type="text" :class="formClass" />
+          <input v-model.trim="form.lastName" type="text" :class="formClass" required />
         </div>
 
         <div>
@@ -123,6 +123,7 @@
           <select
             v-model="form.clientCategoryId"
             class="w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-slate-100"
+            required
           >
             <option value="">Select category...</option>
             <option v-for="cat in categories" :key="cat.id" :value="cat.id">
@@ -139,6 +140,7 @@
           <select
             v-model="form.clientTypeId"
             class="w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-slate-100"
+            required
           >
             <option value="">Select type...</option>
             <option v-for="t in filteredTypes" :key="t.id" :value="t.id">
@@ -251,12 +253,7 @@
   onMounted(loadLookups);
 
   const errors = {
-    name: 'Please fill out Client Name.',
-    firstName: 'Please fill out First Name.',
-    lastName: 'Please fill out Last Name.',
     contact: 'Please enter either an email or a phone number.',
-    category: 'Please select a client category.',
-    type: 'Please select a client type.',
     unexpected: 'An unexpected error occurred.',
   };
 
@@ -264,33 +261,8 @@
     touched.value = true;
     errorMessage.value = null;
 
-    if (!form.value.name) {
-      errorMessage.value = errors.name;
-      return;
-    }
-
-    if (!form.value.firstName) {
-      errorMessage.value = errors.firstName;
-      return;
-    }
-
-    if (!form.value.lastName) {
-      errorMessage.value = errors.lastName;
-      return;
-    }
-
     if (!form.value.email && !form.value.phone) {
       errorMessage.value = errors.contact;
-      return;
-    }
-
-    if (!form.value.clientCategoryId) {
-      errorMessage.value = errors.category;
-      return;
-    }
-
-    if (!form.value.clientTypeId) {
-      errorMessage.value = errors.type;
       return;
     }
 

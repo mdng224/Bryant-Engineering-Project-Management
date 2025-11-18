@@ -10,28 +10,42 @@
 
     <!-- FORM -->
     <form id="add-position-form" class="space-y-4" @submit.prevent="submit">
+      <p class="text-xs text-slate-400">
+        <span class="text-rose-400">*</span>
+        Required field.
+      </p>
+
+      <!-- Name -->
       <div>
-        <label class="mb-1 block text-sm font-medium text-slate-200">Name</label>
+        <label :class="labelClass">
+          Name
+          <span class="text-rose-400">*</span>
+        </label>
         <input
           v-model.trim="form.name"
           type="text"
-          class="w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-white"
-          :class="{ 'border-red-600': touched && !form.name }"
+          :class="[formClass, { 'border-red-600': touched && !form.name }]"
+          autocomplete="off"
           required
         />
       </div>
 
+      <!-- Code -->
       <div>
-        <label class="mb-1 block text-sm font-medium text-slate-200">Code</label>
+        <label :class="labelClass">
+          Code
+          <span class="text-rose-400">*</span>
+        </label>
         <input
           v-model.trim="form.code"
           type="text"
-          class="w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-white"
-          :class="{ 'border-red-600': touched && !form.code }"
+          :class="[formClass, { 'border-red-600': touched && !form.code }]"
+          autocomplete="off"
           required
         />
       </div>
 
+      <!-- Requires license -->
       <div class="flex items-center gap-2">
         <input
           id="requiresLicense"
@@ -43,7 +57,7 @@
       </div>
     </form>
 
-    <!-- FOOTER BUTTONS (now sibling of the form) -->
+    <!-- FOOTER BUTTONS -->
     <template #footer>
       <button
         type="submit"
@@ -59,14 +73,21 @@
 </template>
 
 <script setup lang="ts">
+  // Vue
+  import { ref, watch } from 'vue';
+
+  // Icons & UI
   import AppAlert from '@/components/AppAlert.vue';
   import { AlertTriangle, Plus } from 'lucide-vue-next';
   import AppDialog from '../ui/AppDialog.vue';
 
+  // API & types
   import { extractApiError } from '@/api/error';
   import type { AddPositionRequest } from '@/api/positions';
   import { positionService } from '@/api/positions/services';
-  import { ref, watch } from 'vue';
+
+  const labelClass = 'mb-1 block text-sm font-medium text-slate-200';
+  const formClass = 'w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-white';
 
   const props = defineProps<{ open: boolean }>();
   const emit = defineEmits<{ (e: 'close'): void; (e: 'saved'): void }>();
@@ -74,8 +95,14 @@
   const errorMessage = ref<string | null>(null);
   const submitting = ref(false);
   const touched = ref(false);
-  const form = ref<AddPositionRequest>({ name: '', code: '', requiresLicense: false });
 
+  const form = ref<AddPositionRequest>({
+    name: '',
+    code: '',
+    requiresLicense: false,
+  });
+
+  // Reset when dialog opens
   watch(
     () => props.open,
     isOpen => {
@@ -89,14 +116,9 @@
     { immediate: true },
   );
 
-  const submit = async () => {
+  const submit = async (): Promise<void> => {
     touched.value = true;
     errorMessage.value = null;
-
-    if (!form.value.name || !form.value.code) {
-      errorMessage.value = 'Please fill out Name and Code.';
-      return;
-    }
 
     if (submitting.value) return;
     submitting.value = true;
@@ -107,7 +129,7 @@
       emit('close');
     } catch (e) {
       let msg = extractApiError(e, 'name');
-      if (!msg || msg === 'An unexpected error occurred.') {
+      if (!msg) {
         msg = extractApiError(e, 'code');
       }
       errorMessage.value = msg;

@@ -16,7 +16,7 @@
           <!-- Header -->
           <header class="mb-4 flex items-center justify-between">
             <slot name="title">
-              <h2 class="text-lg font-semibold">{{ title }}</h2>
+              <h2 class="text-2xl font-semibold">{{ title }}</h2>
             </slot>
 
             <button
