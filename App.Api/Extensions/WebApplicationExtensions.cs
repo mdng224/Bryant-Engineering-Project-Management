@@ -54,6 +54,7 @@ public static class WebApplicationExtensions
         app.MapClientEndpoints();
         app.MapProjectEndpoints();
         app.MapClientLookupEndpoints();
+        app.MapProjectLookupEndpoints();
         
         return app;
     }

@@ -7,7 +7,7 @@ import type {
   GetClientLookupsResponse,
   GetClientsRequest,
   GetClientsResponse,
-} from './contracts';
+} from './';
 import { ClientsRoutes } from './routes';
 
 /* ------------------------------ GET (list) ------------------------------ */

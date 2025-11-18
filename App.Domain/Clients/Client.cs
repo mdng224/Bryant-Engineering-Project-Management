@@ -74,7 +74,7 @@ public sealed class Client : IAuditableEntity, ISoftDeletable
     /// CSV-aligned seed method. Pass the raw values from your parsed CSV;
     /// normalize/lookups happen inside.
     /// </summary>
-    public static Client Seed(
+    public static Client Seed( 
         string clientName,
         string? namePrefix,
         string firstName,

@@ -1,4 +1,4 @@
-﻿namespace App.Application.Common.Dtos;
+﻿namespace App.Application.Common.Dtos.Projects;
 
 public sealed record ProjectListItemDto(
     Guid Id,

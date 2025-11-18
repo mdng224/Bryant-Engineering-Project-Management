@@ -1,4 +1,4 @@
-﻿using App.Application.Common.Dtos;
+﻿using App.Application.Common.Dtos.Projects;
 
 namespace App.Application.Abstractions.Persistence.Readers;
 
@@ -16,5 +16,8 @@ public interface IProjectReader
         string? normalizedNameFilter,
         bool? isDeleted,
         Guid? clientId,
+        string? manager,
         CancellationToken ct = default);
+
+    Task<IReadOnlyList<string>> GetDistinctProjectManagersAsync(CancellationToken ct = default);
 }

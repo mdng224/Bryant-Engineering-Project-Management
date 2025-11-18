@@ -6,7 +6,7 @@ type ProjectBase = {
   name: string;
   clientName: string;
   scopeName: string;
-  manager: string | null;
+  manager: string;
   type: string;
   location: string;
   deletedAtUtc: string | null;
@@ -18,6 +18,7 @@ export type GetProjectsRequest = {
   nameFilter: string | null;
   isDeleted: boolean | null;
   clientId: string | null;
+  manager: string | null;
 };
 
 export type GetProjectsResponse = {
@@ -47,4 +48,8 @@ export type ProjectResponse = ProjectBase & {
   createdById: string | null;
   updatedById: string | null;
   deletedBy: string | null;
+};
+
+export type GetProjectLookupsResponse = {
+  managers: string[];
 };

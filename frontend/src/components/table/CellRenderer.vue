@@ -1,7 +1,5 @@
 <template>
-  <span v-if="kind === 'text'" class="text-slate-100">
-    {{ displayText }}
-  </span>
+  <span v-if="kind === 'text'" class="text-slate-100">{{ displayText }}</span>
 
   <span v-else-if="kind === 'datetime'" class="text-[12px] tracking-wide text-slate-100">
     {{ displayDate }}
@@ -66,7 +64,7 @@
     if (v === null || v === undefined) return '—';
     const s = String(v).trim();
     const lower = s.toLowerCase();
-    if (s === '' || lower === 'n/a' || lower === 'unknown') return '—';
+    if (s === '' || lower === 'n/a') return '—';
     return s;
   };
 

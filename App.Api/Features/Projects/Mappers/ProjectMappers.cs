@@ -1,6 +1,7 @@
 ﻿using App.Api.Contracts.Projects.Requests;
 using App.Api.Contracts.Projects.Responses;
 using App.Application.Common.Dtos;
+using App.Application.Common.Dtos.Projects;
 using App.Application.Common.Pagination;
 using App.Application.Projects.Queries.GetProjects;
 using App.Domain.Common;
@@ -28,10 +29,13 @@ public static class ProjectMappers
             pagedQuery,
             normalizedNameFilter,
             request.IsDeleted,
-            request.ClientId);
+            request.ClientId,
+            request.Manager);
 
         return getProjectsQuery;
     }
+
+    public static ProjectLookupsResponse ToResponse(this ProjectLookupsDto dto) => new(dto.Managers);
     
     public static ProjectSummaryResponse ToSummaryResponse(this ProjectListItemDto listItemDto) =>
         new(

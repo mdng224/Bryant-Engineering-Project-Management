@@ -5,4 +5,5 @@ public sealed record GetProjectsRequest(
     int PageSize,
     string? NameFilter,
     bool? IsDeleted,
-    Guid? ClientId);
+    Guid? ClientId,
+    string? Manager);

@@ -1,6 +1,7 @@
 ﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Dtos;
+using App.Application.Common.Dtos.Projects;
 using App.Application.Common.Pagination;
 using App.Application.Common.Results;
 using App.Domain.Common;
@@ -22,6 +23,7 @@ public sealed class GetProjectsHandler(IProjectReader projectReader)
             normalizedNameFilter,
             query.IsDeleted,
             query.ClientId,
+            query.Manager,
             ct);
 
         var pagedResult = new PagedResult<ProjectListItemDto>(items, total, page, pageSize);

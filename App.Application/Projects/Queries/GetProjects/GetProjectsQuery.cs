@@ -6,4 +6,5 @@ public sealed record GetProjectsQuery(
     PagedQuery PagedQuery,
     string? NameFilter,
     bool? IsDeleted,
-    Guid? ClientId);
+    Guid? ClientId,
+    string? Manager);

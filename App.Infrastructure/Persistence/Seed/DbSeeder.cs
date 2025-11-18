@@ -80,11 +80,11 @@ public static class DbSeeder
                              ?? ClientTypeIds.UnknownToBeClassified;
 
                 return Client.Seed(
-                    clientName:       cs.ClientName ?? "Unknown",
+                    clientName:       cs.ClientName!,
                     namePrefix:       cs.NamePrefix,
-                    firstName:        cs.FirstName ?? "Unknown",
+                    firstName:        cs.FirstName!,
                     middleName:       null,
-                    lastName:         cs.LastName ?? "Unknown",
+                    lastName:         cs.LastName!,
                     nameSuffix:       cs.NameSuffix,
                     email:            cs.Email,
                     phone:            cs.Phone,

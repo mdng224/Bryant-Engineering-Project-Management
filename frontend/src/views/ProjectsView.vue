@@ -9,6 +9,16 @@
         @commit="commitNameNow"
       />
       <boolean-filter v-model="deletedFilter" :options="deletedOptions" />
+      <!-- 🔽 Project Manager filter -->
+      <select
+        v-model="selectedManager"
+        class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-100"
+      >
+        <option :value="null">All Project Managers</option>
+        <option v-for="m in managers" :key="m" :value="m">
+          {{ m }}
+        </option>
+      </select>
     </div>
     <button
       class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
@@ -68,10 +78,15 @@
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
+  import { useProjectLookups } from '@/composables/useProjectLookups';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { CheckCircle2, CirclePlus, Eye, Trash2 } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref } from 'vue';
-  import { useRoute } from 'vue-router'; // 👈 NEW
+  import { useRoute } from 'vue-router';
+  const selectedManager = ref<string | null>(null);
+
+  const { managers, loadLookups } = useProjectLookups();
+  loadLookups(); // or onMounted(loadLookups) if you prefer
 
   const route = useRoute();
   const actionButtonClass =
@@ -173,6 +188,7 @@
     name: string | null;
     isDeleted: boolean | null;
     clientId: string | null;
+    manager: string | null;
   };
 
   const projectDetails = ref<ProjectResponse[]>([]);
@@ -185,6 +201,7 @@
       nameFilter: query?.name || null,
       isDeleted: query?.isDeleted ?? null,
       clientId: query?.clientId ?? null,
+      manager: query?.manager || null,
     };
     const response: GetProjectsResponse = await projectService.get(request);
 
@@ -206,15 +223,13 @@
 
     const isDeletedFromStatus = mapStatusToIsDeleted(status);
 
-    const effectiveIsDeleted =
-      status !== undefined
-        ? isDeletedFromStatus // coming from Clients page
-        : deletedFilter.value; // user UI selection, including null
+    const effectiveIsDeleted = status !== undefined ? isDeletedFromStatus : deletedFilter.value;
 
     return {
       name: name.value ?? null,
       isDeleted: effectiveIsDeleted,
       clientId,
+      manager: selectedManager.value,
     };
   });
 
