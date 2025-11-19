@@ -118,13 +118,34 @@ public sealed class VerifyEmailHandlerTests
         var user = PendingUser("alice@company.com");
 
         _verRepo.Setup(r => r.GetForUpdateByTokenHashAsync("t", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(ev);
+            .ReturnsAsync(ev);
 
         _userRepo.Setup(ur => ur.GetForUpdateAsync(userId, It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(user);
+            .ReturnsAsync(user);
+
+        var employee = new Employee(
+            firstName:        "Alice",
+            lastName:         "Example",
+            preferredName:    null,
+            userId:           null,               // not linked yet
+            employmentType:   null,
+            salaryType:       null,
+            department:       null,
+            hireDate:         null,
+            companyEmail:     "alice@company.com",
+            workLocation:     null,
+            notes:            null,
+            addressLine1:     null,
+            addressLine2:     null,
+            city:             null,
+            state:            null,
+            postalCode:       null,
+            recommendedRoleId: null,
+            isPreapproved:    false               // avoids preapproval/email invariant issues
+        );
 
         _employeeReader.Setup(er => er.GetByCompanyEmailAsync("alice@company.com", It.IsAny<CancellationToken>()))
-                       .ReturnsAsync(new Employee("Alice", "Example"));
+            .ReturnsAsync(employee);
 
         // Act
         var result = await sut.Handle(new VerifyEmailCommand("t"), CancellationToken.None);
@@ -135,6 +156,7 @@ public sealed class VerifyEmailHandlerTests
         ev.Used.Should().BeTrue();
         _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+
 
     [Fact]
     public async Task PendingEmail_without_employee_marks_pending_approval_and_saves()

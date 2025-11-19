@@ -16,10 +16,13 @@ public sealed class EfUnitOfWork(AppDbContext db) : IUnitOfWork
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException
                                            {
                                                SqlState: PostgresErrorCodes.UniqueViolation
-                                           })
+                                           } pg)
         {
-            throw new UniqueConstraintViolationException("Unique constraint violation.",
-                ex);
+            throw new UniqueConstraintViolationException(
+                message: "Unique constraint violation.",
+                constraintName: pg.ConstraintName,
+                innerException: ex
+            );
         }
     }
 }

@@ -94,7 +94,7 @@ public static class ServiceCollectionExtensions
         // --- Validators -------------------------------------------------------
         services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
         services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
-        services.AddScoped<IValidator<AddPositionRequest>, AddProjectRequestValidator>();
+        services.AddScoped<IValidator<AddPositionRequest>, AddPositionRequestValidator>();
         services.AddScoped<IValidator<UpdatePositionRequest>, UpdatePositionRequestValidator>();
         services.AddScoped<IValidator<UpdateUserRequest>, UpdateUserRequestValidator>();
 

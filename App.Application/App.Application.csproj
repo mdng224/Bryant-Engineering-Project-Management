@@ -12,7 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Employees\Commands\AddEmployee\" />
     <Folder Include="Projects\Commands\DeleteProject\" />
     <Folder Include="Projects\Commands\UpdateProject\" />
   </ItemGroup>

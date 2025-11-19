@@ -8,38 +8,67 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
 {
     // --- Constructors -------------------------------------------------------
     private Employee() { }
-    public Employee(string firstName, string lastName, Guid? userId = null, DateTimeOffset? hireDate = null)
+    public Employee(
+        string firstName,
+        string lastName,
+        string? preferredName,
+        Guid? userId,
+        EmploymentType? employmentType,
+        SalaryType? salaryType,
+        DepartmentType? department,
+        DateTimeOffset? hireDate,
+        string? companyEmail,
+        string? workLocation,
+        string? notes,
+        string? addressLine1,
+        string? addressLine2,
+        string? city,
+        string? state,
+        string? postalCode,
+        Guid? recommendedRoleId,
+        bool isPreapproved)
     {
         Id = Guid.CreateVersion7();
+        SetName(firstName, lastName, preferredName);
+        if (userId is { } id)
+            UserId = Guard.AgainstDefault(id, nameof(userId));
 
-        FirstName = Guard.AgainstNullOrWhiteSpace(firstName, nameof(firstName)).ToNormalizedName();
-        LastName = Guard.AgainstNullOrWhiteSpace(lastName, nameof(lastName)).ToNormalizedName();
-
-        if (userId is not null)
-            UserId = Guard.AgainstDefault(userId.Value, nameof(userId));
 
         HireDate = hireDate;
+
+        SetEmployment(employmentType, salaryType);
+        SetDepartment(department);
+        SetCompanyEmail(companyEmail);
+        SetWorkLocation(workLocation);
+        SetNotes(notes);
+        RecommendRole(recommendedRoleId);
+
+        var address = CreateAddressOrNull(
+            addressLine1,
+            addressLine2,
+            city,
+            state,
+            postalCode
+        );
+        SetAddress(address);
+
+        // Must come AFTER SetCompanyEmail (it checks for company email)
+        SetPreapproved(isPreapproved);
     }
     
     public Guid Id { get; private set; } 
-    
     public Users.User? User { get; private set; }
     public Guid? UserId { get; private set; }
-    
     public string FirstName { get; private set; } = null!;
     public string LastName { get; private set; } = null!;
     public string? PreferredName { get; private set; }
-    
     public EmploymentType? EmploymentType { get; private set; }   // FullTime / PartTime
     public SalaryType?     SalaryType     { get; private set; }   // Salary / Hourly
     public DateTimeOffset? HireDate       { get; private set; }
     public DateTimeOffset? EndDate        { get; private set; }   // null => active
-    
     public DepartmentType? Department { get; private set; }
     private readonly List<EmployeePosition> _positions = [];
     public IReadOnlyCollection<EmployeePosition> Positions => _positions.AsReadOnly();
-    
-
     public Address?  Address       { get; private set; }
     public string?   CompanyEmail  { get; private set; } // may auto-link at registration
     public string?   WorkLocation  { get; private set; }
@@ -53,76 +82,81 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
     public Guid? CreatedById            { get; private set; }
     public Guid? UpdatedById            { get; private set; }
     public Guid? DeletedById            { get; private set; }
-
     public bool IsDeleted => DeletedAtUtc.HasValue;
 
-    // inside App.Domain.Employees.Employee
-    internal Employee(
+    internal static Employee Seed(
         Guid id,
-        string firstName,
-        string lastName,
-        Guid? userId = null,
-        DateTimeOffset? hireDate = null) : this(firstName, lastName, userId, hireDate)
+        string last,
+        string legalFirst,
+        string? nickname,
+        DepartmentType? departmentType,
+        IEnumerable<Guid>? positionIds,
+        EmploymentType? employmentType,
+        SalaryType? salaryType,
+        string? companyEmail,
+        Guid? recommendedRoleId = null,
+        bool isPreapproved = false,
+        bool isFormerEmployee = false)
     {
-        Id = id; // overwrite the v7 with your deterministic seed id
+        var employee = new Employee(
+            firstName:         legalFirst,
+            lastName:          last,
+            preferredName:     nickname,
+            userId:            null,
+            employmentType:    employmentType,
+            salaryType:        salaryType,
+            department:        departmentType,
+            hireDate:          null,
+            companyEmail:      companyEmail,
+            workLocation:      null,
+            notes:             null,
+            addressLine1:      null,
+            addressLine2:      null,
+            city:              null,
+            state:             null,
+            postalCode:        null,
+            recommendedRoleId: recommendedRoleId,
+            isPreapproved:     isPreapproved
+        );
+
+        // override generated v7 with deterministic seed id
+        employee.Id = id;
+
+        if (positionIds is not null)
+        {
+            foreach (var pid in positionIds)
+                employee.AddPosition(pid);
+        }
+
+        if (isFormerEmployee)
+            employee.SoftDelete();
+
+        return employee;
     }
     
     // --- Mutators -----------------------------------------
-    public void SetName(string first, string last, string? preferred = null)
+    private void SetName(string first, string last, string? preferred)
     {
         EnsureNotDeleted();
         FirstName = Guard.AgainstNullOrWhiteSpace(first, nameof(first)).ToNormalizedName();
         LastName = Guard.AgainstNullOrWhiteSpace(last, nameof(last)).ToNormalizedName();
-        PreferredName = string.IsNullOrWhiteSpace(preferred) ? null : preferred.ToNormalizedName();
+        PreferredName = preferred?.ToNormalizedName();
     }
 
-    public void SetPreferredName(string? preferred)
-    {
-        EnsureNotDeleted();
-        PreferredName = string.IsNullOrWhiteSpace(preferred) ? null : preferred.ToNormalizedName();
-    }
-    
-    public EmployeePosition AddPosition(Guid positionId)
+    private void AddPosition(Guid positionId)
     {
         EnsureNotDeleted();
         var validPositionId = Guard.AgainstDefault(positionId, nameof(positionId));
 
         // prevent duplicate (EmployeeId, PositionId)
         var existing = _positions.FirstOrDefault(p => p.PositionId == validPositionId);
-        if (existing is not null) return existing;
+        if (existing is not null) return;
 
         var ep = new EmployeePosition(Id, validPositionId);
         _positions.Add(ep);
-
-        return ep;
-    }
-
-    public void RemovePosition(Guid positionId)
-    {
-        EnsureNotDeleted();
-        var valid = Guard.AgainstDefault(positionId, nameof(positionId));
-        var ep = _positions.FirstOrDefault(x => x.PositionId == valid);
-        if (ep is null) return;
-
-        _positions.Remove(ep);
-    }
-
-    public void LinkUser(Guid userId)
-    {
-        EnsureNotDeleted();
-        var valid = Guard.AgainstDefault(userId, nameof(userId));
-        if (UserId == valid) return;
-        UserId = valid;
-    }
-
-    public void UnlinkUser()
-    {
-        EnsureNotDeleted();
-        if (UserId is null) return;
-        UserId = null;
     }
     
-    public void RecommendRole(Guid? roleId)
+    private void RecommendRole(Guid? roleId)
     {
         EnsureNotDeleted();
         if (roleId is { } r) Guard.AgainstDefault(r, nameof(roleId));
@@ -133,13 +167,13 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
     /// Sets the employee's address with an all-or-nothing rule:
     /// either null (no address) or a fully specified address (line1, city, state, postalCode).
     /// </summary>
-    public void SetAddress(Address? address)
+    private void SetAddress(Address? address)
     {
         EnsureNotDeleted();
         ApplyAddress(address);
     }
     
-    public void SetPreapproved(bool isPreapproved)
+    private void SetPreapproved(bool isPreapproved)
     {
         EnsureNotDeleted();
         if (isPreapproved && string.IsNullOrWhiteSpace(CompanyEmail))
@@ -147,25 +181,19 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
         IsPreapproved = isPreapproved;
     }
 
-    public void SetEmployment(EmploymentType? type, SalaryType? pay)
+    private void SetEmployment(EmploymentType? type, SalaryType? pay)
     {
         EnsureNotDeleted();
         (EmploymentType, SalaryType) = (type, pay);
     }
 
-    public void SetDates(DateTimeOffset? hire, DateTimeOffset? end)
-    {
-        EnsureNotDeleted();
-        (HireDate, EndDate) = (hire, end);
-    }
-
-    public void SetDepartment(DepartmentType? dept)
+    private void SetDepartment(DepartmentType? dept)
     {
         EnsureNotDeleted();
         Department = dept;
     }
 
-    public void SetCompanyEmail(string? email)
+    private void SetCompanyEmail(string? email)
     {
         EnsureNotDeleted();
 
@@ -179,20 +207,20 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
         }
     }
 
-    public void SetWorkLocation(string? location)
+    private void SetWorkLocation(string? location)
     {
         EnsureNotDeleted();
         WorkLocation = location.ToNormalizedAddressLine();
     }
 
-    public void SetNotes(string? notes)
+    private void SetNotes(string? notes)
     {
         EnsureNotDeleted();
         Notes = notes.ToNormalizedNote();
     }
 
     // --- Lifecycle ----------------------------------------------------------
-    public void SoftDelete()
+    private void SoftDelete()
     {
         if (DeletedAtUtc is not null) return;
         DeletedAtUtc = DateTimeOffset.UtcNow;

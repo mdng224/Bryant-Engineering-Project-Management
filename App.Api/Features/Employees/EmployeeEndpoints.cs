@@ -1,10 +1,12 @@
 ﻿using App.Api.Contracts.Employees.Requests;
 using App.Api.Contracts.Employees.Responses;
 using App.Api.Features.Employees.Mappers;
+using App.Api.Filters;
 using App.Application.Abstractions.Handlers;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
 using App.Application.Common.Results;
+using App.Application.Employees.Commands.AddEmployee;
 using App.Application.Employees.Commands.RestoreEmployee;
 using App.Application.Employees.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +20,16 @@ public static class EmployeeEndpoints
     {
         var employees = app.MapGroup("/employees")
             .WithTags("Employees");
+        
+        // POST /employees
+        employees.MapPost("", HandleAddEmployee)
+            .AddEndpointFilter<Validate<AddEmployeeRequest>>()
+            .WithSummary("Create a new employee")
+            .Accepts<AddEmployeeRequest>("application/json")
+            .Produces<Guid>(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status403Forbidden);
         
         // GET /employees?page=&pageSize=
         employees.MapGet("", HandleGetEmployees)
@@ -33,6 +45,30 @@ public static class EmployeeEndpoints
             .Produces(StatusCodes.Status409Conflict);
     }
 
+    private static async Task<IResult> HandleAddEmployee(
+        [FromBody] AddEmployeeRequest request,
+        [FromServices] ICommandHandler<AddEmployeeCommand, Result<Guid>> handler,
+        CancellationToken ct)
+    {
+        var command = request.ToCommand();
+        var result  = await handler.Handle(command, ct);
+
+        if (result.IsSuccess)
+            return Created($"~/employees/{result.Value}", result.Value);
+
+        var error = result.Error!.Value;
+        return error.Code switch
+        {
+            "validation" => ValidationProblem(
+                errors: new Dictionary<string, string[]> { ["body"] = [error.Message] }),
+            "conflict"   => Conflict(new { message = error.Message }),
+            "forbidden"  => Json(
+                new { message = error.Message },
+                statusCode: StatusCodes.Status403Forbidden),
+            _            => Problem(error.Message)
+        };
+    }
+    
     private static async Task<IResult> HandleGetEmployees(
         [AsParameters] GetEmployeesRequest request,
         [FromServices] IQueryHandler<GetEmployeesQuery, Result<PagedResult<EmployeeListItemDto>>> handler,

@@ -2,6 +2,7 @@
 using App.Api.Contracts.Employees.Responses;
 using App.Application.Common.Dtos;
 using App.Application.Common.Pagination;
+using App.Application.Employees.Commands.AddEmployee;
 using App.Application.Employees.Queries;
 using App.Domain.Common;
 
@@ -9,6 +10,26 @@ namespace App.Api.Features.Employees.Mappers;
 
 internal static class EmployeeMappers
 {
+    public static AddEmployeeCommand ToCommand(this AddEmployeeRequest request) =>
+        new AddEmployeeCommand(
+            FirstName          : request.FirstName,
+            LastName           : request.LastName,
+            PreferredName      : request.PreferredName,
+            UserId             : request.UserId,
+            EmploymentType     : request.EmploymentType,
+            SalaryType         : request.SalaryType,
+            Department         : request.Department,
+            HireDate           : request.HireDate,
+            CompanyEmail       : request.CompanyEmail,
+            WorkLocation       : request.WorkLocation,
+            Notes              : request.Notes,
+            AddressLine1       : request.AddressLine1,
+            AddressLine2       : request.AddressLine2,
+            City               : request.City,
+            State              : request.State,
+            PostalCode         : request.PostalCode,
+            RecommendedRoleId  : request.RecommendedRoleId
+        );
     public static GetEmployeesResponse ToGetEmployeesResponse(
         this PagedResult<EmployeeListItemDto> pagedResult)
     {

@@ -6,9 +6,9 @@ using FluentValidation.TestHelper;
 
 namespace App.Tests.Api.Contracts.Positions;
 
-public class AddProjectRequestValidatorTests
+public class AddPositionRequestValidatorTests
 {
-    private readonly AddProjectRequestValidator _validator = new();
+    private readonly AddPositionRequestValidator _validator = new();
 
     [Fact]
     public void Should_Have_Error_When_Name_Is_Empty()

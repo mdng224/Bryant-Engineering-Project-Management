@@ -7,48 +7,9 @@ namespace App.Infrastructure.Persistence.Seed.Factories;
 
 internal static class EmployeeSeedFactory
 {
-    private static Employee SeededEmployee(
-        Guid id,
-        string last,
-        string legalFirst,
-        string? nickname,
-        DepartmentType? departmentType,
-        IEnumerable<Guid>? positionIds,
-        EmploymentType? employmentType,
-        SalaryType? salaryType,
-        string? companyEmail,
-        Guid? recommendedRoleId = null,
-        bool isPreapproved = false,
-        bool isFormerEmployee = false
-    )
-    {
-        var employee = new Employee(id, legalFirst, last);
-        
-        employee.SetPreferredName(nickname);
-        employee.SetDepartment(departmentType);
-        
-        if (positionIds is not null)
-            foreach (var pid in positionIds)
-                employee.AddPosition(pid);
-        
-        employee.SetEmployment(employmentType, salaryType);
-        employee.SetCompanyEmail(companyEmail);
-        
-        // Apply optional role recommendation & preapproval
-        if (recommendedRoleId is { } r)
-            employee.RecommendRole(r);
-        if (isPreapproved)
-            employee.SetPreapproved(true); // will throw if no CompanyEmail
-        
-        if (isFormerEmployee)
-            employee.SoftDelete();
-        
-        return employee;
-    }
-
     public static IEnumerable<Employee> All =>
     [
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.JasonBaker,
             last:              "Baker",
             legalFirst:        "James",
@@ -61,7 +22,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.Administrator,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.DougBrown,
             last:              "Brown",
             legalFirst:        "Douglas",
@@ -74,7 +35,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.User,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.JakeDavis,
             last:              "Davis",
             legalFirst:        "Jacob",
@@ -87,7 +48,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.User,
             isPreapproved:     false
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.GregHamilton,
             last:              "Hamilton",
             legalFirst:        "David",
@@ -100,7 +61,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.Manager,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.BillKelly,
             last:              "Kelly",
             legalFirst:        "William",
@@ -113,7 +74,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.User,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.MattLee,
             last:              "Lee",
             legalFirst:        "James",
@@ -126,7 +87,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.User,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.AnthonyMayfield,
             last:              "Mayfield",
             legalFirst:        "Anthony",
@@ -139,7 +100,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.User,
             isPreapproved:     false
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.VincentMayfield,
             last:              "Mayfield",
             legalFirst:        "Vincent",
@@ -152,7 +113,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.User,
             isPreapproved:     false
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.NikkiMaynard,
             last:              "Maynard",
             legalFirst:        "Theresa",
@@ -165,7 +126,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.Administrator,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.TannerMiller,
             last:              "Miller",
             legalFirst:        "Jonathan",
@@ -178,7 +139,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.User,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.LeeMills,
             last:              "Mills",
             legalFirst:        "Anthony",
@@ -191,7 +152,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.Administrator,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.HtetThiriNaing,
             last:              "Naing",
             legalFirst:        "Htet Thiri",
@@ -204,7 +165,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.User,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.JacobOBryan,
             last:              "O'Bryan",
             legalFirst:        "Jacob",
@@ -217,7 +178,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.User,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.TonyPhelps,
             last:              "Phelps",
             legalFirst:        "Mark",
@@ -230,7 +191,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.Administrator,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.MasonReynolds,
             last:              "Reynolds",
             legalFirst:        "Mason",
@@ -243,7 +204,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.User,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.ChristianScrivner,
             last:              "Scrivner",
             legalFirst:        "James",
@@ -256,7 +217,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.User,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.DavidWeaver,
             last:              "Weaver",
             legalFirst:        "Robert",
@@ -269,7 +230,7 @@ internal static class EmployeeSeedFactory
             recommendedRoleId: RoleIds.Administrator,
             isPreapproved:     true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.AndyWeaver,
             last:              "Weaver",
             legalFirst:        "William",
@@ -285,7 +246,7 @@ internal static class EmployeeSeedFactory
          // -------------------------
         // Inactive Employees
         // -------------------------
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.WyattCrowell,
             last:              "Crowell",
             legalFirst:        "Wyatt",
@@ -297,7 +258,7 @@ internal static class EmployeeSeedFactory
             companyEmail:      null,
             isFormerEmployee:  true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.VivianHiggs,
             last:              "Higgs",
             legalFirst:        "Vivian",
@@ -309,7 +270,7 @@ internal static class EmployeeSeedFactory
             companyEmail:      null,
             isFormerEmployee:  true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.TerryFoster,
             last:              "Foster",
             legalFirst:        "Terry",
@@ -321,7 +282,7 @@ internal static class EmployeeSeedFactory
             companyEmail:      null,
             isFormerEmployee:  true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.SteveWeaver,
             last:              "Weaver",
             legalFirst:        "Steve",
@@ -333,7 +294,7 @@ internal static class EmployeeSeedFactory
             companyEmail:      null,
             isFormerEmployee:  true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.JimDinning,
             last:              "Dinning",
             legalFirst:        "Jim",
@@ -345,7 +306,7 @@ internal static class EmployeeSeedFactory
             companyEmail:      null,
             isFormerEmployee:  true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.JarretHamilton,
             last:              "Hamilton",
             legalFirst:        "Jarret",
@@ -357,7 +318,7 @@ internal static class EmployeeSeedFactory
             companyEmail:      null,
             isFormerEmployee:  true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.GlenFuchs,
             last:              "Fuchs",
             legalFirst:        "Glen",
@@ -369,7 +330,7 @@ internal static class EmployeeSeedFactory
             companyEmail:      null,
             isFormerEmployee:  true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.DonBryant,
             last:              "Bryant",
             legalFirst:        "Don",
@@ -381,7 +342,7 @@ internal static class EmployeeSeedFactory
             companyEmail:      null,
             isFormerEmployee:  true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.CodyHenderson,
             last:              "Henderson",
             legalFirst:        "Cody",
@@ -393,7 +354,7 @@ internal static class EmployeeSeedFactory
             companyEmail:      null,
             isFormerEmployee:  true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.ChrisFoster,
             last:              "Foster",
             legalFirst:        "Chris",
@@ -405,7 +366,7 @@ internal static class EmployeeSeedFactory
             companyEmail:      null,
             isFormerEmployee:  true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.BillWeikel,
             last:              "Weikel",
             legalFirst:        "Bill",
@@ -417,7 +378,7 @@ internal static class EmployeeSeedFactory
             companyEmail:      null,
             isFormerEmployee:  true
         ),
-        SeededEmployee(
+        Employee.Seed(
             id:                EmployeeIds.AdamMiller,
             last:              "Miller",
             legalFirst:        "Adam",
