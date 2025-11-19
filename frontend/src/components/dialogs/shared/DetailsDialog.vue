@@ -85,8 +85,8 @@
 </template>
 
 <script setup lang="ts">
+  import { AppDialog } from '@/components/ui';
   import { computed } from 'vue';
-  import AppDialog from '../ui/AppDialog.vue';
 
   type FieldType = 'text' | 'date' | 'mono' | 'multiline';
 

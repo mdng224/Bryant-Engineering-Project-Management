@@ -65,10 +65,10 @@
   import { extractApiError } from '@/api/error';
   import { positionService } from '@/api/positions';
   import type { PositionResponse, UpdatePositionRequest } from '@/api/positions/contracts';
-  import AppAlert from '@/components/AppAlert.vue';
+  import { AppDialog } from '@/components/ui';
+  import AppAlert from '@/components/ui/AppAlert.vue';
   import { AlertTriangle, Save } from 'lucide-vue-next';
   import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
-  import AppDialog from '../ui/AppDialog.vue';
 
   const props = defineProps<{
     open: boolean;

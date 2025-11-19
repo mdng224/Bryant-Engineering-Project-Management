@@ -303,11 +303,11 @@
   import type { AddClientRequest } from '@/api/clients';
   import { clientService } from '@/api/clients/services';
   import { extractApiError } from '@/api/error';
-  import AppAlert from '@/components/AppAlert.vue';
+  import { AppDialog } from '@/components/ui';
+  import AppAlert from '@/components/ui/AppAlert.vue';
   import { useClientLookups } from '@/composables/useClientLookups';
   import { AlertTriangle, Plus } from 'lucide-vue-next';
   import { computed, onMounted, ref, watch } from 'vue';
-  import AppDialog from '../ui/AppDialog.vue';
 
   const labelClass = 'mb-1 block text-sm font-medium text-slate-200';
   const formClass = 'w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-white';

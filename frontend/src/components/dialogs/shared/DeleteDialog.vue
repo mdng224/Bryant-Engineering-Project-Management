@@ -1,5 +1,5 @@
 <template>
-  <AppDialog :open="open" :title="title" width="max-w-md" :loading="loading" @close="handleClose">
+  <app-dialog :open="open" :title="title" width="max-w-md" :loading="loading" @close="handleClose">
     <p class="text-sm text-slate-300">
       {{ message }}
     </p>
@@ -35,12 +35,12 @@
         <span>{{ confirmLabel }}</span>
       </button>
     </template>
-  </AppDialog>
+  </app-dialog>
 </template>
 
 <script setup lang="ts">
+  import { AppDialog } from '@/components/ui';
   import { nextTick, ref, watch } from 'vue';
-  import AppDialog from '../ui/AppDialog.vue';
 
   type Props = {
     open: boolean;

@@ -53,3 +53,15 @@ export type ProjectResponse = ProjectBase & {
 export type GetProjectLookupsResponse = {
   managers: string[];
 };
+
+export type AddProjectRequest = {
+  code: string;
+  name: string;
+  clientId: string | null;
+  scopeId: string | null;
+  manager: string;
+  type: string | null;
+  location: string | null;
+  year: number | null;
+  number: number | null;
+};

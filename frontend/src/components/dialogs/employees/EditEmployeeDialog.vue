@@ -1,12 +1,6 @@
 <!-- components/EditEmployeeDialog.vue -->
 <template>
-  <app-dialog
-    :open="open"
-    title="Edit Employee"
-    width="max-w-3xl"
-    :loading="saving"
-    @close="onCancel"
-  >
+  <app-dialog :open title="Edit Employee" width="max-w-3xl" :loading="saving" @close="onCancel">
     <!-- IDs line -->
     <p class="mb-4 text-xs text-slate-400">
       EmployeeId •
@@ -212,9 +206,9 @@
 
 <script setup lang="ts">
   import type { EmployeeResponse } from '@/api/employees/contracts';
+  import { AppDialog } from '@/components/ui';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { computed, reactive, ref, watch } from 'vue';
-  import AppDialog from '../ui/AppDialog.vue';
 
   /******************** Props & Emits ********************/
   const props = defineProps<{

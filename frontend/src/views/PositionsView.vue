@@ -101,16 +101,12 @@
     PositionResponse,
   } from '@/api/positions/contracts';
   import { positionService } from '@/api/positions/services';
-  import AppAlert from '@/components/AppAlert.vue';
   import BooleanFilter from '@/components/BooleanFilter.vue';
-  import AddPositionDialog from '@/components/dialogs/AddPositionDialog.vue';
-  import DeleteDialog from '@/components/dialogs/DeleteDialog.vue';
-  import EditPositionDialog from '@/components/dialogs/EditPositionDialog.vue';
-  import RestoreDialog from '@/components/dialogs/RestoreDialog.vue';
-  import CellRenderer from '@/components/table/CellRenderer.vue';
-  import DataTable from '@/components/table/DataTable.vue';
-  import TableFooter from '@/components/table/TableFooter.vue';
-  import TableSearch from '@/components/TableSearch.vue';
+  import { AddPositionDialog, EditPositionDialog } from '@/components/dialogs/positions';
+  import DeleteDialog from '@/components/dialogs/shared/DeleteDialog.vue';
+  import RestoreDialog from '@/components/dialogs/shared/RestoreDialog.vue';
+  import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
+  import AppAlert from '@/components/ui/AppAlert.vue';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';

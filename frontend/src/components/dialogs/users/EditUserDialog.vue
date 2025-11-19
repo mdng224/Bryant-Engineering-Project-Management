@@ -78,10 +78,9 @@
     UserResponse,
     UserStatus,
   } from '@/api/users/contracts';
+  import { AppAlert, AppDialog } from '@/components/ui';
   import { AlertTriangle, Save } from 'lucide-vue-next';
   import { computed, onMounted, ref, watch } from 'vue';
-  import AppAlert from '../AppAlert.vue';
-  import AppDialog from '../ui/AppDialog.vue';
 
   const roles: RoleName[] = ['Administrator', 'Manager', 'User'];
   const statuses: UserStatus[] = [

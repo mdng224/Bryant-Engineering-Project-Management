@@ -57,6 +57,12 @@
 
   <table-footer :table :totalCount :totalPages :pagination :setPageSize />
 
+  <add-employee-dialog
+    :open="addDialogIsOpen"
+    @close="addDialogIsOpen = false"
+    @saved="handleEmployeeSaved"
+  />
+
   <details-dialog
     :open="openDetailsDialog"
     title="Employee Details"
@@ -84,12 +90,10 @@
   } from '@/api/employees';
   import { employeeService } from '@/api/employees';
   import BooleanFilter from '@/components/BooleanFilter.vue';
-  import DetailsDialog, { type FieldDef } from '@/components/dialogs/DetailsDialog.vue';
-  import EditEmployeeDialog from '@/components/dialogs/EditEmployeeDialog.vue';
-  import CellRenderer from '@/components/table/CellRenderer.vue';
-  import DataTable from '@/components/table/DataTable.vue';
-  import TableFooter from '@/components/table/TableFooter.vue';
-  import TableSearch from '@/components/TableSearch.vue';
+  import { AddEmployeeDialog, EditEmployeeDialog } from '@/components/dialogs/employees';
+  import { DetailsDialog } from '@/components/dialogs/shared';
+  import { type FieldDef } from '@/components/dialogs/shared/DetailsDialog.vue';
+  import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
@@ -246,6 +250,11 @@
     const detail = employeeDetailsById.value.get(summary.id) ?? null;
     selectedEmployee.value = detail;
     editEmployeeDialogIsOpen.value = !!detail;
+  };
+
+  const handleEmployeeSaved = () => {
+    // however you currently refresh; if useDataTable returns a `reload`, call that
+    pagination.pageIndex = 0; // or call your own reload function
   };
 
   const handleOpenDeleteDialog = (summary: EmployeeSummaryResponse): void => {

@@ -65,7 +65,7 @@
   <table-footer :table :total-count :total-pages :pagination :set-page-size />
 
   <!-- Dialogs -->
-  <DeleteDialog
+  <delete-dialog
     :open="deleteDialogIsOpen"
     title="Delete user"
     message="This action cannot be undone. This will permanently delete the selected user."
@@ -73,14 +73,14 @@
     @close="deleteDialogIsOpen = false"
   />
 
-  <EditUserDialog
+  <edit-user-dialog
     :open="editUserDialogIsOpen"
     :selected-user
     @close="editUserDialogIsOpen = false"
     @saved="refetch"
   />
 
-  <RestoreDialog
+  <restore-dialog
     :open="restoreDialogIsOpen"
     title="Restore position"
     message="This action will restore position."
@@ -93,18 +93,13 @@
   import { extractApiError } from '@/api/error';
   import { userService } from '@/api/users';
   import BooleanFilter from '@/components/BooleanFilter.vue';
-  import DeleteDialog from '@/components/dialogs/DeleteDialog.vue';
-  import EditUserDialog from '@/components/dialogs/EditUserDialog.vue';
-  import RestoreDialog from '@/components/dialogs/RestoreDialog.vue';
-  import CellRenderer from '@/components/table/CellRenderer.vue';
-  import DataTable from '@/components/table/DataTable.vue';
-  import TableFooter from '@/components/table/TableFooter.vue';
-  import TableSearch from '@/components/TableSearch.vue';
+  import { DeleteDialog, RestoreDialog } from '@/components/dialogs/shared';
+  import { EditUserDialog } from '@/components/dialogs/users';
+  import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
   import { useAuth } from '@/composables/useAuth';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { AlertTriangle, CheckCircle2, Lock, LockOpen, Pencil, Trash2 } from 'lucide-vue-next';
-
   import { computed, onBeforeUnmount, ref, watch } from 'vue';
   import type { GetUsersRequest, GetUsersResponse, UserResponse, UserStatus } from '../api/users';
   import { useDebouncedRef } from '../composables/useDebouncedRef';

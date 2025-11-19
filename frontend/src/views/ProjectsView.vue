@@ -49,6 +49,11 @@
   </data-table>
 
   <table-footer :table :totalCount :totalPages :pagination :setPageSize />
+  <add-project-dialog
+    :open="addDialogIsOpen"
+    @close="addDialogIsOpen = false"
+    @saved="handleProjectSaved"
+  />
 
   <details-dialog
     :open="openDetailsDialog"
@@ -69,36 +74,51 @@
     type ProjectSummaryResponse,
   } from '@/api/projects';
   import BooleanFilter from '@/components/BooleanFilter.vue';
-  import type { FieldDef } from '@/components/dialogs/DetailsDialog.vue';
-  import DetailsDialog from '@/components/dialogs/DetailsDialog.vue';
-  import CellRenderer from '@/components/table/CellRenderer.vue';
-  import DataTable from '@/components/table/DataTable.vue';
-  import TableFooter from '@/components/table/TableFooter.vue';
-  import TableSearch from '@/components/TableSearch.vue';
+  import { AddProjectDialog } from '@/components/dialogs/projects';
+  import type { FieldDef } from '@/components/dialogs/shared/DetailsDialog.vue';
+  import DetailsDialog from '@/components/dialogs/shared/DetailsDialog.vue';
+  import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { useProjectLookups } from '@/composables/useProjectLookups';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { CheckCircle2, CirclePlus, Eye, Trash2 } from 'lucide-vue-next';
-  import { computed, onBeforeUnmount, ref } from 'vue';
+  import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
   import { useRoute } from 'vue-router';
-  const selectedManager = ref<string | null>(null);
+  // ───────────────────────────── Types ─────────────────────────────
+  type ProjectStatus = 'active' | 'inactive' | 'all';
 
-  const { managers, loadLookups } = useProjectLookups();
-  loadLookups(); // or onMounted(loadLookups) if you prefer
+  type ProjectQuery = {
+    name: string | null;
+    isDeleted: boolean | null;
+    clientId: string | null;
+    manager: string | null;
+  };
 
+  // ───────────────────────── Routing + Lookups ───────────────────────
   const route = useRoute();
+
+  // Project manager lookups
+  const { managers, loadLookups } = useProjectLookups();
+  onMounted(loadLookups);
+
+  // ───────────────────────── Details Dialog Config ───────────────────
   const actionButtonClass =
     'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
 
-  /* ------------------------------- Details ------------------------------ */
   const fieldDef = <K extends keyof ProjectResponse>(
     key: K,
     label: string,
     type: 'text' | 'date' | 'mono' | 'multiline' = 'text',
     span: 1 | 2 = 1,
-  ) => ({ key: key as string, label, type, span }) satisfies FieldDef;
+  ) =>
+    ({
+      key: key as string,
+      label,
+      type,
+      span,
+    }) satisfies FieldDef;
 
   const { formatUtc } = useDateFormat();
 
@@ -121,7 +141,7 @@
     fieldDef('deletedBy', 'Closed By', 'text'),
   ] as any;
 
-  /* -------------------------------- Columns ------------------------------- */
+  // ───────────────────────────── Table Columns ──────────────────────
   const col: ColumnHelper<ProjectSummaryResponse> = createColumnHelper<ProjectSummaryResponse>();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,8 +156,9 @@
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
   ];
 
-  /* ------------------------------- Filtering ------------------------------ */
-  const deletedFilter = ref(null); // default: show only active (not deleted)
+  // ───────────────────────────── Filters & Search ────────────────────
+  const selectedManager = ref<string | null>(null);
+  const deletedFilter = ref<boolean | null>(null);
 
   const deletedOptions = [
     { value: null, label: 'All', icon: Eye, color: 'text-indigo-300' },
@@ -152,15 +173,7 @@
     cancel: cancelNameDebounce, // cleanup on unmount
   } = useDebouncedRef('', 500);
 
-  onBeforeUnmount(() => {
-    cancelNameDebounce();
-    destroy();
-  });
-
-  /* --------------------------- Route → filter mapping -------------------- */
-
-  type ProjectStatus = 'active' | 'inactive' | 'all';
-
+  // ───────────────────────── Route → Filter Mapping ──────────────────
   const statusFromRoute = computed<ProjectStatus | undefined>(() => {
     const raw = route.query.status;
     if (!raw) return undefined;
@@ -179,18 +192,27 @@
   const mapStatusToIsDeleted = (status: ProjectStatus | undefined): boolean | null => {
     if (status === 'active') return false;
     if (status === 'inactive') return true;
-    if (status === 'all') return null; // no deleted filter
+    if (status === 'all') return null;
     return null;
   };
 
-  /* ------------------------------- Fetching ------------------------------- */
-  type ProjectQuery = {
-    name: string | null;
-    isDeleted: boolean | null;
-    clientId: string | null;
-    manager: string | null;
-  };
+  const query = computed<ProjectQuery>(() => {
+    const status = statusFromRoute.value;
+    const clientId = clientIdFromRoute.value;
+    const isDeletedFromStatus = mapStatusToIsDeleted(status);
 
+    const effectiveIsDeleted =
+      status !== undefined ? isDeletedFromStatus : (deletedFilter.value as boolean | null);
+
+    return {
+      name: name.value ?? null,
+      isDeleted: effectiveIsDeleted,
+      clientId,
+      manager: selectedManager.value,
+    };
+  });
+
+  // ─────────────────────────── Data Fetching ─────────────────────────
   const projectDetails = ref<ProjectResponse[]>([]);
   const projectDetailsById = computed(() => new Map(projectDetails.value.map(p => [p.id, p])));
 
@@ -203,13 +225,14 @@
       clientId: query?.clientId ?? null,
       manager: query?.manager || null,
     };
+
     const response: GetProjectsResponse = await projectService.get(request);
 
-    // Cache details for action dialogs
+    // Cache details for dialogs
     projectDetails.value = response.projectListItemResponses.map(plir => plir.details);
 
     return {
-      items: response.projectListItemResponses.map(plir => plir.summary), // summaries are the table rows
+      items: response.projectListItemResponses.map(plir => plir.summary),
       totalCount: response.totalCount,
       totalPages: response.totalPages,
       page: response.page,
@@ -217,27 +240,12 @@
     };
   };
 
-  const query = computed<ProjectQuery>(() => {
-    const status = statusFromRoute.value;
-    const clientId = clientIdFromRoute.value;
-
-    const isDeletedFromStatus = mapStatusToIsDeleted(status);
-
-    const effectiveIsDeleted = status !== undefined ? isDeletedFromStatus : deletedFilter.value;
-
-    return {
-      name: name.value ?? null,
-      isDeleted: effectiveIsDeleted,
-      clientId,
-      manager: selectedManager.value,
-    };
-  });
-
   const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<
     ProjectSummaryResponse,
     ProjectQuery
   >(columns, fetchProjects, query);
-  /* ------------------------------- Dialogs/UX ----------------------------- */
+
+  // ───────────────────────────── Dialog State ─────────────────────────
   const addDialogIsOpen = ref(false);
   const deleteDialogIsOpen = ref(false);
   const editProjectDialogIsOpen = ref(false);
@@ -245,7 +253,7 @@
   const reactivateDialogIsOpen = ref(false);
   const selectedProject = ref<ProjectResponse | null>(null);
 
-  /* -------------------------------- Handlers ------------------------------ */
+  // ───────────────────────────── Handlers ────────────────────────────
   const handleView = (id: string): void => {
     const detail = projectDetailsById.value.get(id) ?? null;
     selectedProject.value = detail;
@@ -253,11 +261,22 @@
   };
 
   const handleOpenDeleteDialog = (summary: ProjectSummaryResponse): void => {
-    //selectedProject.value = summary;
-    //deleteDialogIsOpen.value = true;
+    // selectedProject.value = summary;
+    // deleteDialogIsOpen.value = true;
   };
 
   const handleOpenReactivateDialog = (position: ProjectSummaryResponse): void => {
     // TODO: Call reactivate service
   };
+
+  const handleProjectSaved = () => {
+    // however you currently refresh; if useDataTable returns a `reload`, call that
+    pagination.pageIndex = 0; // or call your own reload function
+  };
+
+  // ───────────────────────────── Cleanup ──────────────────────────────
+  onBeforeUnmount(() => {
+    cancelNameDebounce();
+    destroy();
+  });
 </script>

@@ -53,3 +53,18 @@ export type EmployeeResponse = EmployeeBase & {
   updatedById: string | null;
   deletedById: string | null;
 };
+
+export type AddEmployeeRequest = {
+  firstName: string;
+  lastName: string;
+  preferredName?: string | null;
+  employmentType?: string | null;
+  salaryType?: string | null;
+  hireDate?: string | null;
+  endDate?: string | null;
+  department?: string | null;
+  companyEmail?: string | null;
+  workLocation?: string | null;
+  licenseNotes?: string | null;
+  notes?: string | null;
+};

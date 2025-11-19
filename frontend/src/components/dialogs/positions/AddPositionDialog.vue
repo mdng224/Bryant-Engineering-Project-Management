@@ -77,9 +77,9 @@
   import { ref, watch } from 'vue';
 
   // Icons & UI
-  import AppAlert from '@/components/AppAlert.vue';
+  import { AppDialog } from '@/components/ui';
+  import AppAlert from '@/components/ui/AppAlert.vue';
   import { AlertTriangle, Plus } from 'lucide-vue-next';
-  import AppDialog from '../ui/AppDialog.vue';
 
   // API & types
   import { extractApiError } from '@/api/error';

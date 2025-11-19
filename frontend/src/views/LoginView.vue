@@ -113,7 +113,7 @@
   import type { LoginRequest } from '@/api/auth';
   import { authService } from '@/api/auth/';
   import type { ApiErrorResponse } from '@/api/error';
-  import AppAlert from '@/components/AppAlert.vue';
+  import AppAlert from '@/components/ui/AppAlert.vue';
   import { useAuth } from '@/composables/useAuth';
   import { useAuthFields } from '@/composables/useAuthFields';
   import { isAxiosError } from 'axios';

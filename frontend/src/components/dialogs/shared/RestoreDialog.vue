@@ -39,8 +39,8 @@
 </template>
 
 <script setup lang="ts">
+  import { AppDialog } from '@/components/ui';
   import { nextTick, ref, watch } from 'vue';
-  import AppDialog from '../ui/AppDialog.vue';
 
   type Props = {
     open: boolean;

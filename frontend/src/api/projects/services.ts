@@ -2,6 +2,7 @@
 
 import api from '..';
 import type {
+  AddProjectRequest,
   GetProjectLookupsResponse,
   GetProjectsRequest,
   GetProjectsResponse,
@@ -20,9 +21,15 @@ const getLookups = async (): Promise<GetProjectLookupsResponse> => {
   return data;
 };
 
+/* ------------------------------ POST (add) ------------------------------ */
+const add = async (payload: AddProjectRequest): Promise<AddProjectRequest> => {
+  const { data } = await api.post<AddProjectRequest>(ProjectsRoutes.add, payload);
+  return data;
+};
+
 /* ------------------------------ POST (restore) ------------------------------ */
 const restore = async (id: string): Promise<void> => {
   await api.post<string>(ProjectsRoutes.restore(id));
 };
 
-export const projectService = { get, getLookups, restore };
+export const projectService = { add, get, getLookups, restore };

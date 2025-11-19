@@ -88,12 +88,9 @@
   } from '@/api/clients';
   import type { Address } from '@/api/common';
   import BooleanFilter from '@/components/BooleanFilter.vue';
-  import AddClientDialog from '@/components/dialogs/AddClientDialog.vue';
-  import DetailsDialog, { type FieldDef } from '@/components/dialogs/DetailsDialog.vue';
-  import CellRenderer from '@/components/table/CellRenderer.vue';
-  import DataTable from '@/components/table/DataTable.vue';
-  import TableFooter from '@/components/table/TableFooter.vue';
-  import TableSearch from '@/components/TableSearch.vue';
+  import { AddClientDialog } from '@/components/dialogs/clients';
+  import DetailsDialog, { type FieldDef } from '@/components/dialogs/shared/DetailsDialog.vue';
+  import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
   import { useClientLookups } from '@/composables/useClientLookups';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
