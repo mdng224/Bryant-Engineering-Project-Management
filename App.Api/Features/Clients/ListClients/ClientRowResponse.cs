@@ -5,10 +5,6 @@ public sealed record ClientRowResponse(
     string? Name,
     int     TotalActiveProjects,
     int     TotalProjects,
-    string? FirstName,
-    string? LastName,
-    string? Email,
-    string? Phone,
     string? CategoryName,
     string? TypeName
 );

@@ -1,6 +1,4 @@
 ﻿using App.Application.Clients.Commands.AddClient;
-using App.Application.Common.Dtos;
-using App.Application.Common.Dtos.Clients;
 using App.Application.Common.Dtos.Clients.Lookups;
 using App.Domain.Clients;
 
@@ -11,15 +9,6 @@ public static class ClientMappers
     public static Client ToDomain(this AddClientCommand command) =>
         new(
             name: command.Name,
-            namePrefix: command.NamePrefix,
-            firstName: command.FirstName,
-            middleName: command.MiddleName,
-            lastName: command.LastName,
-            nameSuffix:  command.NameSuffix,
-            email: command.Email,
-            phone: command.Phone,
-            address: command.Address,
-            note: command.Note,
             categoryId: command.ClientCategoryId,
             typeId: command.ClientTypeId,
             projectCode: null

@@ -66,12 +66,6 @@ public static class ListClientsEndpoint
             Name:                dto.Name,
             TotalActiveProjects: dto.TotalActiveProjects,
             TotalProjects:       dto.TotalProjects,
-            FirstName:           dto.FirstName,
-            LastName:            dto.LastName,
-            Email:               dto.Email,
-            Phone:               dto.Phone,
             CategoryName:        dto.CategoryName,
             TypeName:            dto.TypeName);
-
-
 }

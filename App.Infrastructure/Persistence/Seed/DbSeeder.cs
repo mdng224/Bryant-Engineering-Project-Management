@@ -16,6 +16,7 @@ public static class DbSeeder
         await SeedIfEmptyAsync(db, RoleSeedFactory.All, ct);
         await SeedIfEmptyAsync(db, PositionSeedFactory.All, ct);
         await SeedIfEmptyAsync(db, EmployeeSeedFactory.All, ct);
+        await SeedIfEmptyAsync(db, ContactSeedFactory.All, ct);
         await SeedIfEmptyAsync(db, ClientCategorySeedFactory.All, ct);
         await SeedIfEmptyAsync(db, ClientTypeSeedFactory.All, ct);
         await db.SaveChangesAsync(ct);   // ✅ Save the above before we seed clients (which need category/type)
@@ -81,19 +82,6 @@ public static class DbSeeder
 
                 return Client.Seed(
                     clientName:       cs.ClientName!,
-                    namePrefix:       cs.NamePrefix,
-                    firstName:        cs.FirstName!,
-                    middleName:       null,
-                    lastName:         cs.LastName!,
-                    nameSuffix:       cs.NameSuffix,
-                    email:            cs.Email,
-                    phone:            cs.Phone,
-                    line1:            cs.Line1,
-                    line2:            cs.Line2,
-                    city:             cs.City,
-                    state:            cs.State,
-                    postalCode:       cs.PostalCode,
-                    note:             cs.Note,
                     clientCategoryId: categoryId,
                     clientTypeId:     typeId,
                     legacyProjectCode: null // CSV doesn't provide; Will set later

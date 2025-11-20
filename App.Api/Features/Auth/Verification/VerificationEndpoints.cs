@@ -11,7 +11,8 @@ public static class VerificationEndpoints
     public static RouteGroupBuilder MapVerificationEndpoints(this RouteGroupBuilder group)
     {
         // GET /auth/verify?token=...
-        group.MapGet("", Handle)
+        group.MapGet("/verify", Handle)
+            .AllowAnonymous()
             .WithSummary("Verify email")
             .WithDescription("Consumes a one-time token and activates the user.")
             .Produces(302) // Redirect to frontend result page

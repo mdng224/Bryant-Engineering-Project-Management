@@ -1,6 +1,6 @@
 ﻿namespace App.Infrastructure.Persistence.Seed.Configurations;
 
-public static class EmployeeIds
+internal static class EmployeeIds
 {
     // -------------------------
     // Active Employees

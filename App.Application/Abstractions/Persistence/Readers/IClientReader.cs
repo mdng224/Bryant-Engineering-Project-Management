@@ -1,11 +1,9 @@
-﻿using App.Application.Common.Dtos;
-using App.Application.Common.Dtos.Clients;
+﻿using App.Application.Common.Dtos.Clients;
 
 namespace App.Application.Abstractions.Persistence.Readers;
 
 public interface IClientReader
 {
-    Task<bool> EmailExistsAsync(string name, CancellationToken ct = default);
     Task<ClientDetailsDto?> GetDetailsAsync(Guid id, CancellationToken ct = default);
     Task<(IReadOnlyList<ClientRowDto> items, int totalCount)> GetPagedAsync(
         int skip,

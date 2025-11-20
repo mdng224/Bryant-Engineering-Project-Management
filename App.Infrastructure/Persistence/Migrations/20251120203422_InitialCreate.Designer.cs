@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251118211805_InitialCreate")]
+    [Migration("20251120203422_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -93,50 +93,11 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("deleted_by_id");
 
-                    b.Property<string>("Email")
-                        .HasMaxLength(254)
-                        .HasColumnType("character varying(254)")
-                        .HasColumnName("email");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("first_name");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("last_name");
-
-                    b.Property<string>("MiddleName")
-                        .HasColumnType("text");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
-
-                    b.Property<string>("NamePrefix")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("name_prefix");
-
-                    b.Property<string>("NameSuffix")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("name_suffix");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("text")
-                        .HasColumnName("note");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("phone");
 
                     b.Property<string>("ProjectCode")
                         .HasMaxLength(32)
@@ -157,22 +118,15 @@ namespace App.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("ux_clients_email_active")
-                        .HasFilter("email IS NOT NULL AND deleted_at_utc IS NULL");
-
                     b.HasIndex("Name");
 
                     b.HasIndex("ProjectCode");
 
                     b.HasIndex("CategoryId", "TypeId");
 
-                    b.HasIndex("LastName", "FirstName");
-
                     b.ToTable("clients", null, t =>
                         {
-                            t.HasCheckConstraint("ck_clients_all_names_required", " btrim(coalesce(name, ''))       <> ''  AND btrim(coalesce(first_name, '')) <> ''  AND btrim(coalesce(last_name, '')) <> '' ");
+                            t.HasCheckConstraint("ck_clients_all_names_required", " btrim(coalesce(name, ''))       <> '' ");
                         });
                 });
 
@@ -268,6 +222,136 @@ namespace App.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_outbox_messages_processed_at_utc");
 
                     b.ToTable("outbox_messages", (string)null);
+                });
+
+            modelBuilder.Entity("App.Domain.Contacts.Contact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BusinessPhone")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("business_phone");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ClientId1")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Company")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("company");
+
+                    b.Property<string>("Country")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("country");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_id");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by_id");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("department");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("first_name");
+
+                    b.Property<bool>("IsPrimaryForClient")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_primary_for_client");
+
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("job_title");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("last_name");
+
+                    b.Property<string>("MiddleName")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("middle_name");
+
+                    b.Property<string>("MobilePhone")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("mobile_phone");
+
+                    b.Property<string>("NamePrefix")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("name_prefix");
+
+                    b.Property<string>("NameSuffix")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("name_suffix");
+
+                    b.Property<string>("PrimaryPhone")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("primary_phone");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_id");
+
+                    b.Property<string>("WebPage")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("web_page");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("ClientId1");
+
+                    b.HasIndex("Company");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("LastName", "FirstName");
+
+                    b.ToTable("contacts", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_contacts_name_required", "btrim(coalesce(first_name, '')) <> '' AND btrim(coalesce(last_name, '')) <> ''");
+                        });
                 });
 
             modelBuilder.Entity("App.Domain.Employees.Employee", b =>
@@ -680,11 +764,31 @@ namespace App.Infrastructure.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("App.Domain.Clients.Client", b =>
+            modelBuilder.Entity("App.Domain.Clients.ClientType", b =>
                 {
+                    b.HasOne("App.Domain.Clients.ClientCategory", "Category")
+                        .WithMany("Types")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("App.Domain.Contacts.Contact", b =>
+                {
+                    b.HasOne("App.Domain.Clients.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("App.Domain.Clients.Client", null)
+                        .WithMany("Contacts")
+                        .HasForeignKey("ClientId1");
+
                     b.OwnsOne("App.Domain.Common.Address", "Address", b1 =>
                         {
-                            b1.Property<Guid>("ClientId")
+                            b1.Property<Guid>("ContactId")
                                 .HasColumnType("uuid");
 
                             b1.Property<string>("City")
@@ -712,26 +816,17 @@ namespace App.Infrastructure.Persistence.Migrations
                                 .HasColumnType("character varying(50)")
                                 .HasColumnName("state");
 
-                            b1.HasKey("ClientId");
+                            b1.HasKey("ContactId");
 
-                            b1.ToTable("clients");
+                            b1.ToTable("contacts");
 
                             b1.WithOwner()
-                                .HasForeignKey("ClientId");
+                                .HasForeignKey("ContactId");
                         });
 
                     b.Navigation("Address");
-                });
 
-            modelBuilder.Entity("App.Domain.Clients.ClientType", b =>
-                {
-                    b.HasOne("App.Domain.Clients.ClientCategory", "Category")
-                        .WithMany("Types")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
+                    b.Navigation("Client");
                 });
 
             modelBuilder.Entity("App.Domain.Employees.Employee", b =>
@@ -840,6 +935,8 @@ namespace App.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("App.Domain.Clients.Client", b =>
                 {
+                    b.Navigation("Contacts");
+
                     b.Navigation("Projects");
                 });
 

@@ -1,6 +1,7 @@
 ﻿using App.Domain.Auth;
 using App.Domain.Clients;
 using App.Domain.Common;
+using App.Domain.Contacts;
 using App.Domain.Employees;
 using App.Domain.Projects;
 using App.Domain.Users;
@@ -30,6 +31,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ClientCategory> ClientCategories => Set<ClientCategory>();
     public DbSet<ClientType> ClientTypes => Set<ClientType>();
     public DbSet<Scope> Scopes => Set<Scope>();
+    public DbSet<Contact> Contacts => Set<Contact>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,6 +48,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration(new ClientConfig());
         modelBuilder.ApplyConfiguration(new ScopeConfig());
         modelBuilder.ApplyConfiguration(new ProjectConfig());
+        modelBuilder.ApplyConfiguration(new ContactConfig());
     }
 
     // --- Model configuration -----------------------------------------------

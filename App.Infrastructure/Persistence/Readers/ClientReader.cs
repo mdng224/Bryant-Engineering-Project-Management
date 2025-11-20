@@ -8,10 +8,6 @@ namespace App.Infrastructure.Persistence.Readers;
 
 public sealed class ClientReader(AppDbContext db) : IClientReader
 {
-    public async Task<bool> EmailExistsAsync(string normalizedEmail, CancellationToken ct = default) =>
-        await db.ReadSet<Client>()
-            .AnyAsync(c => c.Email == normalizedEmail, ct);
-
     public async Task<ClientDetailsDto?> GetDetailsAsync(Guid id, CancellationToken ct = default)
     {
         var clients    = db.ReadSet<Client>();
@@ -33,12 +29,6 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
                     p.ClientId == c.Id && p.DeletedAtUtc == null),
                 projects.Count(p =>
                     p.ClientId == c.Id),
-                c.FirstName,
-                c.LastName,
-                c.Email,
-                c.Phone,
-                c.Address,      // owned type is fine to project
-                c.Note,
                 cat != null ? cat.Name : null,
                 type != null ? type.Name : null,
                 c.CreatedAtUtc,
@@ -81,10 +71,6 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
             {
                 c.Id,
                 c.Name,
-                c.FirstName,
-                c.LastName,
-                c.Email,
-                c.Phone,
                 CategoryName = cat != null ? cat.Name : null,
                 TypeName     = type != null ? type.Name : null,
                 TotalActiveProjects = projects.Count(p =>
@@ -105,10 +91,6 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
                 x.Name,
                 x.TotalActiveProjects,
                 x.TotalProjects,
-                x.FirstName,
-                x.LastName,
-                x.Email,
-                x.Phone,
                 x.CategoryName,
                 x.TypeName))
             .ToListAsync(ct);
@@ -129,10 +111,7 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
         if (!string.IsNullOrWhiteSpace(normalizedNameFilter))
         {
             var pattern = $"%{normalizedNameFilter}%";
-            clientQuery = clientQuery.Where(c =>
-                EF.Functions.ILike(c.FirstName ?? "", pattern) ||
-                EF.Functions.ILike(c.LastName  ?? "", pattern) ||
-                EF.Functions.ILike(c.Name      ?? "", pattern));
+            clientQuery = clientQuery.Where(c => EF.Functions.ILike(c.Name ?? "", pattern));
         }
 
         // Category / type filters

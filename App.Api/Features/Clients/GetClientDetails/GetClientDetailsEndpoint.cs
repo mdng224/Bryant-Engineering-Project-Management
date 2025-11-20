@@ -13,7 +13,7 @@ public static class GetClientDetailsEndpoint
     {
         group.MapGet("/{id:guid}", Handle)
             .WithSummary("Get full details for a single client")
-            .Produces<GetClientDetailsResponse>(StatusCodes.Status200OK)
+            .Produces<GetClientDetailsResponse>()
             .Produces(StatusCodes.Status404NotFound);
 
         return group;
@@ -48,12 +48,6 @@ public static class GetClientDetailsEndpoint
             Name:                dto.Name,
             TotalActiveProjects: dto.TotalActiveProjects,
             TotalProjects:       dto.TotalProjects,
-            FirstName:           dto.FirstName,
-            LastName:            dto.LastName,
-            Email:               dto.Email,
-            Phone:               dto.Phone,
-            Address:             dto.Address,
-            Note:                dto.Note,
             CategoryName:        dto.CategoryName,
             TypeName:            dto.TypeName,
             CreatedAtUtc:        dto.CreatedAtUtc,

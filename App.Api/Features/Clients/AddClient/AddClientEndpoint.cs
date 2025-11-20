@@ -48,15 +48,6 @@ public static class AddClientEndpoint
     private static AddClientCommand ToCommand(this AddClientRequest request) =>
         new(
             Name:             request.Name,
-            NamePrefix:       request.NamePrefix,
-            FirstName:        request.FirstName,
-            MiddleName:       request.MiddleName,
-            LastName:         request.LastName,
-            NameSuffix:       request.NameSuffix,
-            Email:            request.Email,
-            Phone:            request.Phone,
-            Address:          request.Address,
-            Note:             request.Note,
             ClientCategoryId: request.ClientCategoryId,
             ClientTypeId:     request.ClientTypeId);
 }

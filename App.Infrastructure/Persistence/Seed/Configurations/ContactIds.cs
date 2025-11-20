@@ -1,0 +1,52 @@
+﻿namespace App.Infrastructure.Persistence.Seed.Configurations;
+
+internal static class ContactIds
+{
+    internal static readonly Guid JonathanNieman    = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    internal static readonly Guid GlennShane        = Guid.Parse("12121212-1212-1212-1212-121212121212");
+    internal static readonly Guid SilasBohlen       = Guid.Parse("13131313-1313-1313-1313-131313131313");
+    internal static readonly Guid BenGrove          = Guid.Parse("14141414-1414-1414-1414-141414141414");
+    internal static readonly Guid JenniferRudd      = Guid.Parse("15151515-1515-1515-1515-151515151515");
+    internal static readonly Guid NealWedding       = Guid.Parse("16161616-1616-1616-1616-161616161616");
+    internal static readonly Guid KevinCollignon    = Guid.Parse("17171717-1717-1717-1717-171717171717");
+    internal static readonly Guid MikeHamilton      = Guid.Parse("18181818-1818-1818-1818-181818181818");
+    internal static readonly Guid KaseyEmmick       = Guid.Parse("19191919-1919-1919-1919-191919191919");
+    internal static readonly Guid MattHayden        = Guid.Parse("1a1a1a1a-1a1a-1a1a-1a1a-1a1a1a1a1a1a");
+    internal static readonly Guid KevinGrant        = Guid.Parse("1b1b1b1b-1b1b-1b1b-1b1b-1b1b1b1b1b1b");
+    internal static readonly Guid ChrisLaw          = Guid.Parse("1c1c1c1c-1c1c-1c1c-1c1c-1c1c1c1c1c1c");
+    internal static readonly Guid JoeWatson         = Guid.Parse("1d1d1d1d-1d1d-1d1d-1d1d-1d1d1d1d1d1d");
+    internal static readonly Guid SteveHayden       = Guid.Parse("1e1e1e1e-1e1e-1e1e-1e1e-1e1e1e1e1e1e");
+    internal static readonly Guid CodyHenderson     = Guid.Parse("1f1f1f1f-1f1f-1f1f-1f1f-1f1f1f1f1f1f");
+    internal static readonly Guid KeithPayne        = Guid.Parse("20202020-2020-2020-2020-202020202020");
+    internal static readonly Guid ManuelBall        = Guid.Parse("21212121-2121-2121-2121-212121212121");
+    internal static readonly Guid BillJagoe         = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    internal static readonly Guid JimAdams          = Guid.Parse("23232323-2323-2323-2323-232323232323");
+    internal static readonly Guid SteffanHart       = Guid.Parse("24242424-2424-2424-2424-242424242424");
+    internal static readonly Guid ScottAtherton     = Guid.Parse("25252525-2525-2525-2525-252525252525");
+    internal static readonly Guid TaylorFranklin    = Guid.Parse("26262626-2626-2626-2626-262626262626");
+    internal static readonly Guid SarahPayton       = Guid.Parse("27272727-2727-2727-2727-272727272727");
+    internal static readonly Guid TerryHumphries    = Guid.Parse("28282828-2828-2828-2828-282828282828");
+    internal static readonly Guid TonyKelly         = Guid.Parse("29292929-2929-2929-2929-292929292929");
+    internal static readonly Guid DavidMulloy       = Guid.Parse("2a2a2a2a-2a2a-2a2a-2a2a-2a2a2a2a2a2a");
+    internal static readonly Guid JamieMurphy       = Guid.Parse("2b2b2b2b-2b2b-2b2b-2b2b-2b2b2b2b2b2b");
+    internal static readonly Guid WaltBeasley       = Guid.Parse("2c2c2c2c-2c2c-2c2c-2c2c-2c2c2c2c2c2c");
+    internal static readonly Guid MelissaEvans      = Guid.Parse("2d2d2d2d-2d2d-2d2d-2d2d-2d2d2d2d2d2d");
+    internal static readonly Guid JamesHoward       = Guid.Parse("2e2e2e2e-2e2e-2e2e-2e2e-2e2e2e2e2e2e");
+    internal static readonly Guid CarlaShelton      = Guid.Parse("2f2f2f2f-2f2f-2f2f-2f2f-2f2f2f2f2f2f");
+    internal static readonly Guid MatthewWarren     = Guid.Parse("30303030-3030-3030-3030-303030303030");
+    internal static readonly Guid TreyPedley        = Guid.Parse("31313131-3131-3131-3131-313131313131");
+    internal static readonly Guid AustinMcLimore    = Guid.Parse("32323232-3232-3232-3232-323232323232");
+    internal static readonly Guid EricHoutchen      = Guid.Parse("33333333-3333-3333-3333-333333333333");
+    internal static readonly Guid JoeRanburger      = Guid.Parse("34343434-3434-3434-3434-343434343434");
+    internal static readonly Guid MarkBallard       = Guid.Parse("35353535-3535-3535-3535-353535353535");
+    internal static readonly Guid DakotaBasham      = Guid.Parse("36363636-3636-3636-3636-363636363636");
+    internal static readonly Guid MarkRhinerson     = Guid.Parse("37373737-3737-3737-3737-373737373737");
+    internal static readonly Guid JoeSchepers       = Guid.Parse("38383838-3838-3838-3838-383838383838");
+    internal static readonly Guid DerekProffitt     = Guid.Parse("39393939-3939-3939-3939-393939393939");
+    internal static readonly Guid ChrisStone        = Guid.Parse("3a3a3a3a-3a3a-3a3a-3a3a-3a3a3a3a3a3a");
+    internal static readonly Guid JasonHurt         = Guid.Parse("3b3b3b3b-3b3b-3b3b-3b3b-3b3b3b3b3b3b");
+    internal static readonly Guid GordonBarnett     = Guid.Parse("3c3c3c3c-3c3c-3c3c-3c3c-3c3c3c3c3c3c");
+    internal static readonly Guid JoshMoore         = Guid.Parse("3d3d3d3d-3d3d-3d3d-3d3d-3d3d3d3d3d3d");
+    internal static readonly Guid RickLiggett       = Guid.Parse("3e3e3e3e-3e3e-3e3e-3e3e-3e3e3e3e3e3e");
+    internal static readonly Guid RitaJacobs        = Guid.Parse("3f3f3f3f-3f3f-3f3f-3f3f-3f3f3f3f3f3f");
+}
