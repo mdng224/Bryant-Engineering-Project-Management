@@ -6,14 +6,14 @@ using static App.Application.Common.R;
 
 namespace App.Application.Projects.Queries.GetProjectDetails;
 
-public class GetProjectDetailsHandler(IProjectReader projects)
+public class GetProjectDetailsHandler(IProjectReader reader)
     : IQueryHandler<GetProjectDetailsQuery, Result<ProjectDetailsDto>>
 {
     public async Task<Result<ProjectDetailsDto>> Handle(
         GetProjectDetailsQuery query,
         CancellationToken ct)
     {
-        var dto = await projects.GetDetailsAsync(query.Id, ct);
+        var dto = await reader.GetDetailsAsync(query.Id, ct);
 
         return dto is null ? Fail<ProjectDetailsDto>("not_found", "Project not found.") : Ok(dto);
     }

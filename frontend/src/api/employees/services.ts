@@ -1,11 +1,11 @@
 // src/api/employees/services.ts
 
 import api from '..';
-import type { AddEmployeeRequest, GetEmployeesRequest, GetEmployeesResponse } from './contracts';
+import type { AddEmployeeRequest, ListEmployeesRequest, ListEmployeesResponse } from './contracts';
 import { EmployeesRoutes } from './routes';
 
-const get = async (params: GetEmployeesRequest): Promise<GetEmployeesResponse> => {
-  const { data } = await api.get<GetEmployeesResponse>(EmployeesRoutes.list, { params });
+const get = async (params: ListEmployeesRequest): Promise<ListEmployeesResponse> => {
+  const { data } = await api.get<ListEmployeesResponse>(EmployeesRoutes.list, { params });
   return data;
 };
 

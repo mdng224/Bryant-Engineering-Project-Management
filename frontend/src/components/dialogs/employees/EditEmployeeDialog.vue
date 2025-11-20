@@ -205,7 +205,7 @@
 </template>
 
 <script setup lang="ts">
-  import type { EmployeeResponse } from '@/api/employees/contracts';
+  import type { GetEmployeeDetailsResponse } from '@/api/employees/contracts';
   import { AppDialog } from '@/components/ui';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { computed, reactive, ref, watch } from 'vue';
@@ -213,7 +213,7 @@
   /******************** Props & Emits ********************/
   const props = defineProps<{
     open: boolean;
-    selectedEmployee: EmployeeResponse | null;
+    selectedEmployee: GetEmployeeDetailsResponse | null;
     departments?: string[];
     employmentTypes?: string[];
     salaryTypes?: string[];

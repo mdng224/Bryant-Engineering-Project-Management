@@ -37,24 +37,32 @@ public static class ListProjectsEndpoint
         return Ok(response);
     }
 
-    private static ListProjectsQuery ToQuery(this ListProjectsRequest request) =>
-        new(
-            PagedQuery: new PagedQuery(request.Page, request.PageSize),
+    private static ListProjectsQuery ToQuery(this ListProjectsRequest request)
+    {
+        var pagedQuery = new PagedQuery(request.Page, request.PageSize);
+        
+        return new ListProjectsQuery(
+            PagedQuery: pagedQuery,
             NameFilter: request.NameFilter,
             IsDeleted:  request.IsDeleted,
             ClientId:   request.ClientId,
             Manager:    request.Manager
         );
+    }
 
-    private static ListProjectsResponse ToResponse(this PagedResult<ProjectRowDto> pagedResult) =>
-        new(
-            Projects: pagedResult.Items.Select(dto => dto.ToResponse()).ToList(),
+    private static ListProjectsResponse ToResponse(this PagedResult<ProjectRowDto> pagedResult)
+    {
+        var projects = pagedResult.Items.Select(dto => dto.ToResponse()).ToList();
+        
+        return new ListProjectsResponse(
+            Projects:   projects,
             TotalCount: pagedResult.TotalCount,
-            Page: pagedResult.Page,
-            PageSize: pagedResult.PageSize,
+            Page:       pagedResult.Page,
+            PageSize:   pagedResult.PageSize,
             TotalPages: pagedResult.TotalPages
         );
-    
+    }
+
     private static ProjectRowResponse ToResponse(this ProjectRowDto dto) =>
         new(
             Id:           dto.Id,

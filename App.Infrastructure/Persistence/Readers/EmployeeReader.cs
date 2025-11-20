@@ -1,5 +1,6 @@
 ﻿using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Dtos;
+using App.Application.Common.Dtos.Employees;
 using App.Domain.Employees;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,7 +16,40 @@ public sealed class EmployeeReader(AppDbContext db) : IEmployeeReader
         return employees;
     }
 
-    public async Task<(IReadOnlyList<EmployeeListItemDto> employees, int totalCount)> GetPagedAsync(
+    public async Task<EmployeeDetailsDto?> GetDetailsAsync(Guid id, CancellationToken ct = default)
+    {
+        var projectDetails = await db.ReadSet<Employee>()
+            .Where(e => e.Id == id)
+            .Select(e => new EmployeeDetailsDto(
+                e.Id,
+                e.UserId,
+                e.FirstName,
+                e.LastName,
+                e.PreferredName,
+                e.EmploymentType != null ? e.EmploymentType.ToString() : null,
+                e.SalaryType     != null ? e.SalaryType.ToString()     : null,
+                e.HireDate,
+                e.EndDate,
+                e.Department != null ? e.Department.ToString() : null,
+                db.ReadSet<EmployeePosition>()
+                    .Where(ep => ep.EmployeeId == e.Id && ep.Position.DeletedAtUtc == null)
+                    .Select(ep => ep.Position.Name)
+                    .ToList(),
+                e.CompanyEmail,
+                e.WorkLocation,
+                e.Notes,
+                e.RecommendedRoleId,
+                e.IsPreapproved,
+                e.CreatedAtUtc,
+                e.UpdatedAtUtc,
+                e.DeletedAtUtc
+            ))
+            .SingleOrDefaultAsync(ct);
+
+        return projectDetails;
+    }
+    
+    public async Task<(IReadOnlyList<EmployeeRowDto> employees, int totalCount)> GetPagedAsync(
         int skip,
         int take,
         string? normalizedNameFilter = null,
@@ -46,28 +80,18 @@ public sealed class EmployeeReader(AppDbContext db) : IEmployeeReader
             .ThenBy(u => u.Id)
             .Skip(skip)
             .Take(take)
-            .Select(e => new EmployeeListItemDto(
+            .Select(e => new EmployeeRowDto(
                 e.Id,
-                e.UserId,
-                e.FirstName,
                 e.LastName,
+                e.FirstName,
                 e.PreferredName,
-                e.EmploymentType != null ? e.EmploymentType.ToString() : null,
-                e.SalaryType     != null ? e.SalaryType.ToString()     : null,
-                e.HireDate,
-                e.EndDate,
-                e.Department != null ? e.Department.ToString() : null,
                 db.ReadSet<EmployeePosition>()
                     .Where(ep => ep.EmployeeId == e.Id && ep.Position.DeletedAtUtc == null)
                     .Select(ep => ep.Position.Name)
                     .ToList(),
-                e.CompanyEmail,
-                e.WorkLocation,
-                e.Notes,
-                e.RecommendedRoleId,
-                e.IsPreapproved,
-                e.CreatedAtUtc,
-                e.UpdatedAtUtc,
+                e.EmploymentType != null ? e.EmploymentType.ToString() : null,
+                e.SalaryType     != null ? e.SalaryType.ToString()     : null,
+                e.HireDate,
                 e.DeletedAtUtc
                 ))
             .ToListAsync(ct);

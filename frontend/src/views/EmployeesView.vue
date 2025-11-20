@@ -35,7 +35,7 @@
             v-if="!cell.row.original.deletedAtUtc"
             class="rounded-md bg-indigo-600 p-1.5 transition hover:bg-rose-200"
             aria-label="delete position"
-            @click="handleOpenDeleteDialog(cell.row.original as EmployeeSummaryResponse)"
+            @click="handleOpenDeleteDialog(cell.row.original as EmployeeRowResponse)"
           >
             <Lock class="h-4 w-4 text-rose-500 hover:text-rose-400" />
           </button>
@@ -45,7 +45,7 @@
             v-else
             class="rounded-md bg-indigo-600 p-1.5 text-emerald-200 transition hover:bg-green-200"
             aria-label="reactivate position"
-            @click="handleOpenReactivateDialog(cell.row.original as EmployeeSummaryResponse)"
+            @click="handleOpenReactivateDialog(cell.row.original as EmployeeRowResponse)"
           >
             <lock-open class="h-4 w-4 hover:text-green-400" />
           </button>
@@ -83,10 +83,10 @@
 
 <script setup lang="ts">
   import type {
-    EmployeeResponse,
-    EmployeeSummaryResponse,
-    GetEmployeesRequest,
-    GetEmployeesResponse,
+    EmployeeRowResponse,
+    GetEmployeeDetailsResponse,
+    ListEmployeesRequest,
+    ListEmployeesResponse,
   } from '@/api/employees';
   import { employeeService } from '@/api/employees';
   import BooleanFilter from '@/components/BooleanFilter.vue';
@@ -129,7 +129,7 @@
       : null,
   );
 
-  const fieldDef = <K extends keyof EmployeeResponse>(
+  const fieldDef = <K extends keyof GetEmployeeDetailsResponse>(
     key: K,
     label: string,
     type: 'text' | 'date' | 'mono' | 'multiline' = 'text',
@@ -160,9 +160,9 @@
   ] as any;
 
   /* -------------------------------- Columns ------------------------------- */
-  const col: ColumnHelper<EmployeeSummaryResponse> = createColumnHelper<EmployeeSummaryResponse>();
+  const col: ColumnHelper<EmployeeRowResponse> = createColumnHelper<EmployeeRowResponse>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns: ColumnDef<EmployeeSummaryResponse, any>[] = [
+  const columns: ColumnDef<EmployeeRowResponse, any>[] = [
     col.accessor('lastName', { header: 'Last Name', meta: { kind: 'text' as const } }),
     col.accessor('firstName', { header: 'First Name', meta: { kind: 'text' as const } }),
     col.accessor('preferredName', { header: 'Preferred Name', meta: { kind: 'text' as const } }),
@@ -200,21 +200,20 @@
   /* ------------------------------- Fetching ------------------------------- */
   type EmpQuery = { name?: string; isDeleted?: boolean | null };
 
-  const employeeDetails = ref<EmployeeResponse[]>([]);
+  const employeeDetails = ref<GetEmployeeDetailsResponse[]>([]);
   const employeeDetailsById = computed(() => new Map(employeeDetails.value.map(e => [e.id, e])));
 
   const fetchEmployees = async ({ page, pageSize, query }: FetchParams<EmpQuery>) => {
-    const params: GetEmployeesRequest = {
+    const params: ListEmployeesRequest = {
       page,
       pageSize,
       nameFilter: query?.name || null,
       isDeleted: query?.isDeleted ?? null,
     };
-    const response: GetEmployeesResponse = await employeeService.get(params);
-    employeeDetails.value = response.employees.map(e => e.details);
+    const response: ListEmployeesResponse = await employeeService.get(params);
 
     return {
-      items: response.employees.map(e => e.summary), // summaries are the table rows
+      items: response.employees,
       totalCount: response.totalCount,
       totalPages: response.totalPages,
       page: response.page,
@@ -227,7 +226,7 @@
   }));
 
   const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<
-    EmployeeSummaryResponse,
+    EmployeeRowResponse,
     typeof query.value
   >(columns, fetchEmployees, query);
 
@@ -237,7 +236,7 @@
   const editEmployeeDialogIsOpen = ref(false);
   const openDetailsDialog = ref(false);
   const reactivateDialogIsOpen = ref(false);
-  const selectedEmployee = ref<EmployeeResponse | null>(null);
+  const selectedEmployee = ref<GetEmployeeDetailsResponse | null>(null);
 
   /* -------------------------------- Handlers ------------------------------ */
   const handleView = (id: string): void => {
@@ -246,7 +245,7 @@
     openDetailsDialog.value = !!detail;
   };
 
-  const handleEditEmployee = (summary: EmployeeSummaryResponse): void => {
+  const handleEditEmployee = (summary: EmployeeRowResponse): void => {
     const detail = employeeDetailsById.value.get(summary.id) ?? null;
     selectedEmployee.value = detail;
     editEmployeeDialogIsOpen.value = !!detail;
@@ -257,12 +256,12 @@
     pagination.pageIndex = 0; // or call your own reload function
   };
 
-  const handleOpenDeleteDialog = (summary: EmployeeSummaryResponse): void => {
+  const handleOpenDeleteDialog = (summary: EmployeeRowResponse): void => {
     //selectedEmployee.value = summary;
     //deleteDialogIsOpen.value = true;
   };
 
-  const handleOpenReactivateDialog = (position: EmployeeSummaryResponse): void => {
+  const handleOpenReactivateDialog = (position: EmployeeRowResponse): void => {
     // TODO: Call reactivate service
   };
 </script>

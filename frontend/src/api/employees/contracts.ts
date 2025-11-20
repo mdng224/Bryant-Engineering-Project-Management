@@ -12,31 +12,25 @@ type EmployeeBase = {
   deletedAtUtc: string;
 };
 
-export type GetEmployeesRequest = {
+export type ListEmployeesRequest = {
   page: number;
   pageSize: number;
   nameFilter: string | null;
   isDeleted?: boolean | null;
 };
 
-export type GetEmployeesResponse = {
-  employees: EmployeeListItemResponse[];
+export type ListEmployeesResponse = {
+  employees: EmployeeRowResponse[];
   totalCount: number;
   page: number;
   pageSize: number;
   totalPages: number;
 };
 
-export type EmployeeListItemResponse = {
-  summary: EmployeeSummaryResponse;
-  details: EmployeeResponse;
-};
-
-// This is for the non detail view in the table for an employee
-export type EmployeeSummaryResponse = EmployeeBase;
+export type EmployeeRowResponse = EmployeeBase;
 
 // For expanded detail look on an employee
-export type EmployeeResponse = EmployeeBase & {
+export type GetEmployeeDetailsResponse = EmployeeBase & {
   userId: string;
   fullName: string;
   salaryType: string | null;

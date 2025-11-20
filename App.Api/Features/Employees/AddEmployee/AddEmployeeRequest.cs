@@ -1,6 +1,6 @@
 ﻿using App.Domain.Common;
 
-namespace App.Api.Contracts.Employees.Requests;
+namespace App.Api.Features.Employees.AddEmployee;
 
 public sealed record AddEmployeeRequest(
     string FirstName,

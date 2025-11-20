@@ -26,7 +26,7 @@ namespace App.Tests.Application.Employees.Queries;
 
         var handler = new GetEmployeesHandler(mockReader.Object);
         var pagedQuery = new PagedQuery(page: 1, pageSize: 10);
-        var query = new GetEmployeesQuery(pagedQuery, NameFilter: null, IsDeleted: null);
+        var query = new ListEmployeesQuery(pagedQuery, NameFilter: null, IsDeleted: null);
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -60,7 +60,7 @@ namespace App.Tests.Application.Employees.Queries;
 
         var handler = new GetEmployeesHandler(mockReader.Object);
         var pagedQuery = new PagedQuery(page: 2, pageSize: 10);
-        var query = new GetEmployeesQuery(pagedQuery, NameFilter: null, IsDeleted: null);
+        var query = new ListEmployeesQuery(pagedQuery, NameFilter: null, IsDeleted: null);
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -100,7 +100,7 @@ namespace App.Tests.Application.Employees.Queries;
 
         var handler = new GetEmployeesHandler(mockReader.Object);
         var pagedQuery = new PagedQuery(page: 1, pageSize: 10);
-        var query = new GetEmployeesQuery(pagedQuery, NameFilter: "doe", IsDeleted: false);
+        var query = new ListEmployeesQuery(pagedQuery, NameFilter: "doe", IsDeleted: false);
 
         // Act
         Func<Task> act = async () => await handler.Handle(query, CancellationToken.None);
