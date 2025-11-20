@@ -1,79 +1,74 @@
 <template>
-  <app-dialog :open="open" :title="title" width="max-w-2xl" @close="emit('close')">
+  <app-dialog :open="open" :title width="max-w-4xl" @close="emit('close')">
     <div v-if="item" class="space-y-6 text-sm">
       <!-- Header block -->
       <slot name="header">
         <div class="mb-4">
-          <div class="flex flex-wrap items-end justify-between gap-3">
+          <div class="flex flex-wrap items-start justify-between gap-3">
             <div class="min-w-0">
-              <div class="mt-1 items-center gap-2 text-sm">
-                <div
-                  v-if="nameKey"
-                  class="col-span-12 min-w-0 truncate font-semibold text-slate-100 sm:col-span-8"
-                >
-                  {{ toTitleCase(getItemVal(nameKey)) }}
-                </div>
+              <h3 v-if="nameKey" class="truncate text-xl font-semibold text-slate-50 sm:text-2xl">
+                {{ toTitleCase(getItemVal(nameKey)) }}
+              </h3>
 
-                <div
-                  v-if="idKey"
-                  class="col-span-12 justify-self-end pt-1 text-right font-mono text-slate-400 sm:col-span-4"
+              <p v-if="idKey" class="mt-2 flex items-center gap-2 font-mono text-xs text-slate-400">
+                <span class="uppercase tracking-wide text-slate-500">{{ idLabel }}</span>
+                <span class="max-w-[18rem] truncate">
+                  {{ getItemVal(idKey) }}
+                </span>
+                <button
+                  v-if="getItemVal(idKey) !== '—'"
+                  class="inline-flex items-center rounded border border-slate-700 px-1.5 py-0.5 text-[10px] text-slate-300 hover:bg-slate-700/60"
+                  @click="copy(String((item as any)[idKey]))"
+                  title="Copy ID"
                 >
-                  <span class="pr-4 text-xs uppercase tracking-wide">{{ idLabel }}:</span>
-                  <span class="max-w-[12rem] truncate">
-                    {{ getItemVal(idKey) }}
-                    <button
-                      v-if="getItemVal(idKey) !== '—'"
-                      class="ml-1 inline-flex items-center rounded border border-slate-700 px-1.5 text-[10px] text-slate-300 hover:bg-slate-700/60"
-                      @click="copy(String((item as any)[idKey]))"
-                      title="Copy ID"
-                    >
-                      Copy
-                    </button>
-                  </span>
-                </div>
-              </div>
+                  Copy
+                </button>
+              </p>
             </div>
           </div>
-          <div class="mt-4 h-px w-full bg-slate-700/60"></div>
+
+          <div class="mt-4 h-px w-full bg-slate-700/60" />
         </div>
       </slot>
 
       <!-- Grid -->
-      <dl class="grid grid-cols-12 gap-y-2">
+      <dl class="grid grid-cols-12 gap-2 md:gap-3">
         <template v-for="f in fields" :key="f.key">
           <div
-            class="col-span-12 grid grid-cols-12 items-start rounded-lg bg-slate-800/30 p-1"
-            :class="{ 'md:col-span-12': f.span === 2 }"
+            class="col-span-12 rounded-lg bg-slate-800/30 px-3 py-2 md:px-4 md:py-2.5"
+            :class="f.span === 2 ? 'md:col-span-12' : 'md:col-span-6'"
           >
-            <dt
-              class="col-span-4 pl-1 pr-4 pt-[1px] text-[12px] font-semibold uppercase tracking-wide text-slate-400"
-            >
-              {{ f.label }}
-            </dt>
-
-            <dd
-              class="col-span-8 break-words leading-relaxed text-slate-100"
-              :class="{
-                'font-mono text-[13px]': f.type === 'mono',
-                'text-[16px]': f.type === 'text',
-              }"
-            >
-              <template v-if="f.type === 'multiline'">
-                <span class="whitespace-pre-wrap">{{ displayValue(f) }}</span>
-              </template>
-              <template v-else>
-                <span>{{ displayValue(f) }}</span>
-              </template>
-
-              <button
-                v-if="f.type === 'mono' && displayValue(f) !== '—'"
-                class="ml-2 inline-flex items-center rounded border border-slate-700 px-1.5 py-0.5 text-[10px] text-slate-300 hover:bg-slate-700/60"
-                @click="copy(displayValue(f))"
-                title="Copy"
+            <div class="flex items-baseline justify-between gap-4">
+              <dt
+                class="truncate text-[11px] font-semibold uppercase tracking-wide text-slate-400 md:text-[12px]"
               >
-                Copy
-              </button>
-            </dd>
+                {{ f.label }}
+              </dt>
+
+              <dd
+                class="flex-1 break-words text-right leading-relaxed text-slate-100"
+                :class="{
+                  'font-mono text-[13px]': f.type === 'mono',
+                  'text-[15px] md:text-[16px]': f.type === 'text',
+                }"
+              >
+                <template v-if="f.type === 'multiline'">
+                  <span class="whitespace-pre-wrap">{{ getDisplayValue(f) }}</span>
+                </template>
+                <template v-else>
+                  <span>{{ getDisplayValue(f) }}</span>
+                </template>
+
+                <button
+                  v-if="f.type === 'mono' && getDisplayValue(f) !== '—'"
+                  class="ml-2 inline-flex items-center rounded border border-slate-700 px-1.5 py-0.5 text-[10px] text-slate-300 hover:bg-slate-700/60"
+                  @click="copy(getDisplayValue(f))"
+                  title="Copy"
+                >
+                  Copy
+                </button>
+              </dd>
+            </div>
           </div>
         </template>
       </dl>
@@ -88,7 +83,7 @@
   import { AppDialog } from '@/components/ui';
   import { computed } from 'vue';
 
-  type FieldType = 'text' | 'date' | 'mono' | 'multiline';
+  type FieldType = 'text' | 'date' | 'mono' | 'multiline' | 'phone';
 
   export interface FieldDef {
     key: string;
@@ -133,7 +128,36 @@
   const getItemVal = (k?: string | undefined) =>
     props.item && k ? normalizeEmpty((props.item as any)[k]) : '—';
 
-  const displayValue = (f: FieldDef) => {
+  const formatPhone = (raw: unknown): string => {
+    const normalized = normalizeEmpty(raw);
+    if (normalized === '—') return normalized;
+
+    const digits = normalized.replace(/\D+/g, '');
+    if (!digits) return normalized;
+
+    let d = digits;
+
+    if (d.length === 11 && d.startsWith('1')) {
+      d = d.slice(1);
+    }
+
+    if (d.length === 10) {
+      const area = d.slice(0, 3);
+      const prefix = d.slice(3, 6);
+      const line = d.slice(6);
+      return `(${area}) ${prefix}-${line}`;
+    }
+
+    if (d.length === 7) {
+      const prefix = d.slice(0, 3);
+      const line = d.slice(3);
+      return `${prefix}-${line}`;
+    }
+
+    return normalized;
+  };
+
+  const getDisplayValue = (f: FieldDef): string => {
     if (!props.item) return '—';
     const raw = f.get ? f.get(props.item) : (props.item as any)[f.key];
 
@@ -143,6 +167,9 @@
     switch (f.type) {
       case 'date':
         result = raw ? (props.formatUtc ? props.formatUtc(String(raw)) : String(raw)) : '—';
+        break;
+      case 'phone':
+        result = formatPhone(raw);
         break;
       default:
         result = val(raw);

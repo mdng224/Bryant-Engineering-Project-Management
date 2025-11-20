@@ -92,10 +92,10 @@
 <script setup lang="ts">
   import { extractApiError } from '@/api/error';
   import { userService } from '@/api/users';
-  import BooleanFilter from '@/components/BooleanFilter.vue';
   import { DeleteDialog, RestoreDialog } from '@/components/dialogs/shared';
   import { EditUserDialog } from '@/components/dialogs/users';
   import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
+  import BooleanFilter from '@/components/ui/BooleanFilter.vue';
   import { useAuth } from '@/composables/useAuth';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';

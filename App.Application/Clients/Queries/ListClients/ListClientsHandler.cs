@@ -8,7 +8,7 @@ using static App.Application.Common.R;
 
 namespace App.Application.Clients.Queries.ListClients;
 
-public sealed class ListClientsHandler(IClientReader clientReader)
+public sealed class ListClientsHandler(IClientReader reader)
     : IQueryHandler<ListClientsQuery, Result<PagedResult<ClientRowDto>>>
 {
     public async Task<Result<PagedResult<ClientRowDto>>> Handle(ListClientsQuery query, CancellationToken ct)
@@ -16,7 +16,7 @@ public sealed class ListClientsHandler(IClientReader clientReader)
         var (page, pageSize, skip) = query.PagedQuery;
         var normalized = query.NameFilter?.ToNormalizedName();
 
-        var (items, total) = await clientReader.GetPagedAsync(
+        var (items, total) = await reader.GetPagedAsync(
             skip,
             pageSize,
             normalized,

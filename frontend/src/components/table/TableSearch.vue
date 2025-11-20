@@ -5,34 +5,43 @@
   >
     <Search class="h-4 w-4 text-slate-400" aria-hidden="true" />
     <input
-      v-model="model"
+      v-model="localValue"
       :placeholder="placeholder ?? 'Search…'"
+      type="search"
       class="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
-      @keydown.enter="commitNow()"
+      @keydown.enter="emit('commit')"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-  import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { Search } from 'lucide-vue-next';
-  import { watch } from 'vue';
+  import { ref, watch } from 'vue';
 
   const props = defineProps<{
-    delay?: number;
     modelValue: string | null;
     placeholder?: string;
   }>();
 
-  const emit = defineEmits<{ 'update:modelValue': [string]; commit: [] }>();
+  const emit = defineEmits<{
+    'update:modelValue': [string | null];
+    commit: [];
+  }>();
 
-  const {
-    input: model,
-    debounced,
-    setNow: commitNow,
-  } = useDebouncedRef(props.modelValue ?? '', props.delay ?? 500);
+  const localValue = ref(props.modelValue ?? '');
 
-  watch(model, v => emit('update:modelValue', v));
-  watch(debounced, v => emit('update:modelValue', v)); // parent decides how to use debounced/live
-  watch(commitNow, () => emit('commit'));
+  // Keep localValue in sync if parent changes it externally
+  watch(
+    () => props.modelValue,
+    v => {
+      if (v !== localValue.value) {
+        localValue.value = v ?? '';
+      }
+    },
+  );
+
+  // Push changes up to parent
+  watch(localValue, v => {
+    emit('update:modelValue', v === '' ? null : v);
+  });
 </script>

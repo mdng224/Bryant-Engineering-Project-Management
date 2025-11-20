@@ -1,9 +1,13 @@
 <template>
   <app-dialog :open="open" :title="title" width="max-w-md" :loading="loading" @close="handleClose">
-    <p class="text-sm text-slate-300">
-      {{ message }}
-    </p>
+    <!-- Body -->
+    <slot>
+      <p v-if="message" class="text-sm text-slate-300">
+        {{ message }}
+      </p>
+    </slot>
 
+    <!-- Footer -->
     <template #footer>
       <button
         type="button"
@@ -19,9 +23,16 @@
         type="button"
         class="inline-flex h-9 items-center gap-2 rounded-md bg-red-600 px-3 text-sm font-medium text-white shadow hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
         :disabled="loading"
+        :aria-busy="loading"
         @click="onConfirm"
       >
-        <svg v-if="loading" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+        <svg
+          v-if="loading"
+          class="h-4 w-4 animate-spin"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
           <circle
             class="opacity-25"
             cx="12"
@@ -40,7 +51,9 @@
 
 <script setup lang="ts">
   import { AppDialog } from '@/components/ui';
-  import { nextTick, ref, watch } from 'vue';
+  import { defineOptions, nextTick, ref, watch } from 'vue';
+
+  defineOptions({ name: 'ConfirmDialog' });
 
   type Props = {
     open: boolean;
@@ -69,27 +82,26 @@
 
   const confirmBtn = ref<HTMLButtonElement | null>(null);
 
-  /** Focus the confirm button when the dialog opens */
-  async function focusDefault() {
+  const focusDefault = async () => {
     await nextTick();
     confirmBtn.value?.focus();
-  }
+  };
 
   watch(
     () => props.open,
-    v => {
-      if (v) focusDefault();
+    isOpen => {
+      if (isOpen) focusDefault();
     },
   );
 
   /** prevent closing via overlay/esc while loading */
-  function handleClose() {
+  const handleClose = () => {
     if (props.loading) return;
     emit('close');
-  }
+  };
 
-  function onConfirm() {
+  const onConfirm = () => {
     if (props.loading) return;
     emit('confirm', props.payload);
-  }
+  };
 </script>

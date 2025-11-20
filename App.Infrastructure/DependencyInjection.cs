@@ -62,6 +62,7 @@ public static class DependencyInjection
         services.AddScoped<IScopeReader, ScopeReader>();
         services.AddScoped<IClientTypeReader, ClientTypeReader>();
         services.AddScoped<IClientCategoryReader, ClientCategoryReader>();
+        services.AddScoped<IContactReader, ContactReader>();
         
         // --- Auth helpers (hashing + token creation) ---
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();

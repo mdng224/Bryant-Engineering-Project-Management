@@ -1,9 +1,11 @@
 <template>
   <app-dialog :open="open" :title="title" width="max-w-md" :loading="loading" @close="handleClose">
-    <p class="text-slate-300">
+    <!-- Body -->
+    <p v-if="message" class="text-slate-300">
       {{ message }}
     </p>
 
+    <!-- Footer -->
     <template #footer>
       <button
         type="button"
@@ -17,8 +19,10 @@
       <button
         ref="confirmBtn"
         type="button"
-        class="inline-flex h-9 items-center gap-2 rounded-md bg-emerald-600 px-3 text-sm font-medium text-white shadow hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+        class="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium text-white shadow transition disabled:cursor-not-allowed disabled:opacity-60"
+        :class="confirmClass"
         :disabled="loading"
+        :aria-busy="loading"
         @click="onConfirm"
       >
         <svg v-if="loading" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -40,7 +44,9 @@
 
 <script setup lang="ts">
   import { AppDialog } from '@/components/ui';
-  import { nextTick, ref, watch } from 'vue';
+  import { computed, defineOptions, nextTick, ref, watch } from 'vue';
+
+  defineOptions({ name: 'RestoreDialog' });
 
   type Props = {
     open: boolean;
@@ -50,6 +56,7 @@
     cancelLabel?: string;
     payload?: unknown;
     loading?: boolean;
+    confirmColor?: 'emerald' | 'indigo' | 'red' | 'yellow';
   };
 
   const props = withDefaults(defineProps<Props>(), {
@@ -57,6 +64,7 @@
     message: 'This will restore the previously deleted item and make it active again.',
     confirmLabel: 'Restore',
     cancelLabel: 'Cancel',
+    confirmColor: 'emerald',
     loading: false,
   });
 
@@ -67,25 +75,37 @@
 
   const confirmBtn = ref<HTMLButtonElement | null>(null);
 
-  async function focusDefault() {
+  const focusDefault = async () => {
     await nextTick();
     confirmBtn.value?.focus();
-  }
+  };
 
   watch(
     () => props.open,
-    v => {
-      if (v) focusDefault();
+    open => {
+      if (open) focusDefault();
     },
   );
 
-  function handleClose() {
+  const handleClose = () => {
     if (props.loading) return;
     emit('close');
-  }
+  };
 
-  function onConfirm() {
+  const onConfirm = () => {
     if (props.loading) return;
     emit('confirm', props.payload);
-  }
+  };
+
+  /** Compute Tailwind color classes based on confirmColor */
+  const confirmClass = computed(() => {
+    const base = {
+      emerald: 'bg-emerald-600 hover:bg-emerald-500',
+      indigo: 'bg-indigo-600 hover:bg-indigo-500',
+      red: 'bg-red-600 hover:bg-red-500',
+      yellow: 'bg-yellow-600 hover:bg-yellow-500',
+    };
+
+    return base[props.confirmColor];
+  });
 </script>

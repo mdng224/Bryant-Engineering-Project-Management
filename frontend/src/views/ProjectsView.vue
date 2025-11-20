@@ -9,16 +9,11 @@
         @commit="commitNameNow"
       />
       <boolean-filter v-model="deletedFilter" :options="deletedOptions" />
-      <!-- 🔽 Project Manager filter -->
-      <select
+      <select-filter
         v-model="selectedManager"
-        class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-100"
-      >
-        <option :value="null">All Project Managers</option>
-        <option v-for="m in managers" :key="m" :value="m">
-          {{ m }}
-        </option>
-      </select>
+        :options="managerOptions"
+        placeholder="All Project Managers"
+      />
     </div>
     <button
       class="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
@@ -76,19 +71,20 @@
     type ListProjectsResponse,
     type ProjectRowResponse,
   } from '@/api/projects';
-  import BooleanFilter from '@/components/BooleanFilter.vue';
   import { AddProjectDialog } from '@/components/dialogs/projects';
   import { DetailsDialog } from '@/components/dialogs/shared';
   import type { FieldDef } from '@/components/dialogs/shared/DetailsDialog.vue';
   import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
   import { AppAlert } from '@/components/ui';
+  import BooleanFilter from '@/components/ui/BooleanFilter.vue';
+  import SelectFilter from '@/components/ui/SelectFilter.vue';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { useProjectLookups } from '@/composables/useProjectLookups';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { AlertTriangle, CheckCircle2, CirclePlus, Eye, Trash2 } from 'lucide-vue-next';
-  import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+  import { AlertTriangle, CheckCircle2, CirclePlus, Eye, Trash2, User } from 'lucide-vue-next';
+  import { computed, onBeforeUnmount, onMounted, ref, type Component } from 'vue';
   import { useRoute } from 'vue-router';
 
   const errorMessage = ref<string | null>(null);
@@ -166,6 +162,21 @@
   // ───────────────────────────── Filters & Search ────────────────────
   const selectedManager = ref<string | null>(null);
   const deletedFilter = ref<boolean | null>(null);
+
+  const managerOptions = computed(
+    () =>
+      [
+        {
+          value: null,
+          label: 'All Project Managers',
+          icon: User,
+        },
+        ...managers.value.map(name => ({
+          value: name,
+          label: name,
+        })),
+      ] satisfies { value: string | null; label: string; icon?: Component }[],
+  );
 
   const deletedOptions = [
     { value: null, label: 'All', icon: Eye, color: 'text-indigo-300' },

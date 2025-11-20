@@ -1,8 +1,8 @@
 <template>
-  <div class="relative inline-block text-left">
+  <div ref="root" class="relative inline-block text-left">
     <!-- Dropdown button -->
     <button
-      @click="isOpen = !isOpen"
+      @click="toggleOpen"
       type="button"
       class="flex w-52 items-center justify-between rounded-md border border-slate-600 bg-slate-800/60 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
     >
@@ -10,19 +10,20 @@
         <component :is="currentOption.icon" :class="['h-4 w-4', currentOption.color]" />
         {{ currentOption.label }}
       </span>
+
       <ChevronDown
-        class="h-4 w-4 text-slate-400 transition-transform"
+        class="h-4 w-4 text-slate-400 transition-transform duration-150"
         :class="{ 'rotate-180': isOpen }"
       />
     </button>
 
-    <!-- Dropdown options -->
+    <!-- Options -->
     <div
       v-if="isOpen"
       class="absolute z-50 mt-1 w-52 rounded-md border border-slate-700 bg-slate-800 shadow-lg"
     >
       <button
-        v-for="option in options"
+        v-for="option in props.options"
         :key="option.label"
         @click="selectOption(option.value)"
         class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-100 hover:bg-slate-700/50"
@@ -56,19 +57,26 @@
     (e: 'change', value: boolean | null): void;
   }>();
 
+  // --- State -----------------------------------------------------------------
+  const root = ref<HTMLElement | null>(null);
   const isOpen = ref(false);
-  const localValue = ref<boolean | null>(props.modelValue ?? null);
+  const localValue = ref(props.modelValue);
 
+  // Sync localValue when parent updates v-model
   watch(
     () => props.modelValue,
     val => {
-      if (val !== localValue.value) localValue.value = val;
+      localValue.value = val;
     },
   );
 
-  const currentOption = computed(
-    () => props.options.find(o => o.value === localValue.value) ?? props.options[0],
-  );
+  // --- Derived state ---------------------------------------------------------
+  const currentOption = computed(() => {
+    return props.options.find(o => o.value === localValue.value) ?? props.options[0];
+  });
+
+  // --- Methods ---------------------------------------------------------------
+  const toggleOpen = () => (isOpen.value = !isOpen.value);
 
   const selectOption = (val: boolean | null) => {
     localValue.value = val;
@@ -77,11 +85,20 @@
     isOpen.value = false;
   };
 
-  const handleClickOutside = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.relative.inline-block')) isOpen.value = false;
+  // Click outside using a safer ref instead of a CSS selector
+  const handleClickOutside = (e: Event) => {
+    const el = root.value;
+    if (el && !el.contains(e.target as Node)) {
+      isOpen.value = false;
+    }
   };
 
-  onMounted(() => window.addEventListener('click', handleClickOutside));
-  onBeforeUnmount(() => window.removeEventListener('click', handleClickOutside));
+  // --- Lifecycle -------------------------------------------------------------
+  onMounted(() => {
+    window.addEventListener('pointerdown', handleClickOutside);
+  });
+
+  onBeforeUnmount(() => {
+    window.removeEventListener('pointerdown', handleClickOutside);
+  });
 </script>

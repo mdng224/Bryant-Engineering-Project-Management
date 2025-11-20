@@ -1,16 +1,17 @@
 <!-- src/views/RegisterView.vue -->
 <template>
-  <main class="grid min-h-[50dvh] place-items-center p-4">
+  <main class="-mt-60 grid min-h-screen place-items-center p-4">
     <!-- UNDERLAY: blurred background with radial fade -->
     <div
       class="pointer-events-none fixed inset-0 z-0 bg-slate-900/40 backdrop-blur-3xl [mask-image:radial-gradient(circle_at_center,white_38%,transparent_100%)]"
     ></div>
+
     <!-- Foreground content (card area) -->
     <section
-      class="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-6 text-slate-100 shadow-xl backdrop-blur"
+      class="relative z-10 w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-100 shadow-2xl"
     >
-      <h1 class="mb-4 text-2xl font-semibold tracking-tight">
-        {{ success ? 'Request submitted' : 'Create account' }}
+      <h1 class="mb-1 text-center text-2xl font-semibold tracking-tight">
+        {{ success ? 'Account request submitted' : 'Create your account' }}
       </h1>
 
       <!-- Success state -->
@@ -21,12 +22,9 @@
           aria-live="polite"
         >
           <CheckCircle class="mt-[2px] h-5 w-5 shrink-0 text-emerald-400" aria-hidden="true" />
-
           <span class="grid">
             <span class="font-medium text-emerald-300">Status: {{ success.status }}</span>
-            <span>
-              {{ success.message }}
-            </span>
+            <span>{{ success.message }}</span>
           </span>
         </p>
 
@@ -144,7 +142,7 @@
             v-if="password2 && password2 !== password"
             class="flex items-center gap-2 text-xs text-rose-300"
           >
-            <alter-triangle class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <AlertTriangle class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>Passwords do not match.</span>
           </p>
         </div>
@@ -158,7 +156,7 @@
           aria-live="assertive"
           tabindex="-1"
         >
-          <alter-triangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
+          <AlertTriangle class="block h-4 w-4 shrink-0 self-center" aria-hidden="true" />
           <span>{{ errorMessage }}</span>
         </p>
 
@@ -167,12 +165,12 @@
           type="submit"
           :disabled="!canSubmit || loading"
           :aria-busy="loading"
-          class="inline-flex items-center justify-center rounded-lg border border-indigo-500 bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+          class="mt-1 inline-flex items-center justify-center rounded-lg border border-indigo-500 bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {{ loading ? 'Creating…' : 'Create account' }}
         </button>
 
-        <p class="text-sm text-slate-400">
+        <p class="mt-1 text-sm text-slate-400">
           Already have an account?
           <RouterLink
             class="text-indigo-300 hover:underline"
@@ -191,7 +189,7 @@
   import { authService } from '@/api/auth';
   import { extractApiError } from '@/api/error';
   import { useAuthFields } from '@/composables/useAuthFields';
-  import { CheckCircle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
+  import { AlertTriangle, CheckCircle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
   import { computed, nextTick, onMounted, ref } from 'vue';
   import { useRoute } from 'vue-router';
 
@@ -208,15 +206,10 @@
     maxPassword,
   } = useAuthFields();
 
-  // Register-specific local state
+  const formClass =
+    'w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-60';
+
   const password2 = ref('');
-  const formClass: string = `
-    w-full rounded-lg border border-slate-700 bg-slate-950
-    px-3.5 py-2.5 text-slate-100 outline-none transition
-    placeholder:text-slate-500
-    focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
-    disabled:opacity-60 disabled:cursor-not-allowed
-  `;
   const emailEl = ref<HTMLInputElement | null>(null);
   const errorEl = ref<HTMLElement | null>(null);
   const errorMessage = ref<string | null>(null);
@@ -242,11 +235,9 @@
       const registerResponse: RegisterResponse = await authService.register(payload);
       success.value = registerResponse;
     } catch (err: unknown) {
-      // Prefer email field error if present; otherwise fall back
-      const msg = extractApiError(err, 'email');
+      const msg =
+        extractApiError(err, 'email') || 'We couldn’t create your account. Please try again.';
       errorMessage.value = msg;
-
-      // Only clear passwords; keep email so user can fix typos or retry
       await resetForms(false);
     } finally {
       loading.value = false;
@@ -259,9 +250,10 @@
     password.value = '';
     password2.value = '';
     if (clearEmail) email.value = '';
+
     await nextTick();
 
-    if (errorMessage.value) errorEl.value?.focus();
-    else emailEl.value?.focus();
+    const targetEl = errorMessage.value ? errorEl.value : emailEl.value;
+    targetEl?.focus();
   };
 </script>

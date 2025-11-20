@@ -7,26 +7,14 @@
       <boolean-filter v-model="hasActiveProject" :options="activeOptions" />
 
       <!-- Client Category Filter -->
-      <select
+      <select-filter
         v-model="selectedCategoryId"
-        class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-100"
-      >
-        <option :value="null">All Categories</option>
-        <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-          {{ cat.name }}
-        </option>
-      </select>
+        :options="categoryOptions"
+        placeholder="All Categories"
+      />
 
       <!-- Client Type Filter -->
-      <select
-        v-model="selectedTypeId"
-        class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-100"
-      >
-        <option :value="null">All Types</option>
-        <option v-for="t in filteredTypes" :key="t.id" :value="t.id">
-          {{ t.name }}
-        </option>
-      </select>
+      <select-filter v-model="selectedTypeId" :options="typeOptions" placeholder="All Types" />
     </div>
 
     <button
@@ -88,17 +76,16 @@
     type ListClientsRequest,
     type ListClientsResponse,
   } from '@/api/clients';
-  import type { Address } from '@/api/common';
   import { extractApiError } from '@/api/error';
-  import BooleanFilter from '@/components/BooleanFilter.vue';
   import { AddClientDialog } from '@/components/dialogs/clients';
   import DetailsDialog, { type FieldDef } from '@/components/dialogs/shared/DetailsDialog.vue';
   import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
   import { AppAlert } from '@/components/ui';
+  import BooleanFilter from '@/components/ui/BooleanFilter.vue';
+  import SelectFilter from '@/components/ui/SelectFilter.vue';
   import { useClientLookups } from '@/composables/useClientLookups';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
-
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import router from '@/router';
   import {
@@ -107,8 +94,16 @@
     type ColumnDef,
     type ColumnHelper,
   } from '@tanstack/vue-table';
-  import { AlertTriangle, CheckCircle2, CirclePlus, Eye, Lock } from 'lucide-vue-next';
-  import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+  import {
+    AlertTriangle,
+    CheckCircle2,
+    CirclePlus,
+    Eye,
+    FolderTree,
+    Lock,
+    Tag,
+  } from 'lucide-vue-next';
+  import { computed, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue';
 
   const errorMessage = ref<string | null>(null);
 
@@ -130,38 +125,8 @@
   const fields: FieldDef[] = [
     fieldDef('totalActiveProjects', 'Total Active Projects'),
     fieldDef('totalProjects', 'Total Projects'),
-    fieldDef('firstName', 'Contact First Name'),
-    fieldDef('middleName', 'Contact Middle Name'),
-    fieldDef('lastName', 'Contact Last Name'),
-    fieldDef('email', 'Email'),
-    fieldDef('phone', 'Phone Number'),
     fieldDef('categoryName', 'Client Category'),
     fieldDef('typeName', 'Client Type'),
-    {
-      key: 'address.line1',
-      label: 'Address Line 1',
-      get: (r: { address: Address }) => r.address?.line1,
-    },
-    {
-      key: 'address.line2',
-      label: 'Address Line 2',
-      get: (r: { address: Address }) => r.address?.line2,
-    },
-    {
-      key: 'address.city',
-      label: 'City',
-      get: (r: { address: Address }) => r.address?.city,
-    },
-    {
-      key: 'address.state',
-      label: 'State',
-      get: (r: { address: Address }) => r.address?.state,
-    },
-    {
-      key: 'address.postalCode',
-      label: 'ZIP',
-      get: (r: { address: Address }) => r.address?.postalCode,
-    },
     fieldDef('createdAtUtc', 'Created', 'date'),
     fieldDef('createdById', 'Created By', 'mono'),
     fieldDef('updatedAtUtc', 'Updated', 'date'),
@@ -204,9 +169,6 @@
         },
       },
     }),
-    col.accessor('lastName', { header: 'Last Name', meta: { kind: 'text' as const } }),
-    col.accessor('firstName', { header: 'First Name', meta: { kind: 'text' as const } }),
-    col.accessor('phone', { header: 'Phone', meta: { kind: 'text' as const } }),
     col.accessor('categoryName', { header: 'Category', meta: { kind: 'text' as const } }),
     col.accessor('typeName', { header: 'Type', meta: { kind: 'text' as const } }),
     { id: 'actions', header: 'Actions', meta: { kind: 'actions' as const }, enableSorting: false },
@@ -223,6 +185,24 @@
     { value: true, label: 'Active', icon: CheckCircle2, color: 'text-emerald-400' },
     { value: false, label: 'Inactive', icon: Lock, color: 'text-rose-400' },
   ];
+
+  type SelectOption = { value: string | null; label: string; icon?: Component };
+
+  const categoryOptions = computed<SelectOption[]>(() => [
+    { value: null, label: 'All Categories', icon: FolderTree },
+    ...categories.value.map(cat => ({
+      value: cat.id,
+      label: cat.name,
+    })),
+  ]);
+
+  const typeOptions = computed<SelectOption[]>(() => [
+    { value: null, label: 'All Types', icon: Tag },
+    ...filteredTypes.value.map(t => ({
+      value: t.id,
+      label: t.name,
+    })),
+  ]);
 
   const {
     input: nameFilter, // bound to v-model

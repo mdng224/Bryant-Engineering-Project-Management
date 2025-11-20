@@ -29,6 +29,11 @@
     {{ asNumber }}
   </button>
 
+  <!-- NEW: phone formatting -->
+  <span v-else-if="kind === 'phone'" class="tabular-nums text-slate-100">
+    {{ displayPhone }}
+  </span>
+
   <span v-else>{{ asString }}</span>
 </template>
 
@@ -44,7 +49,8 @@
         kind: 'link';
         onClick?: (ctx: { cell: Cell<unknown, unknown>; value: unknown }) => void;
         disableWhenZero?: boolean;
-      };
+      }
+    | { kind: 'phone' }; // 👈 added
 
   const props = defineProps<{ cell: Cell<unknown, unknown> }>();
   const meta = props.cell.column.columnDef.meta as ColMeta | undefined;
@@ -86,6 +92,38 @@
     const v = rawVal == null ? null : String(rawVal);
     if (!v) return '—';
     return formatUtc(v);
+  });
+
+  // NEW: phone display
+  const displayPhone = computed((): string => {
+    const normalized = normalizeEmpty(rawVal);
+    if (normalized === '—') return normalized;
+
+    const digits = normalized.replace(/\D+/g, '');
+    if (!digits) return normalized;
+
+    let d = digits;
+
+    // handle leading country code "1"
+    if (d.length === 11 && d.startsWith('1')) {
+      d = d.slice(1);
+    }
+
+    if (d.length === 10) {
+      const area = d.slice(0, 3);
+      const prefix = d.slice(3, 6);
+      const line = d.slice(6);
+      return `(${area}) ${prefix}-${line}`;
+    }
+
+    if (d.length === 7) {
+      const prefix = d.slice(0, 3);
+      const line = d.slice(3);
+      return `${prefix}-${line}`;
+    }
+
+    // fallback: show original normalized string
+    return normalized;
   });
 
   const badgeClass = computed(() => {

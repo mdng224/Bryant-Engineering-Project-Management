@@ -3,6 +3,7 @@ using App.Api.Features.Clients.GetClientDetails;
 using App.Api.Features.Clients.ListClientLookups;
 using App.Api.Features.Clients.ListClients;
 using App.Api.Features.Clients.RestoreClient;
+using App.Api.Features.Contacts.GetContactDetails;
 
 namespace App.Api.Features.Clients;
 

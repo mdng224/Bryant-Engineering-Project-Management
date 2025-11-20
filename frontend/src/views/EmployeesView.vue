@@ -72,11 +72,11 @@
   } from '@/api/employees';
   import { employeeService } from '@/api/employees';
   import { extractApiError } from '@/api/error';
-  import BooleanFilter from '@/components/BooleanFilter.vue';
   import { AddEmployeeDialog, EditEmployeeDialog } from '@/components/dialogs/employees';
   import DetailsDialog, { type FieldDef } from '@/components/dialogs/shared/DetailsDialog.vue';
   import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
   import { AppAlert } from '@/components/ui';
+  import BooleanFilter from '@/components/ui/BooleanFilter.vue';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';

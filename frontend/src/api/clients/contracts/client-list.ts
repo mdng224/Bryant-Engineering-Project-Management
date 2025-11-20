@@ -1,4 +1,3 @@
-import type { Address } from '@/api/common';
 import type { ClientBase } from './client-base';
 import type { ClientRowResponse } from './client-summary';
 
@@ -20,14 +19,9 @@ export interface ListClientsResponse {
 }
 
 export type GetClientDetailsResponse = ClientBase & {
-  middleName: string | null;
-  address: Address | null;
-  note: string | null;
-
   createdAtUtc: string;
   updatedAtUtc: string;
   deletedAtUtc: string | null;
-
   createdById: string | null;
   updatedById: string | null;
   deletedById: string | null;

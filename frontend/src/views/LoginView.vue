@@ -1,6 +1,6 @@
 <!-- src/views/LoginView.vue -->
 <template>
-  <main class="grid min-h-[50dvh] place-items-center p-4">
+  <main class="-mt-60 grid min-h-screen place-items-center p-4">
     <!-- UNDERLAY: blurred background with radial fade -->
     <div
       class="pointer-events-none fixed inset-0 z-0 bg-slate-900/40 backdrop-blur-3xl [mask-image:radial-gradient(circle_at_center,white_38%,transparent_100%)]"
@@ -10,7 +10,7 @@
     <section
       class="relative z-10 w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-100 shadow-2xl"
     >
-      <h1 class="mb-4 text-2xl font-semibold tracking-tight">Sign in</h1>
+      <h1 class="mb-1 text-center text-2xl font-semibold tracking-tight">Sign in</h1>
 
       <form novalidate class="grid gap-4" @submit.prevent="onSubmit">
         <!-- Email -->
@@ -18,12 +18,10 @@
           <label for="email" class="text-sm text-slate-300">Email</label>
 
           <div class="relative">
-            <!-- icon -->
             <Mail
               class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
               aria-hidden="true"
             />
-            <!-- input -->
             <input
               id="email"
               ref="emailEl"
@@ -31,12 +29,14 @@
               type="email"
               inputmode="email"
               autocomplete="email"
+              autocapitalize="none"
               :maxlength="maxEmail"
               spellcheck="false"
               required
               :disabled="loading"
               placeholder="you@example.com"
               :class="[formClass, 'pl-10']"
+              :aria-invalid="Boolean(errorMessage)"
             />
           </div>
         </div>
@@ -46,13 +46,11 @@
           <label for="password" class="text-sm text-slate-300">Password</label>
 
           <div class="relative">
-            <!-- left icon -->
             <Lock
               class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
               aria-hidden="true"
             />
 
-            <!-- input -->
             <input
               id="password"
               v-model="password"
@@ -63,9 +61,10 @@
               :disabled="loading"
               placeholder="••••••••"
               :class="[formClass, 'pl-10 pr-10']"
+              :aria-invalid="Boolean(errorMessage)"
+              :aria-describedby="errorMessage ? 'login-error' : undefined"
             />
 
-            <!-- right toggle button -->
             <button
               type="button"
               :aria-pressed="showPassword"
@@ -79,31 +78,27 @@
           </div>
         </div>
 
-        <app-alert
-          v-if="errorMessage"
-          :message="errorMessage"
-          variant="error"
-          :icon="AlertTriangle"
-        />
+        <!-- Error -->
+        <div v-if="errorMessage" id="login-error" ref="errorEl" tabindex="-1" class="mt-1">
+          <app-alert :message="errorMessage" variant="error" :icon="AlertTriangle" />
+        </div>
 
         <!-- Submit -->
         <button
           type="submit"
           :disabled="!canSubmit || loading"
           :aria-busy="loading"
-          class="inline-flex items-center justify-center rounded-lg border border-indigo-500 bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+          class="mt-1 inline-flex items-center justify-center rounded-lg border border-indigo-500 bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span>{{ loading ? 'Signing in…' : 'Sign in' }}</span>
         </button>
 
-        <p class="text-sm text-slate-400">
+        <p class="mt-1 text-sm text-slate-400">
           New here?
           <RouterLink class="text-indigo-300 hover:underline" to="/register">
             Create an account
           </RouterLink>
         </p>
-
-        <!-- TODO: ADD FORGOT PASSWORD FEATURE -->
       </form>
     </section>
   </main>
@@ -111,7 +106,7 @@
 
 <script setup lang="ts">
   import type { LoginRequest } from '@/api/auth';
-  import { authService } from '@/api/auth/';
+  import { authService } from '@/api/auth';
   import type { ApiErrorResponse } from '@/api/error';
   import AppAlert from '@/components/ui/AppAlert.vue';
   import { useAuth } from '@/composables/useAuth';
@@ -120,6 +115,7 @@
   import { AlertTriangle, Eye, EyeOff, Lock, Mail } from 'lucide-vue-next';
   import { computed, nextTick, onMounted, ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
+
   const route = useRoute();
   const router = useRouter();
   const { ensureAuthState } = useAuth();
@@ -130,16 +126,12 @@
   const errorMessage = ref<string | null>(null);
   const emailEl = ref<HTMLInputElement | null>(null);
   const errorEl = ref<HTMLElement | null>(null);
-  const formClass: string = `
-      w-full rounded-lg border border-slate-700 bg-slate-950
-      px-3.5 py-2.5 text-slate-100 outline-none transition
-      placeholder:text-slate-500
-      focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40
-      disabled:opacity-60 disabled:cursor-not-allowed
-    `;
-  onMounted(() => emailEl.value?.focus());
+  const canSubmit = computed(() => isEmailValid.value && !!password.value);
 
-  const canSubmit = computed(() => isEmailValid.value && password.value);
+  const formClass =
+    'w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-60';
+
+  onMounted(() => emailEl.value?.focus());
 
   const onSubmit = async (): Promise<void> => {
     if (!canSubmit.value || loading.value) return;
@@ -147,11 +139,12 @@
     errorMessage.value = null;
 
     try {
-      const LoginRequest: LoginRequest = {
-        email: normalizedEmail.value, // locale-insensitive for emails
+      const loginRequest: LoginRequest = {
+        email: normalizedEmail.value,
         password: password.value,
       };
-      await authService.login(LoginRequest);
+
+      await authService.login(loginRequest);
       const authed = await ensureAuthState(true);
 
       if (authed) {
@@ -162,25 +155,23 @@
         password.value = '';
       }
     } catch (err: unknown) {
-      let msg = 'Login failed. Please try again.';
+      let msg = 'We couldn’t sign you in. Please try again.';
 
       if (isAxiosError<ApiErrorResponse>(err)) {
         const { status, data } = err.response ?? {};
-
-        // Prefer ProblemDetails.detail, then message, then legacy error
         const detail = data?.detail ?? data?.message ?? data?.error;
 
         if (status === 401) {
           msg = detail ?? 'Invalid email or password.';
         } else {
-          msg = detail ?? msg;
+          msg = detail ?? 'Something went wrong. Please try again.';
         }
       } else if (err instanceof Error) {
         msg = err.message || msg;
       }
 
       errorMessage.value = msg;
-      resetForms();
+      await resetForms();
     } finally {
       loading.value = false;
     }
@@ -189,9 +180,10 @@
   const resetForms = async (): Promise<void> => {
     showPassword.value = false;
     password.value = '';
+
     await nextTick();
 
-    if (errorMessage.value) errorEl.value?.focus();
-    else emailEl.value?.focus();
+    const targetEl = errorMessage.value ? errorEl.value : emailEl.value;
+    targetEl?.focus();
   };
 </script>

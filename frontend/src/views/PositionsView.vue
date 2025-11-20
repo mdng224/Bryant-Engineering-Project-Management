@@ -101,11 +101,11 @@
     PositionRowResponse,
   } from '@/api/positions/contracts';
   import { positionService } from '@/api/positions/services';
-  import BooleanFilter from '@/components/BooleanFilter.vue';
   import { AddPositionDialog, EditPositionDialog } from '@/components/dialogs/positions';
   import { DeleteDialog, RestoreDialog } from '@/components/dialogs/shared';
   import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
   import { AppAlert } from '@/components/ui';
+  import BooleanFilter from '@/components/ui/BooleanFilter.vue';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';

@@ -1,6 +1,7 @@
 ﻿using App.Api.Features.Auth;
 using App.Api.Features.Auth.Verification;
 using App.Api.Features.Clients;
+using App.Api.Features.Contacts;
 using App.Api.Features.Employees;
 using App.Api.Features.Positions;
 using App.Api.Features.Projects;
@@ -54,6 +55,7 @@ public static class WebApplicationExtensions
         app.MapPositionEndpoints();
         app.MapProjectEndpoints();
         app.MapUserEndpoints();
+        app.MapContactEndpoints();
 
         return app;
     }

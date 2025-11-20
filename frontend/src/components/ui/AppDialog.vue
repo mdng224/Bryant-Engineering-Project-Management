@@ -14,13 +14,19 @@
           @keydown.esc="handleClose"
         >
           <!-- Header -->
-          <header class="mb-4 flex items-center justify-between">
-            <slot name="title">
-              <h2 class="text-2xl font-semibold">{{ title }}</h2>
-            </slot>
+          <header class="relative mb-4 flex items-center justify-center">
+            <!-- Centered title -->
+            <div class="flex-1 text-center">
+              <slot name="title">
+                <h2 class="text-2xl font-semibold">{{ title }}</h2>
+              </slot>
+            </div>
 
+            <!-- Close button pinned to the right -->
             <button
-              class="rounded-md px-2 py-1 text-sm text-slate-300 hover:bg-slate-700/70"
+              class="absolute right-0 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-slate-300 hover:bg-slate-700/70"
+              type="button"
+              aria-label="Close dialog"
               @click="handleClose"
             >
               <X class="block h-5 w-5" />
@@ -79,5 +85,6 @@
   onMounted(() => {
     if (props.open) window.addEventListener('keydown', handleKeydown);
   });
+
   onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
 </script>

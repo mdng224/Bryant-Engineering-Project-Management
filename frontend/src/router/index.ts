@@ -29,6 +29,7 @@ const router = createRouter({
     },
     // --- Protected routes ---
     { path: '/clients', name: 'clients', component: () => import('../views/ClientsView.vue') },
+    { path: '/contacts', name: 'contacts', component: () => import('../views/ContactsView.vue') },
     {
       path: '/employees',
       name: 'employees',
