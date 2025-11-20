@@ -13,7 +13,7 @@ using static Microsoft.AspNetCore.Http.Results;
 
 namespace App.Api.Features.Auth;
 
-public static class AuthEndpoints
+public static class AuthModule
 {
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {

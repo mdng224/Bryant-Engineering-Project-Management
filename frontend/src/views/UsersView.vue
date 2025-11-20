@@ -32,7 +32,7 @@
             v-if="!cell.row.original.deletedAtUtc"
             class="rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500"
             aria-label="Edit user"
-            @click="handleEditUser(cell.row.original as UserResponse)"
+            @click="handleEditUser(cell.row.original as UserRowResponse)"
           >
             <Pencil class="h-4 w-4" />
           </button>
@@ -42,7 +42,7 @@
             v-if="!cell.row.original.deletedAtUtc && canDelete(cell.row.original)"
             class="rounded-md bg-indigo-600 p-1.5 transition hover:bg-rose-200"
             aria-label="delete user"
-            @click="handleOpenDeleteDialog(cell.row.original as UserResponse)"
+            @click="handleOpenDeleteDialog(cell.row.original as UserRowResponse)"
           >
             <Lock class="h-4 w-4 text-rose-500 hover:text-rose-400" />
           </button>
@@ -52,7 +52,7 @@
             v-else-if="cell.row.original.deletedAtUtc"
             class="rounded-md bg-indigo-600 p-1.5 text-emerald-200 transition hover:bg-green-200"
             aria-label="reactivate position"
-            @click="handleOpenRestoreDialog(cell.row.original as UserResponse)"
+            @click="handleOpenRestoreDialog(cell.row.original as UserRowResponse)"
           >
             <lock-open class="h-4 w-4 hover:text-green-400" />
           </button>
@@ -101,7 +101,12 @@
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
   import { AlertTriangle, CheckCircle2, Lock, LockOpen, Pencil, Trash2 } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref, watch } from 'vue';
-  import type { GetUsersRequest, GetUsersResponse, UserResponse, UserStatus } from '../api/users';
+  import type {
+    GetUsersRequest,
+    GetUsersResponse,
+    UserRowResponse,
+    UserStatus,
+  } from '../api/users';
   import { useDebouncedRef } from '../composables/useDebouncedRef';
 
   const errorMessage = ref<string | null>(null);
@@ -110,7 +115,7 @@
   const { currentUserId, canDeleteUser } = useAuth();
 
   // helper so we can reuse it in template/handlers
-  const canDelete = (u: UserResponse) =>
+  const canDelete = (u: UserRowResponse) =>
     currentUserId.value == null || u.id !== currentUserId.value;
 
   /* ------------------------------ Status ------------------------------- */
@@ -126,9 +131,9 @@
     statusClasses[status as UserStatus] ?? 'bg-slate-800/60 text-slate-400';
 
   /* -------------------------------- Columns ------------------------------- */
-  const col: ColumnHelper<UserResponse> = createColumnHelper<UserResponse>();
+  const col: ColumnHelper<UserRowResponse> = createColumnHelper<UserRowResponse>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns: ColumnDef<UserResponse, any>[] = [
+  const columns: ColumnDef<UserRowResponse, any>[] = [
     col.accessor('email', {
       header: 'Email',
       meta: { kind: 'text' as const },
@@ -221,12 +226,12 @@
     setQuery,
     setPageSize,
     fetchNow: refetch,
-  } = useDataTable<UserResponse, UserQuery>(columns, fetchUsers, query);
+  } = useDataTable<UserRowResponse, UserQuery>(columns, fetchUsers, query);
 
   /* ------------------------------ Handlers ------------------------------- */
   const deleteDialogIsOpen = ref(false);
   const editUserDialogIsOpen = ref(false);
-  const selectedUser = ref<UserResponse | null>(null);
+  const selectedUser = ref<UserRowResponse | null>(null);
   const restoreDialogIsOpen = ref(false);
 
   const handleDelete = async (): Promise<void> => {
@@ -261,18 +266,18 @@
     }
   };
 
-  const handleOpenDeleteDialog = (user: UserResponse): void => {
+  const handleOpenDeleteDialog = (user: UserRowResponse): void => {
     if (!canDeleteUser(user.id)) return; // no self-delete
     selectedUser.value = user;
     deleteDialogIsOpen.value = true;
   };
 
-  const handleEditUser = (user: UserResponse): void => {
+  const handleEditUser = (user: UserRowResponse): void => {
     selectedUser.value = user;
     editUserDialogIsOpen.value = true;
   };
 
-  const handleOpenRestoreDialog = (user: UserResponse): void => {
+  const handleOpenRestoreDialog = (user: UserRowResponse): void => {
     restoreDialogIsOpen.value = true;
     selectedUser.value = user;
   };

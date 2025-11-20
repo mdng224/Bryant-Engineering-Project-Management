@@ -11,10 +11,10 @@ using System.Text.Json.Serialization;
 using App.Api.Contracts.Auth.Requests;
 using App.Api.Contracts.Auth.Validators;
 using App.Api.Contracts.Positions.Validators;
-using App.Api.Contracts.Users.Requests;
 using App.Api.Contracts.Users.Validators;
 using App.Api.Features.Positions.AddPosition;
 using App.Api.Features.Positions.UpdatePosition;
+using App.Api.Features.Users.UpdateUser;
 
 namespace App.Api.Extensions;
 

@@ -11,7 +11,7 @@ export type GetUsersRequest = {
 };
 
 export type GetUsersResponse = {
-  users: UserResponse[];
+  users: UserRowResponse[];
   totalCount: number;
   page: number;
   pageSize: number;
@@ -24,7 +24,7 @@ export type UpdateUserRequest = {
 };
 
 // Each row in the table
-export type UserResponse = {
+export type UserRowResponse = {
   id: string;
   email: string;
   roleName: RoleName;

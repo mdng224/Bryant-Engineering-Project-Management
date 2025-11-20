@@ -14,7 +14,7 @@ using static Microsoft.AspNetCore.Http.Results;
 
 namespace App.Api.Features.Employees;
 
-public static class EmployeeEndpoints
+public static class EmployeeModule
 {
     public static void MapEmployeeEndpoints(this IEndpointRouteBuilder app)
     {

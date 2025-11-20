@@ -1,6 +1,6 @@
-﻿namespace App.Api.Contracts.Users.Responses;
+﻿namespace App.Api.Features.Users.ListUsers;
 
-public sealed record UserResponse(
+public sealed record UserRowResponse(
     Guid Id,
     string Email,
     string RoleName,

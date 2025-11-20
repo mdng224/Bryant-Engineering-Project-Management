@@ -18,7 +18,7 @@ const deleteUser = async (id: string): Promise<void> => {
  *  - pageSize (number): number of users per page
  *
  * Returns:
- *  - users (UserResponse[]): array of user records
+ *  - users (UserRowResponse[]): array of user records
  *  - totalCount (number): total number of users
  *  - page (number): current page returned by backend
  *  - pageSize (number): actual page size used by backend

@@ -1,37 +1,37 @@
 ﻿using App.Application.Abstractions.Handlers;
+using App.Application.Common.Dtos;
 using App.Application.Common.Results;
-using App.Application.Projects.Commands.RestoreProject;
+using App.Application.Users.Commands.RestoreUser;
 using Microsoft.AspNetCore.Mvc;
 using static Microsoft.AspNetCore.Http.Results;
 
-namespace App.Api.Features.Projects.RestoreProject;
+namespace App.Api.Features.Users.RestoreUser;
 
-public static class RestoreProjectEndpoint
+public static class RestoreUserEndpoint
 {
-    public static RouteGroupBuilder MapRestoreProjectEndpoint(this RouteGroupBuilder group)
+    public static RouteGroupBuilder MapRestoreUserEndpoint(this RouteGroupBuilder group)
     {
-        // POST /projects/{id}/restore
-        group.MapPost("/{id:guid}/restore", Handle)
-            .WithSummary("Restore a soft-deleted project")
+        // POST /Users/{id}/restore
+        group.MapPost("/{id:guid}/restore", HandleRestoreUser)
+            .WithSummary("Restore a soft-deleted User")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status409Conflict)
-            .Produces(StatusCodes.Status403Forbidden);
+            .Produces(StatusCodes.Status409Conflict);
 
         return group;
     }
     
-    private static async Task<IResult> Handle(
+    private static async Task<IResult> HandleRestoreUser(
         [FromRoute] Guid id,
-        [FromServices] ICommandHandler<RestoreProjectCommand, Result<Unit>> handler,
+        ICommandHandler<RestoreUserCommand, Result<UserDto>> handler,
         CancellationToken ct)
     {
-        var command = new RestoreProjectCommand(id);
-        var result  = await handler.Handle(command, ct);
-
+        var command = new RestoreUserCommand(id);
+        var result = await handler.Handle(command, ct);
+        
         if (result.IsSuccess)
             return NoContent();
-
+        
         var error = result.Error!.Value;
         return error.Code switch
         {

@@ -1,5 +1,5 @@
 ﻿using System.Text.RegularExpressions;
-using App.Api.Contracts.Users.Requests;
+using App.Api.Features.Users.UpdateUser;
 using FluentValidation;
 
 namespace App.Api.Contracts.Users.Validators;

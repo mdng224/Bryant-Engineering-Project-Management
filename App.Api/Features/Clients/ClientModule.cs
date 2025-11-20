@@ -14,7 +14,7 @@ using static Microsoft.AspNetCore.Http.Results;
 
 namespace App.Api.Features.Clients;
 
-public static class ClientEndpoints
+public static class ClientModule
 {
     public static void MapClientEndpoints(this IEndpointRouteBuilder app)
     {

@@ -75,7 +75,7 @@
   import type {
     RoleName,
     UpdateUserRequest,
-    UserResponse,
+    UserRowResponse,
     UserStatus,
   } from '@/api/users/contracts';
   import { AppAlert, AppDialog } from '@/components/ui';
@@ -93,7 +93,7 @@
 
   const props = defineProps<{
     open: boolean;
-    selectedUser: UserResponse | null;
+    selectedUser: UserRowResponse | null;
   }>();
 
   const emit = defineEmits<{
