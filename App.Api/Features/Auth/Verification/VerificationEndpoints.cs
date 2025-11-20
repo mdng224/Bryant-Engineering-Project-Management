@@ -4,19 +4,14 @@ using App.Application.Common.Results;
 using Microsoft.AspNetCore.Mvc;
 using static Microsoft.AspNetCore.Http.Results;
 
-namespace App.Api.Features.Auth;
+namespace App.Api.Features.Auth.Verification;
 
 public static class VerificationEndpoints
 {
-    public static void MapVerificationEndpoints(this IEndpointRouteBuilder app)
+    public static RouteGroupBuilder MapVerificationEndpoints(this RouteGroupBuilder group)
     {
-        var verify = app.MapGroup("/auth/verify")
-            .AllowAnonymous()
-            .WithTags("Verification")
-            .WithOpenApi();
-
         // GET /auth/verify?token=...
-        verify.MapGet("", HandleVerificationAsync)
+        group.MapGet("", Handle)
             .WithSummary("Verify email")
             .WithDescription("Consumes a one-time token and activates the user.")
             .Produces(302) // Redirect to frontend result page
@@ -24,9 +19,11 @@ public static class VerificationEndpoints
             .ProducesProblem(409)
             .ProducesProblem(410)
             .ProducesProblem(500);
+
+        return group;
     }
 
-    private static async Task<IResult> HandleVerificationAsync(
+    private static async Task<IResult> Handle(
         [FromQuery] string token,
         [FromServices] ICommandHandler<VerifyEmailCommand, Result<VerifyEmailResult>> handler,
         [FromServices] IConfiguration cfg,

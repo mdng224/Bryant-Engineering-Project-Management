@@ -1,4 +1,5 @@
 ﻿using App.Api.Features.Auth;
+using App.Api.Features.Auth.Verification;
 using App.Api.Features.Clients;
 using App.Api.Features.Employees;
 using App.Api.Features.Positions;
@@ -45,16 +46,15 @@ public static class WebApplicationExtensions
         });
 
         // feature endpoints
-        app.MapDefaultEndpoints();
         app.MapAuthEndpoints();
-        app.MapEmployeeEndpoints();
-        app.MapPositionEndpoints();
-        app.MapUserEndpoints();
-        app.MapVerificationEndpoints();
+        app.MapDefaultEndpoints();
         app.MapClientEndpoints();
         app.MapClientLookupEndpoints();
+        app.MapEmployeeEndpoints();
+        app.MapPositionEndpoints();
         app.MapProjectEndpoints();
-        
+        app.MapUserEndpoints();
+
         return app;
     }
 

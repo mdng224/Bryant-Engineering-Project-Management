@@ -1,9 +1,9 @@
 // src/api/auth/services.ts
 
 import type {
+  GetMeResponse,
   LoginRequest,
   LoginResponse,
-  MeResponse,
   RegisterRequest,
   RegisterResponse,
 } from '@/api/auth/contracts';
@@ -63,9 +63,9 @@ const login = async (request: LoginRequest): Promise<LoginResponse> => {
  * @description Uses the stored JWT (via request interceptor) to fetch user identity.
  * @returns The decoded JWT claims (subject, email, etc.).
  */
-const me = async (): Promise<MeResponse> => {
+const me = async (): Promise<GetMeResponse> => {
   try {
-    const { data } = await apiClient.get<MeResponse>(AuthRoutes.me);
+    const { data } = await apiClient.get<GetMeResponse>(AuthRoutes.me);
     return data;
   } catch (err) {
     const e = err as AxiosError;

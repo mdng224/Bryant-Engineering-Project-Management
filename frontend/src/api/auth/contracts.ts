@@ -10,7 +10,7 @@ export type LoginResponse = {
   expiresAtUtc: string;
 };
 
-export type MeResponse = {
+export type GetMeResponse = {
   sub: string;
   email?: string;
 };
