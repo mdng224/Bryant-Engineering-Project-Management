@@ -29,6 +29,8 @@
     </button>
   </div>
 
+  <app-alert v-if="errorMessage" :message="errorMessage" variant="error" :icon="AlertTriangle" />
+
   <data-table :table :loading :total-count empty-text="No projects found.">
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
@@ -38,7 +40,7 @@
           <button
             :class="actionButtonClass"
             aria-label="view project"
-            @click="handleView(cell.row.original.id as string)"
+            @click="handleOpenProjectDetails(cell.row.original.id as string)"
           >
             <eye class="h-4 w-4" />
           </button>
@@ -66,6 +68,7 @@
 </template>
 
 <script setup lang="ts">
+  import { extractApiError } from '@/api/error';
   import {
     projectService,
     type GetProjectDetailsResponse,
@@ -75,17 +78,21 @@
   } from '@/api/projects';
   import BooleanFilter from '@/components/BooleanFilter.vue';
   import { AddProjectDialog } from '@/components/dialogs/projects';
+  import { DetailsDialog } from '@/components/dialogs/shared';
   import type { FieldDef } from '@/components/dialogs/shared/DetailsDialog.vue';
-  import DetailsDialog from '@/components/dialogs/shared/DetailsDialog.vue';
   import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
+  import { AppAlert } from '@/components/ui';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { useProjectLookups } from '@/composables/useProjectLookups';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { CheckCircle2, CirclePlus, Eye, Trash2 } from 'lucide-vue-next';
+  import { AlertTriangle, CheckCircle2, CirclePlus, Eye, Trash2 } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
   import { useRoute } from 'vue-router';
+
+  const errorMessage = ref<string | null>(null);
+
   // ───────────────────────────── Types ─────────────────────────────
   type ProjectStatus = 'active' | 'inactive' | 'all';
 
@@ -220,21 +227,34 @@
     const request: ListProjectsRequest = {
       page,
       pageSize,
-      nameFilter: query?.name || null,
+      nameFilter: query?.name ?? null,
       isDeleted: query?.isDeleted ?? null,
       clientId: query?.clientId ?? null,
-      manager: query?.manager || null,
+      manager: query?.manager ?? null,
     };
 
-    const response: ListProjectsResponse = await projectService.get(request);
+    try {
+      const response: ListProjectsResponse = await projectService.list(request);
+      return {
+        items: response.projects,
+        totalCount: response.totalCount,
+        totalPages: response.totalPages,
+        page: response.page,
+        pageSize: response.pageSize,
+      };
+    } catch (err: unknown) {
+      const msg: string = extractApiError(err, 'project');
+      errorMessage.value = msg;
 
-    return {
-      items: response.projects,
-      totalCount: response.totalCount,
-      totalPages: response.totalPages,
-      page: response.page,
-      pageSize: response.pageSize,
-    };
+      // Fallback so the table can still render gracefully
+      return {
+        items: [],
+        totalCount: 0,
+        totalPages: 0,
+        page,
+        pageSize,
+      };
+    }
   };
 
   const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<
@@ -251,10 +271,22 @@
   const selectedProject = ref<GetProjectDetailsResponse | null>(null);
 
   // ───────────────────────────── Handlers ────────────────────────────
-  const handleView = (id: string): void => {
-    const detail = projectDetailsById.value.get(id) ?? null;
-    selectedProject.value = detail;
-    openDetailsDialog.value = !!detail;
+  const handleOpenProjectDetails = async (id: string): Promise<void> => {
+    errorMessage.value = null;
+
+    if (selectedProject.value?.id === id) {
+      openDetailsDialog.value = true;
+      return;
+    }
+
+    try {
+      const response: GetProjectDetailsResponse = await projectService.getDetails(id);
+      selectedProject.value = response;
+      openDetailsDialog.value = Boolean(response);
+    } catch (err: unknown) {
+      const msg: string = extractApiError(err, 'project');
+      errorMessage.value = msg;
+    }
   };
 
   const handleOpenDeleteDialog = (summary: ProjectRowResponse): void => {

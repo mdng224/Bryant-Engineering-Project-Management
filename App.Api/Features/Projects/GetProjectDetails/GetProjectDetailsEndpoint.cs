@@ -13,7 +13,7 @@ public static class GetProjectDetailsEndpoint
     {
         group.MapGet("/{id:guid}", Handle)
             .WithSummary("Get full details for a single project")
-            .Produces<GetProjectDetailsResponse>(StatusCodes.Status200OK)
+            .Produces<GetProjectDetailsResponse>()
             .Produces(StatusCodes.Status404NotFound);
 
         return group;

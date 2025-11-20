@@ -13,6 +13,6 @@ public class GetClientDetailsHandler(IClientReader reader)
     {
         var dto = await reader.GetDetailsAsync(query.Id, ct);
 
-        return dto is null ? Fail<ClientDetailsDto>("not_found", "Project not found.") : Ok(dto);
+        return dto is null ? Fail<ClientDetailsDto>("not_found", "Client not found.") : Ok(dto);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using App.Api.Features.Employees.AddEmployee;
+using App.Api.Features.Employees.GetEmployeeDetails;
 using App.Api.Features.Employees.ListEmployees;
 using App.Api.Features.Employees.RestoreEmployee;
 
@@ -12,6 +13,7 @@ public static class EmployeeModule
             .WithTags("Employees");
 
         employees.MapAddEmployeeEndpoint();
+        employees.MapGetEmployeeDetailsEndpoint();
         employees.MapListEmployeesEndpoint();
         employees.MapRestoreEmployeeEndpoint();
     }

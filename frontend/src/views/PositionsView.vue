@@ -103,10 +103,9 @@
   import { positionService } from '@/api/positions/services';
   import BooleanFilter from '@/components/BooleanFilter.vue';
   import { AddPositionDialog, EditPositionDialog } from '@/components/dialogs/positions';
-  import DeleteDialog from '@/components/dialogs/shared/DeleteDialog.vue';
-  import RestoreDialog from '@/components/dialogs/shared/RestoreDialog.vue';
+  import { DeleteDialog, RestoreDialog } from '@/components/dialogs/shared';
   import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
-  import AppAlert from '@/components/ui/AppAlert.vue';
+  import { AppAlert } from '@/components/ui';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
@@ -175,19 +174,31 @@
     const request: ListPositionsRequest = {
       page,
       pageSize,
-      nameFilter: query?.position || null,
+      nameFilter: query?.position ?? null,
       isDeleted: query?.deletedFilter ?? false,
     };
-    console.log(request);
-    const response: ListPositionsResponse = await positionService.get(request);
-    console.log(response);
-    return {
-      items: response.positions,
-      totalCount: response.totalCount,
-      totalPages: response.totalPages,
-      page: response.page,
-      pageSize: response.pageSize,
-    };
+    try {
+      const response: ListPositionsResponse = await positionService.get(request);
+      return {
+        items: response.positions,
+        totalCount: response.totalCount,
+        totalPages: response.totalPages,
+        page: response.page,
+        pageSize: response.pageSize,
+      };
+    } catch (err: unknown) {
+      const msg: string = extractApiError(err, 'position');
+      errorMessage.value = msg;
+
+      // Fallback so the table can still render gracefully
+      return {
+        items: [],
+        totalCount: 0,
+        totalPages: 0,
+        page,
+        pageSize,
+      };
+    }
   };
 
   const query = computed<PosQuery>(() => ({

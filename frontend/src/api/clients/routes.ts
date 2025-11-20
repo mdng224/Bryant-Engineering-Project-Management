@@ -2,6 +2,7 @@
 
 export const ClientsRoutes = Object.freeze({
   add: '/clients',
+  getDetails: (id: string) => `/clients/${id}`,
   list: '/clients',
   lookups: '/clients/lookups',
   restore: (id: string) => `/clients/${id}/restore`, // POST - restore client

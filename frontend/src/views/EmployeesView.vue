@@ -15,6 +15,8 @@
     </button>
   </div>
 
+  <app-alert v-if="errorMessage" :message="errorMessage" variant="error" :icon="AlertTriangle" />
+
   <data-table :table :loading :total-count empty-text="No employees found.">
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
@@ -25,29 +27,9 @@
             v-if="!cell.row.original.deletedAtUtc"
             :class="actionButtonClass"
             aria-label="view employee"
-            @click="handleView(cell.row.original.id as string)"
+            @click="handleOpenEmployeeDetails(cell.row.original.id as string)"
           >
             <eye class="h-4 w-4" />
-          </button>
-
-          <!-- Delete button -->
-          <button
-            v-if="!cell.row.original.deletedAtUtc"
-            class="rounded-md bg-indigo-600 p-1.5 transition hover:bg-rose-200"
-            aria-label="delete position"
-            @click="handleOpenDeleteDialog(cell.row.original as EmployeeRowResponse)"
-          >
-            <Lock class="h-4 w-4 text-rose-500 hover:text-rose-400" />
-          </button>
-
-          <!-- Reactivate button -->
-          <button
-            v-else
-            class="rounded-md bg-indigo-600 p-1.5 text-emerald-200 transition hover:bg-green-200"
-            aria-label="reactivate position"
-            @click="handleOpenReactivateDialog(cell.row.original as EmployeeRowResponse)"
-          >
-            <lock-open class="h-4 w-4 hover:text-green-400" />
           </button>
         </span>
       </template>
@@ -89,18 +71,20 @@
     ListEmployeesResponse,
   } from '@/api/employees';
   import { employeeService } from '@/api/employees';
+  import { extractApiError } from '@/api/error';
   import BooleanFilter from '@/components/BooleanFilter.vue';
   import { AddEmployeeDialog, EditEmployeeDialog } from '@/components/dialogs/employees';
-  import { DetailsDialog } from '@/components/dialogs/shared';
-  import { type FieldDef } from '@/components/dialogs/shared/DetailsDialog.vue';
+  import DetailsDialog, { type FieldDef } from '@/components/dialogs/shared/DetailsDialog.vue';
   import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
+  import { AppAlert } from '@/components/ui';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import { createColumnHelper, type ColumnDef, type ColumnHelper } from '@tanstack/vue-table';
-  import { CheckCircle2, CirclePlus, Eye, Lock, LockOpen, Trash2 } from 'lucide-vue-next';
-
+  import { AlertTriangle, CheckCircle2, CirclePlus, Eye, Trash2 } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, ref } from 'vue';
+
+  const errorMessage = ref<string | null>(null);
 
   /* ------------------------------- Constants ------------------------------ */
   // Buttons
@@ -139,14 +123,28 @@
   const { formatUtc } = useDateFormat();
 
   const fields: FieldDef[] = [
-    fieldDef('fullName', 'Full Name'),
+    // Identity
     fieldDef('firstName', 'First Name'),
+    fieldDef('lastName', 'Last Name'),
+    fieldDef('preferredName', 'Preferred Name'),
+
+    // Employment / org
     fieldDef('companyEmail', 'Email'),
     fieldDef('department', 'Department'),
     fieldDef('employmentType', 'Employment Type'),
     fieldDef('salaryType', 'Salary Type'),
     fieldDef('workLocation', 'Work Location'),
-    fieldDef('recommendedRoleId', 'Recommended Role ID', 'mono'),
+    fieldDef('recommendedRole', 'Recommended Role', 'text'),
+    fieldDef('isPreapproved', 'Pre-Approved'),
+
+    // Address
+    fieldDef('addressLine1', 'Address Line 1'),
+    fieldDef('addressLine2', 'Address Line 2'),
+    fieldDef('city', 'City'),
+    fieldDef('state', 'State'),
+    fieldDef('postalCode', 'Postal Code'),
+
+    // Dates
     fieldDef('hireDate', 'Hire Date', 'date'),
     fieldDef('endDate', 'End Date', 'date'),
     fieldDef('createdAtUtc', 'Created', 'date'),
@@ -155,7 +153,8 @@
     fieldDef('updatedById', 'Updated By', 'mono'),
     fieldDef('deletedAtUtc', 'Deleted', 'date'),
     fieldDef('deletedById', 'Deleted By', 'mono'),
-    fieldDef('licenseNotes', 'License Notes', 'multiline', 2),
+
+    // Notes
     fieldDef('notes', 'Notes', 'multiline', 2),
   ] as any;
 
@@ -210,15 +209,28 @@
       nameFilter: query?.name || null,
       isDeleted: query?.isDeleted ?? null,
     };
-    const response: ListEmployeesResponse = await employeeService.get(params);
+    try {
+      const response: ListEmployeesResponse = await employeeService.list(params);
 
-    return {
-      items: response.employees,
-      totalCount: response.totalCount,
-      totalPages: response.totalPages,
-      page: response.page,
-      pageSize: response.pageSize,
-    };
+      return {
+        items: response.employees,
+        totalCount: response.totalCount,
+        totalPages: response.totalPages,
+        page: response.page,
+        pageSize: response.pageSize,
+      };
+    } catch (err: unknown) {
+      const msg: string = extractApiError(err, 'employee');
+      errorMessage.value = msg;
+
+      return {
+        items: [],
+        totalCount: 0,
+        totalPages: 0,
+        page,
+        pageSize,
+      };
+    }
   };
   const query = computed(() => ({
     name: name.value ?? null,
@@ -239,10 +251,21 @@
   const selectedEmployee = ref<GetEmployeeDetailsResponse | null>(null);
 
   /* -------------------------------- Handlers ------------------------------ */
-  const handleView = (id: string): void => {
-    const detail = employeeDetailsById.value.get(id) ?? null;
-    selectedEmployee.value = detail;
-    openDetailsDialog.value = !!detail;
+  const handleOpenEmployeeDetails = async (id: string): Promise<void> => {
+    errorMessage.value = null;
+    if (selectedEmployee.value?.id === id) {
+      openDetailsDialog.value = true;
+      return;
+    }
+
+    try {
+      const response: GetEmployeeDetailsResponse = await employeeService.getDetails(id);
+      selectedEmployee.value = response;
+      openDetailsDialog.value = Boolean(response);
+    } catch (err: unknown) {
+      const msg: string = extractApiError(err, 'project');
+      errorMessage.value = msg;
+    }
   };
 
   const handleEditEmployee = (summary: EmployeeRowResponse): void => {

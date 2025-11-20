@@ -13,6 +13,6 @@ public class GetEmployeeDetailsHandler(IEmployeeReader reader)
     {
         var dto = await reader.GetDetailsAsync(query.Id, ct);
 
-        return dto is null ? Fail<EmployeeDetailsDto>("not_found", "Project not found.") : Ok(dto);
+        return dto is null ? Fail<EmployeeDetailsDto>("not_found", "Employee not found.") : Ok(dto);
     }
 }

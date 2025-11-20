@@ -1,5 +1,5 @@
 <template>
-  <app-dialog :open="open" :title="title" width="max-w-xl" @close="emit('close')">
+  <app-dialog :open="open" :title="title" width="max-w-2xl" @close="emit('close')">
     <div v-if="item" class="space-y-6 text-sm">
       <!-- Header block -->
       <slot name="header">

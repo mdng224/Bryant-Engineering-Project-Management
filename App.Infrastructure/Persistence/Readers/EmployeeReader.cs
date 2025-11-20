@@ -1,7 +1,7 @@
 ﻿using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Common.Dtos;
 using App.Application.Common.Dtos.Employees;
 using App.Domain.Employees;
+using App.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Infrastructure.Persistence.Readers;
@@ -18,35 +18,54 @@ public sealed class EmployeeReader(AppDbContext db) : IEmployeeReader
 
     public async Task<EmployeeDetailsDto?> GetDetailsAsync(Guid id, CancellationToken ct = default)
     {
-        var projectDetails = await db.ReadSet<Employee>()
+        var employeeDetails = await db.ReadSet<Employee>()
             .Where(e => e.Id == id)
             .Select(e => new EmployeeDetailsDto(
                 e.Id,
                 e.UserId,
+                // Identity
                 e.FirstName,
                 e.LastName,
                 e.PreferredName,
-                e.EmploymentType != null ? e.EmploymentType.ToString() : null,
-                e.SalaryType     != null ? e.SalaryType.ToString()     : null,
+                // Employment
+                e.EmploymentType.HasValue ? e.EmploymentType.ToString() : null,
+                e.SalaryType.HasValue     ? e.SalaryType.ToString()     : null,
                 e.HireDate,
                 e.EndDate,
-                e.Department != null ? e.Department.ToString() : null,
-                db.ReadSet<EmployeePosition>()
-                    .Where(ep => ep.EmployeeId == e.Id && ep.Position.DeletedAtUtc == null)
+                // Organization
+                e.Department.HasValue ? e.Department.ToString() : null,
+                e.Positions
+                    .Where(ep => ep.Position.DeletedAtUtc == null)
+                    .OrderBy(ep => ep.Position.Name)
                     .Select(ep => ep.Position.Name)
                     .ToList(),
+                // Contact / Misc
                 e.CompanyEmail,
                 e.WorkLocation,
                 e.Notes,
-                e.RecommendedRoleId,
+                // Address
+                e.Address != null ? e.Address.Line1      : null,
+                e.Address != null ? e.Address.Line2      : null,
+                e.Address != null ? e.Address.City       : null,
+                e.Address != null ? e.Address.State      : null,
+                e.Address != null ? e.Address.PostalCode : null,
+                // Recommendation / preapproval
+                db.ReadSet<Role>()
+                    .Where(r => r.Id == e.RecommendedRoleId)
+                    .Select(r => r.Name)
+                    .FirstOrDefault(),
                 e.IsPreapproved,
+                // Auditing
                 e.CreatedAtUtc,
                 e.UpdatedAtUtc,
-                e.DeletedAtUtc
+                e.DeletedAtUtc,
+                e.CreatedById,
+                e.UpdatedById,
+                e.DeletedById
             ))
             .SingleOrDefaultAsync(ct);
 
-        return projectDetails;
+        return employeeDetails;
     }
     
     public async Task<(IReadOnlyList<EmployeeRowDto> employees, int totalCount)> GetPagedAsync(

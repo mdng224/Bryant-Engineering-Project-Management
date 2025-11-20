@@ -1,24 +1,27 @@
-﻿namespace App.Application.Common.Dtos.Employees;
+﻿using App.Domain.Common;
 
-public sealed record EmployeeDetailsDto(
+namespace App.Api.Features.Employees.GetEmployeeDetails;
+
+
+public sealed record GetEmployeeDetailsResponse(
     Guid Id,
     Guid? UserId,
-    // Identity
     string FirstName,
     string LastName,
     string? PreferredName,
+    string FullName,
     // Employment
-    string? EmploymentType,   // "FullTime" | "PartTime"
-    string? SalaryType,       // "Salary" | "Hourly"
+    string? EmploymentType,
+    string? SalaryType,
+    string? Department,
     DateTimeOffset? HireDate,
     DateTimeOffset? EndDate,
-    // Organization
-    string? Department,
-    IReadOnlyList<string> PositionNames,
-    // Contact / Misc
+    // Contact / Work
     string? CompanyEmail,
     string? WorkLocation,
     string? Notes,
+    // Positions
+    IReadOnlyList<string> PositionNames,
     // Address (flattened from Address VO)
     string? AddressLine1,
     string? AddressLine2,
@@ -26,13 +29,13 @@ public sealed record EmployeeDetailsDto(
     string? State,
     string? PostalCode,
     // Role recommendation / preapproval
-    string? RecommendRole,
+    string? RecommendedRole,
     bool IsPreapproved,
-    // Auditing
+    // Audit
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc,
     DateTimeOffset? DeletedAtUtc,
     Guid? CreatedById,
     Guid? UpdatedById,
-    Guid? DeletedById
+    string? DeletedBy
 );

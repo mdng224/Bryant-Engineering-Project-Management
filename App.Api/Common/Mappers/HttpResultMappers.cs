@@ -1,5 +1,4 @@
-﻿using App.Application.Common;
-using App.Application.Common.Results;
+﻿using App.Application.Common.Results;
 
 namespace App.Api.Common.Mappers;
 

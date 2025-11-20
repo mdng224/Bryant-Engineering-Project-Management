@@ -2,7 +2,8 @@
 
 export const ProjectsRoutes = Object.freeze({
   add: '/projects',
-  get: '/projects',
+  getDetails: (id: string) => `/projects/${id}`,
+  list: '/projects',
   lookups: '/projects/lookups',
   restore: (id: string) => `/projects/${id}/restore`,
 } as const);

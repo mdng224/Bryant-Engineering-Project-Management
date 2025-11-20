@@ -3,15 +3,21 @@
 import api from '..';
 import type {
   AddProjectRequest,
+  GetProjectDetailsResponse,
   ListProjectLookupsResponse,
   ListProjectsRequest,
   ListProjectsResponse,
 } from './contracts';
 import { ProjectsRoutes } from './routes';
 
+const getDetails = async (id: string): Promise<GetProjectDetailsResponse> => {
+  const { data } = await api.get<GetProjectDetailsResponse>(ProjectsRoutes.getDetails(id));
+  return data;
+};
+
 /* ------------------------------ GET (list) ------------------------------ */
-const get = async (params: ListProjectsRequest): Promise<ListProjectsResponse> => {
-  const { data } = await api.get<ListProjectsResponse>(ProjectsRoutes.get, { params });
+const list = async (params: ListProjectsRequest): Promise<ListProjectsResponse> => {
+  const { data } = await api.get<ListProjectsResponse>(ProjectsRoutes.list, { params });
   return data;
 };
 
@@ -32,4 +38,4 @@ const restore = async (id: string): Promise<void> => {
   await api.post<string>(ProjectsRoutes.restore(id));
 };
 
-export const projectService = { add, get, getLookups, restore };
+export const projectService = { add, getDetails, list, getLookups, restore };

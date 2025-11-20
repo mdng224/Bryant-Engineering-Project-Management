@@ -38,6 +38,8 @@
     </button>
   </div>
 
+  <app-alert v-if="errorMessage" :message="errorMessage" variant="error" :icon="AlertTriangle" />
+
   <data-table :table :loading :total-count empty-text="No clients found.">
     <!-- actions slot for this table only -->
     <template #cell="{ cell }">
@@ -47,7 +49,7 @@
           <button
             :class="actionButtonClass"
             aria-label="View client"
-            @click="handleView(cell.row.original.id as string)"
+            @click="handleOpenClientDetails(cell.row.original.id as string)"
           >
             <eye class="h-4 w-4" />
           </button>
@@ -87,13 +89,16 @@
     type ListClientsResponse,
   } from '@/api/clients';
   import type { Address } from '@/api/common';
+  import { extractApiError } from '@/api/error';
   import BooleanFilter from '@/components/BooleanFilter.vue';
   import { AddClientDialog } from '@/components/dialogs/clients';
   import DetailsDialog, { type FieldDef } from '@/components/dialogs/shared/DetailsDialog.vue';
   import { CellRenderer, DataTable, TableFooter, TableSearch } from '@/components/table';
+  import { AppAlert } from '@/components/ui';
   import { useClientLookups } from '@/composables/useClientLookups';
   import { useDataTable, type FetchParams } from '@/composables/useDataTable';
   import { useDateFormat } from '@/composables/UseDateFormat';
+
   import { useDebouncedRef } from '@/composables/useDebouncedRef';
   import router from '@/router';
   import {
@@ -102,8 +107,10 @@
     type ColumnDef,
     type ColumnHelper,
   } from '@tanstack/vue-table';
-  import { CheckCircle2, CirclePlus, Eye, Lock } from 'lucide-vue-next';
+  import { AlertTriangle, CheckCircle2, CirclePlus, Eye, Lock } from 'lucide-vue-next';
   import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+
+  const errorMessage = ref<string | null>(null);
 
   /* ------------------------------- Constants ------------------------------ */
   // Buttons
@@ -259,15 +266,28 @@
       categoryId: query?.categoryId ?? null,
       typeId: query?.typeId ?? null,
     };
-    const response: ListClientsResponse = await clientService.get(request);
+    try {
+      const response: ListClientsResponse = await clientService.list(request);
 
-    return {
-      items: response.clients,
-      totalCount: response.totalCount,
-      totalPages: response.totalPages,
-      page: response.page,
-      pageSize: response.pageSize,
-    };
+      return {
+        items: response.clients,
+        totalCount: response.totalCount,
+        totalPages: response.totalPages,
+        page: response.page,
+        pageSize: response.pageSize,
+      };
+    } catch (err: unknown) {
+      const msg: string = extractApiError(err, 'client');
+      errorMessage.value = msg;
+
+      return {
+        items: [],
+        totalCount: 0,
+        totalPages: 0,
+        page,
+        pageSize,
+      };
+    }
   };
 
   const query = computed(() => ({
@@ -294,10 +314,22 @@
   const openDetailsDialog = ref(false);
   const selectedClient = ref<GetClientDetailsResponse | null>(null);
 
-  const handleView = (id: string): void => {
-    const detail = clientDetailsById.value.get(id) ?? null;
-    selectedClient.value = detail;
-    openDetailsDialog.value = !!detail;
+  const handleOpenClientDetails = async (id: string): Promise<void> => {
+    errorMessage.value = null;
+
+    if (selectedClient.value?.id === id) {
+      openDetailsDialog.value = true;
+      return;
+    }
+
+    try {
+      const response: GetClientDetailsResponse = await clientService.getDetails(id);
+      selectedClient.value = response;
+      openDetailsDialog.value = Boolean(response);
+    } catch (err: unknown) {
+      const msg: string = extractApiError(err, 'project');
+      errorMessage.value = msg;
+    }
   };
 
   const handleEditClient = (summary: ClientRowResponse): void => {

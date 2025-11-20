@@ -29,17 +29,29 @@ export type ListEmployeesResponse = {
 
 export type EmployeeRowResponse = EmployeeBase;
 
-// For expanded detail look on an employee
 export type GetEmployeeDetailsResponse = EmployeeBase & {
-  userId: string;
-  fullName: string;
+  userId: string | null;
+  fullName: string; // computed backend-side from First/Last
   salaryType: string | null;
   endDate: string | null;
   companyEmail: string | null;
   workLocation: string | null;
-  licenseNotes: string | null;
+
+  // Notes
   notes: string | null;
-  recommendedRoleId: string | null;
+
+  // Address
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+
+  // Role recommendation / preapproval
+  recommendedRole: string | null;
+  isPreapproved: boolean;
+
+  // Audit
   createdAtUtc: string;
   updatedAtUtc: string;
   deletedAtUtc: string | null;
