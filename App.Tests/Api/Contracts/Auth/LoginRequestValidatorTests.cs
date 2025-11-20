@@ -1,6 +1,6 @@
 ﻿using App.Api.Contracts.Auth;
-using App.Api.Contracts.Auth.Requests;
 using App.Api.Contracts.Auth.Validators;
+using App.Api.Features.Auth.Login;
 using FluentValidation.TestHelper;
 
 namespace App.Tests.Api.Contracts.Auth;

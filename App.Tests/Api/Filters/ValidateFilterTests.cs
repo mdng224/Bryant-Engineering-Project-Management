@@ -1,5 +1,5 @@
 ﻿using App.Api.Contracts.Auth;
-using App.Api.Contracts.Auth.Requests;
+using App.Api.Features.Auth.Login;
 using App.Api.Filters;
 using FluentValidation;
 using FluentValidation.Results;

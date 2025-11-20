@@ -1,3 +1,3 @@
-﻿namespace App.Api.Contracts.Auth.Requests;
+﻿namespace App.Api.Features.Auth.Login;
 
 public sealed record LoginRequest(string Email, string Password);

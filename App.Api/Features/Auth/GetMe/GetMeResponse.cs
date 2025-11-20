@@ -1,4 +1,4 @@
-﻿namespace App.Api.Contracts.Auth.Responses;
+﻿namespace App.Api.Features.Auth.GetMe;
 
 /// <summary>
 /// Represents the authenticated user's identity information extracted from a JWT token.
@@ -11,4 +11,4 @@
 /// <param name="Email">
 /// The user's email address (if available), extracted from the JWT <c>email</c> claim.
 /// </param>
-public sealed record MeResponse(string Subject, string? Email);
+public sealed record GetMeResponse(string Subject, string? Email);
