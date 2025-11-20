@@ -1,16 +1,16 @@
-export interface ClientCategoryDto {
+export interface ClientCategoryResponse {
   id: string;
   name: string;
 }
 
-export interface ClientTypeDto {
+export interface ClientTypeResponse {
   id: string;
   name: string;
   description: string;
   categoryId: string;
 }
 
-export interface GetClientLookupsResponse {
-  categories: ClientCategoryDto[];
-  types: ClientTypeDto[];
+export interface ListClientLookupsResponse {
+  categories: ClientCategoryResponse[];
+  types: ClientTypeResponse[];
 }

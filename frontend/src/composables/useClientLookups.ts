@@ -1,15 +1,15 @@
 // src/composables/useClientLookups.ts
 import {
   clientService,
-  type ClientCategoryDto,
-  type ClientTypeDto,
-  type GetClientLookupsResponse,
+  type ClientCategoryResponse,
+  type ClientTypeResponse,
+  type ListClientLookupsResponse,
 } from '@/api/clients';
 import { ref } from 'vue';
 
 // module-level refs so all components share the same cache
-const categories = ref<ClientCategoryDto[]>([]);
-const types = ref<ClientTypeDto[]>([]);
+const categories = ref<ClientCategoryResponse[]>([]);
+const types = ref<ClientTypeResponse[]>([]);
 const loaded = ref(false);
 const loading = ref(false);
 
@@ -19,7 +19,7 @@ export const useClientLookups = () => {
 
     loading.value = true;
     try {
-      const lookups: GetClientLookupsResponse = await clientService.getLookups();
+      const lookups: ListClientLookupsResponse = await clientService.getLookups();
 
       categories.value = lookups.categories;
       types.value = lookups.types;

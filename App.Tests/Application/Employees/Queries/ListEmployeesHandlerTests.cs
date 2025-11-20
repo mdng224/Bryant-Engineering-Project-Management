@@ -1,13 +1,14 @@
 ﻿using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Pagination;
 using App.Application.Employees.Queries;
+using App.Application.Employees.Queries.ListEmployees;
 using App.Domain.Employees;
 using FluentAssertions;
 using Moq;
 
 namespace App.Tests.Application.Employees.Queries;
 
- public class GetEmployeesHandlerTests
+ public class ListEmployeesHandlerTests
 {
     [Fact]
     public async Task Handle_Should_Return_Ok_With_EmptyEmployees_And_ZeroTotals()
@@ -24,7 +25,7 @@ namespace App.Tests.Application.Employees.Queries;
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(([], 0));
 
-        var handler = new GetEmployeesHandler(mockReader.Object);
+        var handler = new ListEmployeesHandler(mockReader.Object);
         var pagedQuery = new PagedQuery(page: 1, pageSize: 10);
         var query = new ListEmployeesQuery(pagedQuery, NameFilter: null, IsDeleted: null);
 
@@ -58,7 +59,7 @@ namespace App.Tests.Application.Employees.Queries;
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(([], 25));
 
-        var handler = new GetEmployeesHandler(mockReader.Object);
+        var handler = new ListEmployeesHandler(mockReader.Object);
         var pagedQuery = new PagedQuery(page: 2, pageSize: 10);
         var query = new ListEmployeesQuery(pagedQuery, NameFilter: null, IsDeleted: null);
 
@@ -98,7 +99,7 @@ namespace App.Tests.Application.Employees.Queries;
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("boom"));
 
-        var handler = new GetEmployeesHandler(mockReader.Object);
+        var handler = new ListEmployeesHandler(mockReader.Object);
         var pagedQuery = new PagedQuery(page: 1, pageSize: 10);
         var query = new ListEmployeesQuery(pagedQuery, NameFilter: "doe", IsDeleted: false);
 

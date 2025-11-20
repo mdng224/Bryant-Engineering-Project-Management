@@ -1,10 +1,10 @@
 ﻿using App.Domain.Common;
 
-namespace App.Application.Common.Dtos.Clients;
+namespace App.Api.Features.Clients.GetClientDetails;
 
-public sealed record ClientListItemDto(
+public sealed record GetClientDetailsResponse(
     Guid Id,
-    string Name,
+    string? Name,
     int TotalActiveProjects,
     int TotalProjects,
     string? FirstName,
@@ -20,4 +20,5 @@ public sealed record ClientListItemDto(
     DateTimeOffset? DeletedAtUtc,
     Guid? CreatedById,
     Guid? UpdatedById,
-    Guid? DeletedById);
+    Guid? DeletedById 
+    );

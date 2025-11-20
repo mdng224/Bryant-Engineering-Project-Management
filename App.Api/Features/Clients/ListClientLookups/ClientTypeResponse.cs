@@ -1,7 +1,8 @@
-﻿namespace App.Api.Contracts.Clients.Responses.Lookups;
+﻿namespace App.Api.Features.Clients.ListClientLookups;
 
 public record ClientTypeResponse(
     Guid Id,
     string Name,
     string Description,
-    Guid CategoryId);
+    Guid CategoryId
+);

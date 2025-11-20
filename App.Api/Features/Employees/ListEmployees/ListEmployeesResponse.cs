@@ -5,4 +5,5 @@ public record ListEmployeesResponse(
     int TotalCount,
     int Page,
     int PageSize,
-    int TotalPages);
+    int TotalPages
+);

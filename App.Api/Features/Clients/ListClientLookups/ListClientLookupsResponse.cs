@@ -1,5 +1,5 @@
-﻿namespace App.Api.Contracts.Clients.Responses.Lookups;
+﻿namespace App.Api.Features.Clients.ListClientLookups;
 
-public record ClientLookupsResponse(
+public record ListClientLookupsResponse(
     IReadOnlyList<ClientCategoryResponse> Categories,
     IReadOnlyList<ClientTypeResponse> Types);

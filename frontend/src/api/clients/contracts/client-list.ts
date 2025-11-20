@@ -1,13 +1,8 @@
 import type { Address } from '@/api/common';
 import type { ClientBase } from './client-base';
-import type { ClientSummaryResponse } from './client-summary';
+import type { ClientRowResponse } from './client-summary';
 
-export interface ClientListItemResponse {
-  clientSummaryResponse: ClientSummaryResponse;
-  clientDetailsResponse: ClientDetailsResponse;
-}
-
-export interface GetClientsRequest {
+export interface ListClientsRequest {
   page: number;
   pageSize: number;
   nameFilter: string | null;
@@ -16,15 +11,15 @@ export interface GetClientsRequest {
   typeId: string | null;
 }
 
-export interface GetClientsResponse {
-  clientListItemResponses: ClientListItemResponse[];
+export interface ListClientsResponse {
+  clients: ClientRowResponse[];
   totalCount: number;
   page: number;
   pageSize: number;
   totalPages: number;
 }
 
-export type ClientDetailsResponse = ClientBase & {
+export type GetClientDetailsResponse = ClientBase & {
   middleName: string | null;
   address: Address | null;
   note: string | null;

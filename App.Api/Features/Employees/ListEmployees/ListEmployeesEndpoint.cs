@@ -3,6 +3,7 @@ using App.Application.Common.Dtos.Employees;
 using App.Application.Common.Pagination;
 using App.Application.Common.Results;
 using App.Application.Employees.Queries;
+using App.Application.Employees.Queries.ListEmployees;
 using Microsoft.AspNetCore.Mvc;
 using static Microsoft.AspNetCore.Http.Results;
 
@@ -42,8 +43,7 @@ public static class ListEmployeesEndpoint
         return new ListEmployeesQuery(pagedQuery, request.NameFilter, request.IsDeleted);
     }
     
-    private static ListEmployeesResponse ToResponse(
-        this PagedResult<EmployeeRowDto> pagedResult)
+    private static ListEmployeesResponse ToResponse(this PagedResult<EmployeeRowDto> pagedResult)
     {
         var employees = pagedResult.Items.Select(dto => dto.ToResponse()).ToList();
 

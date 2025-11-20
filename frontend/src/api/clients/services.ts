@@ -4,21 +4,21 @@ import api from '..';
 import type {
   AddClientRequest,
   AddClientResponse,
-  GetClientLookupsResponse,
-  GetClientsRequest,
-  GetClientsResponse,
+  ListClientLookupsResponse,
+  ListClientsRequest,
+  ListClientsResponse,
 } from './';
 import { ClientsRoutes } from './routes';
 
 /* ------------------------------ GET (list) ------------------------------ */
-const get = async (params: GetClientsRequest): Promise<GetClientsResponse> => {
-  const { data } = await api.get<GetClientsResponse>(ClientsRoutes.list, { params });
+const get = async (params: ListClientsRequest): Promise<ListClientsResponse> => {
+  const { data } = await api.get<ListClientsResponse>(ClientsRoutes.list, { params });
   return data;
 };
 
 /* ------------------------------ GET (lookups) ------------------------------ */
-const getLookups = async (): Promise<GetClientLookupsResponse> => {
-  const { data } = await api.get<GetClientLookupsResponse>(ClientsRoutes.lookups);
+const getLookups = async (): Promise<ListClientLookupsResponse> => {
+  const { data } = await api.get<ListClientLookupsResponse>(ClientsRoutes.lookups);
   return data;
 };
 

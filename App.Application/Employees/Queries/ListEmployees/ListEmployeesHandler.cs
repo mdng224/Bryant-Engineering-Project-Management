@@ -1,15 +1,14 @@
 ﻿using App.Application.Abstractions.Handlers;
 using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Common.Dtos;
 using App.Application.Common.Dtos.Employees;
 using App.Application.Common.Pagination;
 using App.Application.Common.Results;
 using App.Domain.Common;
 using static App.Application.Common.R;
 
-namespace App.Application.Employees.Queries;
+namespace App.Application.Employees.Queries.ListEmployees;
 
-public sealed class GetEmployeesHandler(IEmployeeReader reader)
+public sealed class ListEmployeesHandler(IEmployeeReader reader)
     : IQueryHandler<ListEmployeesQuery, Result<PagedResult<EmployeeRowDto>>>
 {
     public async Task<Result<PagedResult<EmployeeRowDto>>> Handle(ListEmployeesQuery query, CancellationToken ct)

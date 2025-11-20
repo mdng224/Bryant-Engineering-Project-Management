@@ -1,9 +1,10 @@
-﻿namespace App.Api.Contracts.Clients.Requests;
+﻿namespace App.Api.Features.Clients.ListClients;
 
-public record GetClientsRequest(
+public record ListClientsRequest(
     int Page,
     int PageSize,
     string? NameFilter,
     bool HasActiveProject,
     Guid? CategoryId,
-    Guid? TypeId);
+    Guid? TypeId
+);

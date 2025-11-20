@@ -1,7 +1,6 @@
-﻿namespace App.Api.Contracts.Clients.Responses;
+﻿namespace App.Application.Common.Dtos.Clients;
 
-// Non detailed row
-public sealed record ClientSummaryResponse(
+public sealed record ClientRowDto(
     Guid     Id,
     string? Name,
     int     TotalActiveProjects,

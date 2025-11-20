@@ -12,7 +12,47 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
         await db.ReadSet<Client>()
             .AnyAsync(c => c.Email == normalizedEmail, ct);
 
-    public async Task<(IReadOnlyList<ClientListItemDto> items, int totalCount)> GetPagedAsync(
+    public async Task<ClientDetailsDto?> GetDetailsAsync(Guid id, CancellationToken ct = default)
+    {
+        var clients    = db.ReadSet<Client>();
+        var projects   = db.ReadSet<Project>().IgnoreQueryFilters();
+        var categories = db.ReadSet<ClientCategory>();
+        var types      = db.ReadSet<ClientType>();
+
+        var query =
+            from c in clients
+            where c.Id == id
+            join cat in categories on c.CategoryId equals cat.Id into catGroup
+            from cat in catGroup.DefaultIfEmpty()
+            join t in types on c.TypeId equals t.Id into typeGroup
+            from type in typeGroup.DefaultIfEmpty()
+            select new ClientDetailsDto(
+                c.Id,
+                c.Name,
+                projects.Count(p =>
+                    p.ClientId == c.Id && p.DeletedAtUtc == null),
+                projects.Count(p =>
+                    p.ClientId == c.Id),
+                c.FirstName,
+                c.LastName,
+                c.Email,
+                c.Phone,
+                c.Address,      // owned type is fine to project
+                c.Note,
+                cat != null ? cat.Name : null,
+                type != null ? type.Name : null,
+                c.CreatedAtUtc,
+                c.UpdatedAtUtc,
+                c.DeletedAtUtc,
+                c.CreatedById,
+                c.UpdatedById,
+                c.DeletedById
+            );
+
+        return await query.SingleOrDefaultAsync(ct);
+    }
+    
+    public async Task<(IReadOnlyList<ClientRowDto> items, int totalCount)> GetPagedAsync(
         int skip,
         int take,
         string? normalizedNameFilter,
@@ -21,32 +61,23 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
         Guid? typeId,
         CancellationToken ct = default)
     {
-        // 1. Build filtered client query
-        var clientQuery = BuildClientQuery(
-            normalizedNameFilter,
-            hasActiveProject,
-            categoryId,
-            typeId);
+        var clientQuery = BuildClientQuery(normalizedNameFilter, hasActiveProject, categoryId, typeId);
 
-        // 2. Count (simple query)
         var totalCount = await clientQuery.CountAsync(ct);
         if (totalCount == 0 || skip >= totalCount)
             return ([], totalCount);
         
-        // 3. Decorate with joins + counts
+        var projects   = db.ReadSet<Project>().IgnoreQueryFilters();
         var categories = db.ReadSet<ClientCategory>();
-        var projects = db.ReadSet<Project>().IgnoreQueryFilters();
         var types      = db.ReadSet<ClientType>();
-        
-        var queryWithCounts =
+
+        var query =
             from c in clientQuery
             join cat in categories on c.CategoryId equals cat.Id into catGroup
             from cat in catGroup.DefaultIfEmpty()
             join t in types on c.TypeId equals t.Id into typeGroup
             from type in typeGroup.DefaultIfEmpty()
-            join p in projects on c.Id equals p.ClientId into projGroup
-            from pg in projGroup.DefaultIfEmpty()
-            group new { c, cat, type, pg } by new
+            select new
             {
                 c.Id,
                 c.Name,
@@ -54,69 +85,34 @@ public sealed class ClientReader(AppDbContext db) : IClientReader
                 c.LastName,
                 c.Email,
                 c.Phone,
-                c.Address,
-                c.Note,
-                c.CreatedAtUtc,
-                c.UpdatedAtUtc,
-                c.DeletedAtUtc,
-                c.CreatedById,
-                c.UpdatedById,
-                c.DeletedById,
                 CategoryName = cat != null ? cat.Name : null,
-                TypeName     = type != null ? type.Name : null
-            }
-            into g
-            select new
-            {
-                ClientId           = g.Key.Id,
-                ClientName         = g.Key.Name,
-                g.Key.FirstName,
-                g.Key.LastName,
-                g.Key.Email,
-                g.Key.Phone,
-                g.Key.Address,
-                g.Key.Note,
-                g.Key.CreatedAtUtc,
-                g.Key.UpdatedAtUtc,
-                g.Key.DeletedAtUtc,
-                g.Key.CreatedById,
-                g.Key.UpdatedById,
-                g.Key.DeletedById,
-                g.Key.CategoryName,
-                g.Key.TypeName,
-                TotalProjects       = g.Count(x => x.pg != null),
-                TotalActiveProjects = g.Count(x => x.pg != null && x.pg.DeletedAtUtc == null)
+                TypeName     = type != null ? type.Name : null,
+                TotalActiveProjects = projects.Count(p =>
+                    p.ClientId == c.Id && p.DeletedAtUtc == null),
+                TotalProjects = projects.Count(p =>
+                    p.ClientId == c.Id)
             };
         
-        // 4. Order, page, map to DTO
-        var items = await queryWithCounts
+        var items = await query
             .OrderByDescending(jq => jq.TotalActiveProjects)
             .ThenByDescending(jq => jq.TotalProjects)
-            .ThenBy(jq => jq.ClientName)
-            .ThenBy(jq => jq.ClientId)
+            .ThenBy(jq => jq.Name)
+            .ThenBy(jq => jq.Id)
             .Skip(skip)
             .Take(take)
-            .Select(x => new ClientListItemDto(
-                x.ClientId,
-                x.ClientName,
+            .Select(x => new ClientRowDto(
+                x.Id,
+                x.Name,
                 x.TotalActiveProjects,
                 x.TotalProjects,
                 x.FirstName,
                 x.LastName,
                 x.Email,
                 x.Phone,
-                x.Address,
-                x.Note,
                 x.CategoryName,
-                x.TypeName,
-                x.CreatedAtUtc,
-                x.UpdatedAtUtc,
-                x.DeletedAtUtc,
-                x.CreatedById,
-                x.UpdatedById,
-                x.DeletedById))
+                x.TypeName))
             .ToListAsync(ct);
-        
+
         return (items, totalCount);
     }
     

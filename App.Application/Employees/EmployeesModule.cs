@@ -8,6 +8,7 @@ using App.Application.Employees.Commands.AddEmployee;
 using App.Application.Employees.Commands.RestoreEmployee;
 using App.Application.Employees.Queries;
 using App.Application.Employees.Queries.GetEmployeeDetails;
+using App.Application.Employees.Queries.ListEmployees;
 using App.Application.Positions.Commands.RestorePosition;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,7 +20,7 @@ public static class EmployeesModule
     {
         // Queries
         services.AddScoped<IQueryHandler<GetEmployeeDetailsQuery, Result<EmployeeDetailsDto>>, GetEmployeeDetailsHandler>();
-        services.AddScoped<IQueryHandler<ListEmployeesQuery, Result<PagedResult<EmployeeRowDto>>>, GetEmployeesHandler>();
+        services.AddScoped<IQueryHandler<ListEmployeesQuery, Result<PagedResult<EmployeeRowDto>>>, ListEmployeesHandler>();
         
         // Commands
         services.AddScoped<ICommandHandler<AddEmployeeCommand, Result<Guid>>, AddEmployeeHandler>();

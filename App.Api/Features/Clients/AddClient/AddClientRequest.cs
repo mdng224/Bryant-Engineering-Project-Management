@@ -1,6 +1,6 @@
 ﻿using App.Domain.Common;
 
-namespace App.Api.Contracts.Clients.Requests;
+namespace App.Api.Features.Clients.AddClient;
 
 public sealed record AddClientRequest(
     string Name,
@@ -14,4 +14,5 @@ public sealed record AddClientRequest(
     Address? Address,
     string? Note,
     Guid ClientCategoryId,
-    Guid ClientTypeId);
+    Guid ClientTypeId
+);

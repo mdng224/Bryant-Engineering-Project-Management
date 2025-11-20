@@ -81,10 +81,10 @@
 <script setup lang="ts">
   import {
     clientService,
-    type ClientDetailsResponse,
-    type ClientSummaryResponse,
-    type GetClientsRequest,
-    type GetClientsResponse,
+    type ClientRowResponse,
+    type GetClientDetailsResponse,
+    type ListClientsRequest,
+    type ListClientsResponse,
   } from '@/api/clients';
   import type { Address } from '@/api/common';
   import BooleanFilter from '@/components/BooleanFilter.vue';
@@ -111,7 +111,7 @@
     'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
 
   /* ------------------------------- Details ------------------------------ */
-  const fieldDef = <K extends keyof ClientDetailsResponse>(
+  const fieldDef = <K extends keyof GetClientDetailsResponse>(
     key: K,
     label: string,
     type: 'text' | 'date' | 'mono' | 'multiline' = 'text',
@@ -164,17 +164,17 @@
   ] as any;
 
   /* -------------------------------- Columns ------------------------------- */
-  const col: ColumnHelper<ClientSummaryResponse> = createColumnHelper<ClientSummaryResponse>();
+  const col: ColumnHelper<ClientRowResponse> = createColumnHelper<ClientRowResponse>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns: ColumnDef<ClientSummaryResponse, any>[] = [
+  const columns: ColumnDef<ClientRowResponse, any>[] = [
     col.accessor('name', { header: 'Client Name', meta: { kind: 'text' as const } }),
     col.accessor('totalActiveProjects', {
       header: 'Active Projects',
       meta: {
         kind: 'link' as const,
         disableWhenZero: true,
-        onClick: ({ cell }: { cell: Cell<ClientSummaryResponse, unknown> }) => {
-          const row = cell.row.original as ClientSummaryResponse;
+        onClick: ({ cell }: { cell: Cell<ClientRowResponse, unknown> }) => {
+          const row = cell.row.original as ClientRowResponse;
           router.push({
             name: 'projects',
             query: { clientId: row.id, status: 'active' },
@@ -188,8 +188,8 @@
       meta: {
         kind: 'link' as const,
         disableWhenZero: true,
-        onClick: ({ cell }: { cell: Cell<ClientSummaryResponse, unknown> }) => {
-          const row = cell.row.original as ClientSummaryResponse;
+        onClick: ({ cell }: { cell: Cell<ClientRowResponse, unknown> }) => {
+          const row = cell.row.original as ClientRowResponse;
           router.push({
             name: 'projects',
             query: { clientId: row.id, status: 'all' },
@@ -241,9 +241,9 @@
     typeId: string | null;
   };
 
-  const clientDetails = ref<ClientDetailsResponse[]>([]);
+  const clientDetails = ref<GetClientDetailsResponse[]>([]);
   const clientDetailsById = computed(() => {
-    const map = new Map<string, ClientDetailsResponse>();
+    const map = new Map<string, GetClientDetailsResponse>();
     for (const item of clientDetails.value) {
       map.set(item.id, item);
     }
@@ -251,7 +251,7 @@
   });
 
   const fetchClients = async ({ page, pageSize, query }: FetchParams<ClientQuery>) => {
-    const request: GetClientsRequest = {
+    const request: ListClientsRequest = {
       page,
       pageSize,
       nameFilter: query?.name || null,
@@ -259,11 +259,10 @@
       categoryId: query?.categoryId ?? null,
       typeId: query?.typeId ?? null,
     };
-    const response: GetClientsResponse = await clientService.get(request);
-    clientDetails.value = response.clientListItemResponses.map(clir => clir.clientDetailsResponse);
+    const response: ListClientsResponse = await clientService.get(request);
 
     return {
-      items: response.clientListItemResponses.map(clir => clir.clientSummaryResponse),
+      items: response.clients,
       totalCount: response.totalCount,
       totalPages: response.totalPages,
       page: response.page,
@@ -287,13 +286,13 @@
     setPageSize,
     fetchNow: refetch,
     destroy,
-  } = useDataTable<ClientSummaryResponse, typeof query.value>(columns, fetchClients, query);
+  } = useDataTable<ClientRowResponse, typeof query.value>(columns, fetchClients, query);
 
   /* -------------------------------- Handlers ------------------------------ */
   const addDialogIsOpen = ref(false);
   const editClientDialogIsOpen = ref(false);
   const openDetailsDialog = ref(false);
-  const selectedClient = ref<ClientDetailsResponse | null>(null);
+  const selectedClient = ref<GetClientDetailsResponse | null>(null);
 
   const handleView = (id: string): void => {
     const detail = clientDetailsById.value.get(id) ?? null;
@@ -301,7 +300,7 @@
     openDetailsDialog.value = !!detail;
   };
 
-  const handleEditClient = (summary: ClientSummaryResponse): void => {
+  const handleEditClient = (summary: ClientRowResponse): void => {
     const detail = clientDetailsById.value.get(summary.id) ?? null;
     selectedClient.value = detail;
     editClientDialogIsOpen.value = !!detail;

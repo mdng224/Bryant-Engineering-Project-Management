@@ -1,10 +1,10 @@
 ﻿using App.Domain.Common;
 
-namespace App.Api.Contracts.Clients.Responses;
+namespace App.Application.Common.Dtos.Clients;
 
-public sealed record ClientDetailsResponse(
+public sealed record ClientDetailsDto(
     Guid Id,
-    string? Name,
+    string Name,
     int TotalActiveProjects,
     int TotalProjects,
     string? FirstName,
@@ -20,5 +20,4 @@ public sealed record ClientDetailsResponse(
     DateTimeOffset? DeletedAtUtc,
     Guid? CreatedById,
     Guid? UpdatedById,
-    Guid? DeletedById 
-    );
+    Guid? DeletedById);

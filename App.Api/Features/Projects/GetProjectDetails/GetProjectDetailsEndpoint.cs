@@ -37,13 +37,12 @@ public static class GetProjectDetailsEndpoint
         }
 
         var dto = result.Value!;
-        var response = MapToResponse(dto);
+        var response = dto.ToResponse();
 
         return Ok(response);
     }
 
-    // keep mapping local to the slice for now
-    private static GetProjectDetailsResponse MapToResponse(ProjectDetailsDto dto) =>
+    private static GetProjectDetailsResponse ToResponse(this ProjectDetailsDto dto) =>
         new(
             Id:            dto.Id,
             Code:          dto.Code,

@@ -6,12 +6,12 @@ using App.Application.Common.Results;
 using App.Domain.Common;
 using static App.Application.Common.R;
 
-namespace App.Application.Clients.Queries.GetClients;
+namespace App.Application.Clients.Queries.ListClients;
 
-public sealed class GetClientsHandler(IClientReader clientReader)
-    : IQueryHandler<GetClientsQuery, Result<PagedResult<ClientListItemDto>>>
+public sealed class ListClientsHandler(IClientReader clientReader)
+    : IQueryHandler<ListClientsQuery, Result<PagedResult<ClientRowDto>>>
 {
-    public async Task<Result<PagedResult<ClientListItemDto>>> Handle(GetClientsQuery query, CancellationToken ct)
+    public async Task<Result<PagedResult<ClientRowDto>>> Handle(ListClientsQuery query, CancellationToken ct)
     {
         var (page, pageSize, skip) = query.PagedQuery;
         var normalized = query.NameFilter?.ToNormalizedName();
@@ -25,7 +25,7 @@ public sealed class GetClientsHandler(IClientReader clientReader)
             query.TypeId,
             ct);
         
-        var pagedResult = new PagedResult<ClientListItemDto>(items, total, page, pageSize);
+        var pagedResult = new PagedResult<ClientRowDto>(items, total, page, pageSize);
 
         return Ok(pagedResult);
     }
