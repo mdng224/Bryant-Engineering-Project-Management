@@ -1,5 +1,5 @@
 // src/composables/useProjectLookups.ts
-import { projectService, type GetProjectLookupsResponse } from '@/api/projects';
+import { projectService, type ListProjectLookupsResponse } from '@/api/projects';
 import { ref } from 'vue';
 
 const managers = ref<string[]>([]);
@@ -12,7 +12,7 @@ export const useProjectLookups = () => {
 
     loading.value = true;
     try {
-      const lookups: GetProjectLookupsResponse = await projectService.getLookups();
+      const lookups: ListProjectLookupsResponse = await projectService.getLookups();
 
       managers.value = lookups.managers;
       loaded.value = true;

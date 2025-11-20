@@ -33,7 +33,7 @@
             v-if="!cell.row.original.deletedAtUtc"
             :class="actionButtonClass"
             aria-label="Edit position"
-            @click="handleEdit(cell.row.original as PositionResponse)"
+            @click="handleEdit(cell.row.original as PositionRowResponse)"
           >
             <pencil class="h-4 w-4" />
           </button>
@@ -43,7 +43,7 @@
             v-if="!cell.row.original.deletedAtUtc"
             class="rounded-md bg-indigo-600 p-1.5 transition hover:bg-rose-200"
             aria-label="delete position"
-            @click="handleOpenDeleteDialog(cell.row.original as PositionResponse)"
+            @click="handleOpenDeleteDialog(cell.row.original as PositionRowResponse)"
           >
             {{ cell.row.original.deletedAtUtc }}
             <Lock class="h-4 w-4 text-rose-500 hover:text-rose-400" />
@@ -54,7 +54,7 @@
             v-else
             class="rounded-md bg-indigo-600 p-1.5 text-emerald-200 transition hover:bg-green-200"
             aria-label="reactivate position"
-            @click="handleOpenRestoreDialog(cell.row.original as PositionResponse)"
+            @click="handleOpenRestoreDialog(cell.row.original as PositionRowResponse)"
           >
             <lock-open class="h-4 w-4 hover:text-green-400" />
           </button>
@@ -96,9 +96,9 @@
 <script setup lang="ts">
   import { extractApiError } from '@/api/error';
   import type {
-    GetPositionsRequest,
-    GetPositionsResponse,
-    PositionResponse,
+    ListPositionsRequest,
+    ListPositionsResponse,
+    PositionRowResponse,
   } from '@/api/positions/contracts';
   import { positionService } from '@/api/positions/services';
   import BooleanFilter from '@/components/BooleanFilter.vue';
@@ -125,9 +125,9 @@
   const actionButtonClass = 'rounded-md bg-indigo-600 p-1.5  transition hover:bg-indigo-500';
 
   /* -------------------------------- Columns ------------------------------- */
-  const col: ColumnHelper<PositionResponse> = createColumnHelper<PositionResponse>();
+  const col: ColumnHelper<PositionRowResponse> = createColumnHelper<PositionRowResponse>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns: ColumnDef<PositionResponse, any>[] = [
+  const columns: ColumnDef<PositionRowResponse, any>[] = [
     col.accessor('name', {
       header: 'Position Name',
       meta: { kind: 'text' as const },
@@ -172,14 +172,15 @@
   type PosQuery = { position: string | null; deletedFilter: boolean | null };
 
   const fetchPositions = async ({ page, pageSize, query }: FetchParams<PosQuery>) => {
-    const params: GetPositionsRequest = {
+    const request: ListPositionsRequest = {
       page,
       pageSize,
       nameFilter: query?.position || null,
       isDeleted: query?.deletedFilter ?? false,
     };
-    const response: GetPositionsResponse = await positionService.get(params);
-
+    console.log(request);
+    const response: ListPositionsResponse = await positionService.get(request);
+    console.log(response);
     return {
       items: response.positions,
       totalCount: response.totalCount,
@@ -203,10 +204,10 @@
     setPageSize,
     fetchNow: refetch,
     destroy,
-  } = useDataTable<PositionResponse, typeof query.value>(columns, fetchPositions, query);
+  } = useDataTable<PositionRowResponse, typeof query.value>(columns, fetchPositions, query);
 
   /* ------------------------------ Handlers ------------------------------- */
-  const selectedPosition = ref<PositionResponse | null>(null);
+  const selectedPosition = ref<PositionRowResponse | null>(null);
   const addDialogIsOpen = ref(false);
   const deleteDialogIsOpen = ref(false);
   const editPositionDialogIsOpen = ref(false);
@@ -233,7 +234,6 @@
     if (!id) return;
 
     try {
-      console.log(id);
       await positionService.restore(id);
       await refetch();
     } catch (err: unknown) {
@@ -245,17 +245,17 @@
     }
   };
 
-  const handleOpenDeleteDialog = (position: PositionResponse): void => {
+  const handleOpenDeleteDialog = (position: PositionRowResponse): void => {
     selectedPosition.value = position;
     deleteDialogIsOpen.value = true;
   };
 
-  const handleEdit = (position: PositionResponse): void => {
+  const handleEdit = (position: PositionRowResponse): void => {
     selectedPosition.value = position;
     editPositionDialogIsOpen.value = true;
   };
 
-  const handleOpenRestoreDialog = (position: PositionResponse): void => {
+  const handleOpenRestoreDialog = (position: PositionRowResponse): void => {
     restoreDialogIsOpen.value = true;
     selectedPosition.value = position;
   };

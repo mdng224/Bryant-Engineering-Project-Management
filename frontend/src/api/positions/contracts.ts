@@ -13,15 +13,15 @@ export type AddPositionResponse = PositionBase & {
   id: string;
 };
 
-export type GetPositionsRequest = {
+export type ListPositionsRequest = {
   page: number;
   pageSize: number;
   nameFilter: string | null;
   isDeleted: boolean;
 };
 
-export type GetPositionsResponse = {
-  positions: PositionResponse[];
+export type ListPositionsResponse = {
+  positions: PositionRowResponse[];
   totalCount: number;
   page: number;
   pageSize: number;
@@ -30,7 +30,7 @@ export type GetPositionsResponse = {
 };
 
 // Response for each individual position (used in table)
-export type PositionResponse = PositionBase & {
+export type PositionRowResponse = PositionBase & {
   id: string;
 };
 

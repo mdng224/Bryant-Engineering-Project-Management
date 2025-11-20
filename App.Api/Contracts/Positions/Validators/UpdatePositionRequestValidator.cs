@@ -1,4 +1,4 @@
-﻿using App.Api.Contracts.Positions.Requests;
+﻿using App.Api.Features.Positions.UpdatePosition;
 using FluentValidation;
 
 namespace App.Api.Contracts.Positions.Validators;

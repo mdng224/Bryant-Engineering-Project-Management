@@ -3,16 +3,16 @@
 import type {
   AddPositionRequest,
   AddPositionResponse,
-  GetPositionsRequest,
-  GetPositionsResponse,
+  ListPositionsRequest,
+  ListPositionsResponse,
   UpdatePositionRequest,
 } from '@/api/positions/contracts';
 import { PositionsRoutes } from '@/api/positions/routes';
 import api from '..';
 
 /* ------------------------------ GET (list) ------------------------------ */
-const get = async (params: GetPositionsRequest): Promise<GetPositionsResponse> => {
-  const { data } = await api.get<GetPositionsResponse>(PositionsRoutes.list, { params });
+const get = async (params: ListPositionsRequest): Promise<ListPositionsResponse> => {
+  const { data } = await api.get<ListPositionsResponse>(PositionsRoutes.list, { params });
   return data;
 };
 

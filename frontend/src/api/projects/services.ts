@@ -3,21 +3,21 @@
 import api from '..';
 import type {
   AddProjectRequest,
-  GetProjectLookupsResponse,
-  GetProjectsRequest,
-  GetProjectsResponse,
+  ListProjectLookupsResponse,
+  ListProjectsRequest,
+  ListProjectsResponse,
 } from './contracts';
 import { ProjectsRoutes } from './routes';
 
 /* ------------------------------ GET (list) ------------------------------ */
-const get = async (params: GetProjectsRequest): Promise<GetProjectsResponse> => {
-  const { data } = await api.get<GetProjectsResponse>(ProjectsRoutes.get, { params });
+const get = async (params: ListProjectsRequest): Promise<ListProjectsResponse> => {
+  const { data } = await api.get<ListProjectsResponse>(ProjectsRoutes.get, { params });
   return data;
 };
 
 /* ------------------------------ GET (lookups) ------------------------------ */
-const getLookups = async (): Promise<GetProjectLookupsResponse> => {
-  const { data } = await api.get<GetProjectLookupsResponse>(ProjectsRoutes.lookups);
+const getLookups = async (): Promise<ListProjectLookupsResponse> => {
+  const { data } = await api.get<ListProjectLookupsResponse>(ProjectsRoutes.lookups);
   return data;
 };
 

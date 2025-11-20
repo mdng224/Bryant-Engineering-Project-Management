@@ -64,7 +64,7 @@
 <script setup lang="ts">
   import { extractApiError } from '@/api/error';
   import { positionService } from '@/api/positions';
-  import type { PositionResponse, UpdatePositionRequest } from '@/api/positions/contracts';
+  import type { PositionRowResponse, UpdatePositionRequest } from '@/api/positions/contracts';
   import { AppDialog } from '@/components/ui';
   import AppAlert from '@/components/ui/AppAlert.vue';
   import { AlertTriangle, Save } from 'lucide-vue-next';
@@ -72,7 +72,7 @@
 
   const props = defineProps<{
     open: boolean;
-    selectedPosition: PositionResponse | null;
+    selectedPosition: PositionRowResponse | null;
   }>();
 
   const emit = defineEmits<{
@@ -81,7 +81,7 @@
   }>();
 
   /******************** State ********************/
-  const model = reactive<PositionResponse>({
+  const model = reactive<PositionRowResponse>({
     id: '',
     name: '',
     code: '',

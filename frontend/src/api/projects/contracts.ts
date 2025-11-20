@@ -12,7 +12,7 @@ type ProjectBase = {
   deletedAtUtc: string | null;
 };
 
-export type GetProjectsRequest = {
+export type ListProjectsRequest = {
   page: number;
   pageSize: number;
   nameFilter: string | null;
@@ -21,24 +21,18 @@ export type GetProjectsRequest = {
   manager: string | null;
 };
 
-export type GetProjectsResponse = {
-  projectListItemResponses: ProjectListItemResponse[];
+export type ListProjectsResponse = {
+  projects: ProjectRowResponse[];
   totalCount: number;
   page: number;
   pageSize: number;
   totalPages: number;
 };
 
-export type ProjectListItemResponse = {
-  summary: ProjectSummaryResponse;
-  details: ProjectResponse;
-};
-
-// This is for the non detail view in the table for an project
-export type ProjectSummaryResponse = ProjectBase;
+export type ProjectRowResponse = ProjectBase;
 
 // For expanded detail look on an project
-export type ProjectResponse = ProjectBase & {
+export type GetProjectDetailsResponse = ProjectBase & {
   clientId: string;
   scopeId: string;
   year: number;
@@ -50,7 +44,7 @@ export type ProjectResponse = ProjectBase & {
   deletedBy: string | null;
 };
 
-export type GetProjectLookupsResponse = {
+export type ListProjectLookupsResponse = {
   managers: string[];
 };
 

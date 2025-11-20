@@ -10,10 +10,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using App.Api.Contracts.Auth.Requests;
 using App.Api.Contracts.Auth.Validators;
-using App.Api.Contracts.Positions.Requests;
 using App.Api.Contracts.Positions.Validators;
 using App.Api.Contracts.Users.Requests;
 using App.Api.Contracts.Users.Validators;
+using App.Api.Features.Positions.AddPosition;
+using App.Api.Features.Positions.UpdatePosition;
 
 namespace App.Api.Extensions;
 
@@ -47,7 +48,7 @@ public static class ServiceCollectionExtensions
             throw new InvalidOperationException("JWT key not configured. Provide Jwt:KeyBase64 or Jwt:Key.");
 
         var keyBytes = !string.IsNullOrWhiteSpace(keyB64)
-            ? Convert.FromBase64String(keyB64!)
+            ? Convert.FromBase64String(keyB64)
             : Encoding.UTF8.GetBytes(keyRaw!);
 
         // IMPORTANT: do not map inbound claims; keep "role" as "role"

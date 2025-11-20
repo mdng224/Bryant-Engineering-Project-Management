@@ -1,5 +1,4 @@
 ﻿using App.Application.Abstractions.Persistence.Readers;
-using App.Application.Common.Dtos;
 using App.Application.Common.Dtos.Projects;
 using App.Domain.Projects;
 using Microsoft.EntityFrameworkCore;
@@ -19,26 +18,12 @@ public sealed class ProjectReader(AppDbContext db) : IProjectReader
 
         return projectManagers;
     }
-    
-    public async Task<(IReadOnlyList<ProjectListItemDto> items, int totalCount)> GetPagedAsync(
-        int skip,
-        int take,
-        string? normalizedNameFilter,
-        bool? isDeleted,
-        Guid? clientId,
-        string? manager,
-        CancellationToken ct = default)
+
+    public async Task<ProjectDetailsDto?> GetDetailsAsync(Guid id, CancellationToken ct = default)
     {
-        var projectQuery = BuildProjectQuery(normalizedNameFilter, isDeleted, clientId, manager);
-        
-        var totalCount = await projectQuery.CountAsync(ct);
-        if (totalCount == 0 || skip >= totalCount)
-            return ([], totalCount);
-        
-        var items = await projectQuery
-            .Skip(skip)
-            .Take(take)
-            .Select(p => new ProjectListItemDto(
+        var projectDetails = await db.ReadSet<Project>()
+            .Where(p => p.Id == id)
+            .Select(p => new ProjectDetailsDto(
                 p.Id,
                 p.ClientId,
                 p.Client.Name,
@@ -57,6 +42,41 @@ public sealed class ProjectReader(AppDbContext db) : IProjectReader
                 p.CreatedById,
                 p.UpdatedById,
                 p.DeletedById
+            ))
+            .SingleOrDefaultAsync(ct);
+
+        return projectDetails;
+    }
+    
+    public async Task<(IReadOnlyList<ProjectRowDto> items, int totalCount)> GetPagedAsync(
+        int skip,
+        int take,
+        string? normalizedNameFilter,
+        bool? isDeleted,
+        Guid? clientId,
+        string? manager,
+        CancellationToken ct = default)
+    {
+        var projectQuery = BuildProjectQuery(normalizedNameFilter, isDeleted, clientId, manager);
+        
+        var totalCount = await projectQuery.CountAsync(ct);
+        if (totalCount == 0 || skip >= totalCount)
+            return ([], totalCount);
+        
+        var items = await projectQuery
+            .Skip(skip)
+            .Take(take)
+            .Select(p => new ProjectRowDto(
+                p.Id,
+                p.ClientId,
+                p.Client.Name,
+                p.ScopeId,
+                p.Scope.Name,
+                p.Name,
+                p.Code,
+                p.Manager,
+                p.Type,
+                p.DeletedAtUtc
             ))
             .ToListAsync(ct);
         

@@ -1,5 +1,6 @@
 ﻿using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Dtos;
+using App.Application.Common.Dtos.Positions;
 using App.Application.Common.Dtos.Projects;
 using App.Application.Common.Pagination;
 using App.Application.Positions.Queries.GetPositions;

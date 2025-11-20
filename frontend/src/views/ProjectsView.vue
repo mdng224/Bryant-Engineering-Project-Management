@@ -58,7 +58,7 @@
   <details-dialog
     :open="openDetailsDialog"
     title="Project Details"
-    :item="selectedProject as ProjectResponse"
+    :item="selectedProject as GetProjectDetailsResponse"
     :fields
     :format-utc
     @close="openDetailsDialog = false"
@@ -68,10 +68,10 @@
 <script setup lang="ts">
   import {
     projectService,
-    type GetProjectsRequest,
-    type GetProjectsResponse,
-    type ProjectResponse,
-    type ProjectSummaryResponse,
+    type GetProjectDetailsResponse,
+    type ListProjectsRequest,
+    type ListProjectsResponse,
+    type ProjectRowResponse,
   } from '@/api/projects';
   import BooleanFilter from '@/components/BooleanFilter.vue';
   import { AddProjectDialog } from '@/components/dialogs/projects';
@@ -107,7 +107,7 @@
   const actionButtonClass =
     'rounded-md bg-indigo-600 p-1.5 text-white transition hover:bg-indigo-500';
 
-  const fieldDef = <K extends keyof ProjectResponse>(
+  const fieldDef = <K extends keyof GetProjectDetailsResponse>(
     key: K,
     label: string,
     type: 'text' | 'date' | 'mono' | 'multiline' = 'text',
@@ -142,10 +142,10 @@
   ] as any;
 
   // ───────────────────────────── Table Columns ──────────────────────
-  const col: ColumnHelper<ProjectSummaryResponse> = createColumnHelper<ProjectSummaryResponse>();
+  const col: ColumnHelper<ProjectRowResponse> = createColumnHelper<ProjectRowResponse>();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns: ColumnDef<ProjectSummaryResponse, any>[] = [
+  const columns: ColumnDef<ProjectRowResponse, any>[] = [
     col.accessor('code', { header: 'Code', meta: { kind: 'text' as const } }),
     col.accessor('name', { header: 'Project Name', meta: { kind: 'text' as const } }),
     col.accessor('clientName', { header: 'Client Name', meta: { kind: 'text' as const } }),
@@ -213,11 +213,11 @@
   });
 
   // ─────────────────────────── Data Fetching ─────────────────────────
-  const projectDetails = ref<ProjectResponse[]>([]);
+  const projectDetails = ref<GetProjectDetailsResponse[]>([]);
   const projectDetailsById = computed(() => new Map(projectDetails.value.map(p => [p.id, p])));
 
   const fetchProjects = async ({ page, pageSize, query }: FetchParams<ProjectQuery>) => {
-    const request: GetProjectsRequest = {
+    const request: ListProjectsRequest = {
       page,
       pageSize,
       nameFilter: query?.name || null,
@@ -226,13 +226,10 @@
       manager: query?.manager || null,
     };
 
-    const response: GetProjectsResponse = await projectService.get(request);
-
-    // Cache details for dialogs
-    projectDetails.value = response.projectListItemResponses.map(plir => plir.details);
+    const response: ListProjectsResponse = await projectService.get(request);
 
     return {
-      items: response.projectListItemResponses.map(plir => plir.summary),
+      items: response.projects,
       totalCount: response.totalCount,
       totalPages: response.totalPages,
       page: response.page,
@@ -241,7 +238,7 @@
   };
 
   const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<
-    ProjectSummaryResponse,
+    ProjectRowResponse,
     ProjectQuery
   >(columns, fetchProjects, query);
 
@@ -251,7 +248,7 @@
   const editProjectDialogIsOpen = ref(false);
   const openDetailsDialog = ref(false);
   const reactivateDialogIsOpen = ref(false);
-  const selectedProject = ref<ProjectResponse | null>(null);
+  const selectedProject = ref<GetProjectDetailsResponse | null>(null);
 
   // ───────────────────────────── Handlers ────────────────────────────
   const handleView = (id: string): void => {
@@ -260,12 +257,12 @@
     openDetailsDialog.value = !!detail;
   };
 
-  const handleOpenDeleteDialog = (summary: ProjectSummaryResponse): void => {
+  const handleOpenDeleteDialog = (summary: ProjectRowResponse): void => {
     // selectedProject.value = summary;
     // deleteDialogIsOpen.value = true;
   };
 
-  const handleOpenReactivateDialog = (position: ProjectSummaryResponse): void => {
+  const handleOpenReactivateDialog = (position: ProjectRowResponse): void => {
     // TODO: Call reactivate service
   };
 
