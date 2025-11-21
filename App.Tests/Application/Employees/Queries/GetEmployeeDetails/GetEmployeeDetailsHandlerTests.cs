@@ -37,7 +37,7 @@ public class GetEmployeeDetailsHandlerTests
 
             // Organization
             Department: "Engineering",
-            PositionNames: new[] { "Engineer" },
+            PositionNames: ["Engineer"],
 
             // Contact / Misc
             CompanyEmail: "john.doe@example.com",
