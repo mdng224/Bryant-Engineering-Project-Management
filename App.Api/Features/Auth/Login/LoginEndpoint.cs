@@ -1,5 +1,4 @@
-﻿using App.Api.Filters;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Auth.Queries.Login;
 using App.Application.Common.Results;
 using Microsoft.AspNetCore.Mvc;
@@ -14,13 +13,11 @@ public static class LoginEndpoint
         // ---- POST /auth/login
         group.MapPost("/login", Handle)
             .AllowAnonymous()
-            .AddEndpointFilter<Validate<LoginRequest>>()
             .Accepts<LoginRequest>("application/json")
             .WithName("Auth_Login")
             .WithSummary("Login to the application")
             .WithDescription("Login with email and password to receive an access token.")
             .Produces<LoginResponse>()
-            .ProducesValidationProblem()
             .Produces(StatusCodes.Status401Unauthorized);
 
         return group;

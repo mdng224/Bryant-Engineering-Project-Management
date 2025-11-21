@@ -1,5 +1,4 @@
-﻿using App.Api.Filters;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Common.Results;
 using App.Application.Positions.Commands.AddPosition;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +11,6 @@ public static class AddPositionEndpoint
     public static RouteGroupBuilder MapAddPositionEndpoint(this RouteGroupBuilder group)
     {
         group.MapPost("", Handle)
-            .AddEndpointFilter<Validate<AddPositionRequest>>()        // TODO: you can remove later if moving validation
             .WithSummary("Create a new position")
             .Accepts<AddPositionRequest>("application/json")
             .Produces<Guid>(StatusCodes.Status201Created)

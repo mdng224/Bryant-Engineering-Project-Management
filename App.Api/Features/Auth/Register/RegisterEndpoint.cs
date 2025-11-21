@@ -1,6 +1,4 @@
-﻿using App.Api.Common.Mappers;
-using App.Api.Filters;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Auth.Commands.Register;
 using App.Application.Common.Results;
 using Microsoft.AspNetCore.Mvc;
@@ -15,13 +13,11 @@ public static class RegisterEndpoint
         // ---- POST /auth/register
         group.MapPost("/register", HandleRegister)
             .AllowAnonymous()
-            .AddEndpointFilter<Validate<RegisterRequest>>()
             .Accepts<RegisterRequest>("application/json")
             .WithName("Auth_Register")
             .WithSummary("Register a new user")
             .WithDescription("Create a new user account with email and password.")
-            .Produces<RegisterResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .Produces<Guid>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status409Conflict);
 
         return group;
@@ -29,19 +25,22 @@ public static class RegisterEndpoint
     
     private static async Task<IResult> HandleRegister(
         [FromBody] RegisterRequest request,
-        [FromServices] ICommandHandler<RegisterCommand, Result<RegisterResult>> handler,
+        [FromServices] ICommandHandler<RegisterCommand, Result<Guid>> handler,
         CancellationToken ct)
     {
         var command = new RegisterCommand(request.Email, request.Password);
         var result  = await handler.Handle(command, ct);
-
         
-        return result.ToHttpResult(registerResult =>
+        if (result.IsSuccess)
+            return Created($"~/users/{result.Value}", result.Value);
+
+        var error = result.Error!.Value;
+        return error.Code switch
         {
-            var registerResponse = new RegisterResponse(registerResult.UserId,
-                "pending",
-                "Your account is pending administrator.");
-            return Created($"/auth/users/{registerResponse.UserId}", registerResponse);
-        });
+            "validation" => ValidationProblem(
+                errors: new Dictionary<string, string[]> { ["body"] = [error.Message] }),
+            "conflict"   => Conflict(new { message = error.Message }),
+            _            => Problem(error.Message)
+        };
     }
 }

@@ -1,5 +1,4 @@
-﻿using App.Api.Filters;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Clients.Commands.AddClient;
 using App.Application.Common.Results;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +12,6 @@ public static class AddClientEndpoint
     {
         // POST /clients
         group.MapPost("", Handle)
-            .AddEndpointFilter<Validate<AddClientRequest>>()
             .WithSummary("Create a new position")
             .Accepts<AddClientRequest>("application/json")
             .Produces<Guid>(StatusCodes.Status201Created)

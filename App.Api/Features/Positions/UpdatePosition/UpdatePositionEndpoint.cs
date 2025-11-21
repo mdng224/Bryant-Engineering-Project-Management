@@ -1,5 +1,4 @@
-﻿using App.Api.Filters;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Common.Results;
 using App.Application.Positions.Commands.UpdatePosition;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +12,6 @@ public static class UpdatePositionEndpoint
     {
         // PATCH /positions/{id}
         group.MapPatch("/{id:guid}", Handle)
-            .AddEndpointFilter<Validate<UpdatePositionRequest>>() // TODO: Remove
             .WithSummary("Update a position")
             .Accepts<UpdatePositionRequest>("application/json")
             .Produces(StatusCodes.Status204NoContent)

@@ -1,5 +1,4 @@
-﻿using App.Api.Filters;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Common.Results;
 using App.Application.Users.Commands.UpdateUser;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +12,6 @@ public static class UpdateUserEndpoint
     {
         // PATCH /users/{id}
         group.MapPatch("/{id:guid}", Handle)
-            .AddEndpointFilter<Validate<UpdateUserRequest>>()
             .WithSummary("Update a user's role and/or status")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status400BadRequest)      // validation
