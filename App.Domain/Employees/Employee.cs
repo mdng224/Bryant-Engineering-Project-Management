@@ -20,8 +20,8 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
         string? companyEmail,
         string? workLocation,
         string? notes,
-        string? addressLine1,
-        string? addressLine2,
+        string? line1,
+        string? line2,
         string? city,
         string? state,
         string? postalCode,
@@ -33,7 +33,6 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
         if (userId is { } id)
             UserId = Guard.AgainstDefault(id, nameof(userId));
 
-
         HireDate = hireDate;
 
         SetEmployment(employmentType, salaryType);
@@ -44,8 +43,8 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
         RecommendRole(recommendedRoleId);
 
         var address = CreateAddressOrNull(
-            addressLine1,
-            addressLine2,
+            line1,
+            line2,
             city,
             state,
             postalCode
@@ -110,8 +109,8 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
             companyEmail:      companyEmail,
             workLocation:      null,
             notes:             null,
-            addressLine1:      null,
-            addressLine2:      null,
+            line1:             null,
+            line2:             null,
             city:              null,
             state:             null,
             postalCode:        null,
@@ -181,10 +180,10 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
         IsPreapproved = isPreapproved;
     }
 
-    private void SetEmployment(EmploymentType? type, SalaryType? pay)
+    private void SetEmployment(EmploymentType? employmentType, SalaryType? salaryType)
     {
         EnsureNotDeleted();
-        (EmploymentType, SalaryType) = (type, pay);
+        (EmploymentType, SalaryType) = (employmentType, salaryType);
     }
 
     private void SetDepartment(DepartmentType? dept)
@@ -210,14 +209,19 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
     private void SetWorkLocation(string? location)
     {
         EnsureNotDeleted();
-        WorkLocation = location.ToNormalizedAddressLine();
+        WorkLocation = string.IsNullOrWhiteSpace(location)
+            ? null
+            : location.ToNormalizedAddressLine();
     }
 
     private void SetNotes(string? notes)
     {
         EnsureNotDeleted();
-        Notes = notes.ToNormalizedNote();
+        Notes = string.IsNullOrWhiteSpace(notes)
+            ? null
+            : notes.ToNormalizedNote();
     }
+
 
     // --- Lifecycle ----------------------------------------------------------
     private void SoftDelete()

@@ -28,8 +28,8 @@ const getLookups = async (): Promise<ListProjectLookupsResponse> => {
 };
 
 /* ------------------------------ POST (add) ------------------------------ */
-const add = async (payload: AddProjectRequest): Promise<AddProjectRequest> => {
-  const { data } = await api.post<AddProjectRequest>(ProjectsRoutes.add, payload);
+const add = async (payload: AddProjectRequest): Promise<string> => {
+  const { data } = await api.post<string>(ProjectsRoutes.add, payload);
   return data;
 };
 

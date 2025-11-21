@@ -13,9 +13,11 @@ using App.Api.Contracts.Positions.Validators;
 using App.Api.Contracts.Users.Validators;
 using App.Api.Features.Auth.Login;
 using App.Api.Features.Auth.Register;
+using App.Api.Features.Employees.AddEmployee;
 using App.Api.Features.Positions.AddPosition;
 using App.Api.Features.Positions.UpdatePosition;
 using App.Api.Features.Users.UpdateUser;
+using App.Application.Employees.Commands.AddEmployee;
 
 namespace App.Api.Extensions;
 
@@ -99,6 +101,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IValidator<AddPositionRequest>, AddPositionRequestValidator>();
         services.AddScoped<IValidator<UpdatePositionRequest>, UpdatePositionRequestValidator>();
         services.AddScoped<IValidator<UpdateUserRequest>, UpdateUserRequestValidator>();
+        services.AddScoped<IValidator<AddEmployeeCommand>, AddEmployeeCommandValidator>();
 
         return services;
     }

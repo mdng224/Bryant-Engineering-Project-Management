@@ -14,5 +14,3 @@ export interface AddClientRequest {
   clientCategoryId: string; // Guid as string
   clientTypeId: string; // Guid as string
 }
-
-export type AddClientResponse = {};

@@ -2,7 +2,6 @@
 
 import type {
   AddPositionRequest,
-  AddPositionResponse,
   ListPositionsRequest,
   ListPositionsResponse,
   UpdatePositionRequest,
@@ -17,8 +16,8 @@ const get = async (params: ListPositionsRequest): Promise<ListPositionsResponse>
 };
 
 /* ------------------------------ POST (add) ------------------------------ */
-const add = async (payload: AddPositionRequest): Promise<AddPositionResponse> => {
-  const { data } = await api.post<AddPositionResponse>(PositionsRoutes.add, payload);
+const add = async (payload: AddPositionRequest): Promise<string> => {
+  const { data } = await api.post<string>(PositionsRoutes.add, payload);
   return data;
 };
 

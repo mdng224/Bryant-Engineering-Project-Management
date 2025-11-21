@@ -1,5 +1,4 @@
-﻿using App.Api.Filters;
-using App.Application.Abstractions.Handlers;
+﻿using App.Application.Abstractions.Handlers;
 using App.Application.Common.Results;
 using App.Application.Employees.Commands.AddEmployee;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +12,6 @@ public static class AddEmployeeEndpoint
     {
         // POST /employees
         group.MapPost("", Handle)
-            .AddEndpointFilter<Validate<AddEmployeeRequest>>()
             .WithSummary("Create a new employee")
             .Accepts<AddEmployeeRequest>("application/json")
             .Produces<Guid>(StatusCodes.Status201Created)
@@ -61,8 +59,8 @@ public static class AddEmployeeEndpoint
             CompanyEmail       : request.CompanyEmail,
             WorkLocation       : request.WorkLocation,
             Notes              : request.Notes,
-            AddressLine1       : request.AddressLine1,
-            AddressLine2       : request.AddressLine2,
+            Line1              : request.Line1,
+            Line2              : request.Line2,
             City               : request.City,
             State              : request.State,
             PostalCode         : request.PostalCode,

@@ -99,11 +99,6 @@
           <label :class="labelClass">Hire Date</label>
           <input v-model="form.hireDate" type="date" :class="formClass" />
         </div>
-
-        <div>
-          <label :class="labelClass">End Date</label>
-          <input v-model="form.endDate" type="date" :class="formClass" />
-        </div>
       </div>
 
       <!-- Contact / work info -->
@@ -116,6 +111,7 @@
             :class="formClass"
             placeholder="name@company.com"
             autocomplete="email"
+            required
           />
         </div>
 
@@ -190,16 +186,15 @@
   const form = ref<AddEmployeeRequest>({
     firstName: '',
     lastName: '',
-    preferredName: '',
-    employmentType: '',
-    salaryType: '',
+    preferredName: null,
+    employmentType: null,
+    salaryType: null,
     hireDate: null,
-    endDate: null,
-    department: '',
+    department: null,
     companyEmail: '',
-    workLocation: '',
-    licenseNotes: '',
-    notes: '',
+    workLocation: null,
+    licenseNotes: null,
+    notes: null,
   });
 
   // Simple local option lists – keep in sync with backend enums
@@ -214,10 +209,11 @@
   ];
 
   const departmentOptions = [
+    { value: 'Unknown', label: 'Unknown' },
     { value: 'Engineering', label: 'Engineering' },
-    { value: 'Survey', label: 'Survey' },
-    { value: 'Admin', label: 'Administration' },
-    { value: 'Other', label: 'Other' },
+    { value: 'Drafting', label: 'Drafting' },
+    { value: 'Surveying', label: 'Surveying' },
+    { value: 'OfficeAdmin', label: 'Office Admin' },
   ];
 
   // Reset when dialog opens
@@ -228,16 +224,15 @@
         form.value = {
           firstName: '',
           lastName: '',
-          preferredName: '',
-          employmentType: '',
-          salaryType: '',
+          preferredName: null,
+          employmentType: null,
+          salaryType: null,
           hireDate: null,
-          endDate: null,
-          department: '',
+          department: null,
           companyEmail: '',
-          workLocation: '',
-          licenseNotes: '',
-          notes: '',
+          workLocation: null,
+          licenseNotes: null,
+          notes: null,
         };
         submitting.value = false;
         touched.value = false;

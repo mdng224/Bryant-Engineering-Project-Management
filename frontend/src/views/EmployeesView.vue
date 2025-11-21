@@ -39,11 +39,7 @@
 
   <table-footer :table :totalCount :totalPages :pagination :setPageSize />
 
-  <add-employee-dialog
-    :open="addDialogIsOpen"
-    @close="addDialogIsOpen = false"
-    @saved="handleEmployeeSaved"
-  />
+  <add-employee-dialog :open="addDialogIsOpen" @close="addDialogIsOpen = false" @saved="refetch" />
 
   <details-dialog
     :open="openDetailsDialog"
@@ -138,8 +134,8 @@
     fieldDef('isPreapproved', 'Pre-Approved'),
 
     // Address
-    fieldDef('addressLine1', 'Address Line 1'),
-    fieldDef('addressLine2', 'Address Line 2'),
+    fieldDef('line1', 'Address Line 1'),
+    fieldDef('line2', 'Address Line 2'),
     fieldDef('city', 'City'),
     fieldDef('state', 'State'),
     fieldDef('postalCode', 'Postal Code'),
@@ -237,10 +233,16 @@
     isDeleted: deletedFilter.value,
   }));
 
-  const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<
-    EmployeeRowResponse,
-    typeof query.value
-  >(columns, fetchEmployees, query);
+  const {
+    table,
+    loading,
+    totalCount,
+    totalPages,
+    pagination,
+    setPageSize,
+    fetchNow: refetch,
+    destroy,
+  } = useDataTable<EmployeeRowResponse, typeof query.value>(columns, fetchEmployees, query);
 
   /* ------------------------------- Dialogs/UX ----------------------------- */
   const addDialogIsOpen = ref(false);

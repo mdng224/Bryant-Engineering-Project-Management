@@ -20,8 +20,8 @@ const list = async (params: ListEmployeesRequest): Promise<ListEmployeesResponse
 };
 
 /* ------------------------------ POST (add) ------------------------------ */
-const add = async (payload: AddEmployeeRequest): Promise<AddEmployeeRequest> => {
-  const { data } = await api.post<AddEmployeeRequest>(EmployeesRoutes.add, payload);
+const add = async (payload: AddEmployeeRequest): Promise<string> => {
+  const { data } = await api.post<string>(EmployeesRoutes.add, payload);
   return data;
 };
 

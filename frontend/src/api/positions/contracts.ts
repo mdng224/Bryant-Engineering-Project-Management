@@ -9,10 +9,6 @@ type PositionBase = {
 
 export type AddPositionRequest = PositionBase;
 
-export type AddPositionResponse = PositionBase & {
-  id: string;
-};
-
 export type ListPositionsRequest = {
   page: number;
   pageSize: number;

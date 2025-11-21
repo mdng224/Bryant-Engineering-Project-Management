@@ -3,7 +3,6 @@
 import api from '..';
 import type {
   AddClientRequest,
-  AddClientResponse,
   GetClientDetailsResponse,
   ListClientLookupsResponse,
   ListClientsRequest,
@@ -29,8 +28,8 @@ const getLookups = async (): Promise<ListClientLookupsResponse> => {
 };
 
 /* ------------------------------ POST (add) ------------------------------ */
-const add = async (payload: AddClientRequest): Promise<AddClientResponse> => {
-  const { data } = await api.post<AddClientResponse>(ClientsRoutes.add, payload);
+const add = async (payload: AddClientRequest): Promise<string> => {
+  const { data } = await api.post<string>(ClientsRoutes.add, payload);
   return data;
 };
 

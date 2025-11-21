@@ -21,8 +21,8 @@ const list = async (params: ListContactsRequest): Promise<ListContactsResponse> 
 };
 
 /* ------------------------------ POST (add) ------------------------------ */
-const add = async (payload: AddContactRequest): Promise<AddContactRequest> => {
-  const { data } = await api.post<AddContactRequest>(ContactsRoutes.add, payload);
+const add = async (payload: AddContactRequest): Promise<string> => {
+  const { data } = await api.post<string>(ContactsRoutes.add, payload);
   return data;
 };
 

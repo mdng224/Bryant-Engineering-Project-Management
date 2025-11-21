@@ -41,8 +41,8 @@ export type GetEmployeeDetailsResponse = EmployeeBase & {
   notes: string | null;
 
   // Address
-  addressLine1: string | null;
-  addressLine2: string | null;
+  line1: string | null;
+  line2: string | null;
   city: string | null;
   state: string | null;
   postalCode: string | null;
@@ -66,10 +66,9 @@ export type AddEmployeeRequest = {
   preferredName?: string | null;
   employmentType?: string | null;
   salaryType?: string | null;
-  hireDate?: string | null;
-  endDate?: string | null;
   department?: string | null;
-  companyEmail?: string | null;
+  hireDate?: string | null;
+  companyEmail: string;
   workLocation?: string | null;
   licenseNotes?: string | null;
   notes?: string | null;
