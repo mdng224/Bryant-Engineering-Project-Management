@@ -6,6 +6,7 @@ using App.Application.Users.Commands.DeleteUser;
 using App.Application.Users.Commands.RestoreUser;
 using App.Application.Users.Commands.UpdateUser;
 using App.Application.Users.Queries;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace App.Application.Users;
@@ -14,14 +15,17 @@ public static class UsersModule
 {
     public static IServiceCollection AddUsersApplication(this IServiceCollection services)
     {
-        // Queries
-        services.AddScoped<IQueryHandler<GetUsersQuery, Result<PagedResult<UserDto>>>, GetUsersHandler>();
-
         // Commands
         services.AddScoped<ICommandHandler<DeleteUserCommand, Result<Unit>>, DeleteUserHandler>();
         services.AddScoped<ICommandHandler<UpdateUserCommand, Result<UpdateUserResult>>, UpdateUserHandler>();
         services.AddScoped<ICommandHandler<RestoreUserCommand, Result<Unit>>, RestoreUserHandler>();
+        
+        // Queries
+        services.AddScoped<IQueryHandler<GetUsersQuery, Result<PagedResult<UserDto>>>, GetUsersHandler>();
 
+        // Validators
+        services.AddScoped<IValidator<UpdateUserCommand>, UpdateUserRequestValidator>();
+        
         return services;
     }
 }

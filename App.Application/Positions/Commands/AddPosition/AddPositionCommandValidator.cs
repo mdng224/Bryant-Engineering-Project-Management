@@ -1,11 +1,10 @@
-﻿using App.Api.Features.Positions.AddPosition;
-using FluentValidation;
+﻿using FluentValidation;
 
-namespace App.Api.Contracts.Positions.Validators;
+namespace App.Application.Positions.Commands.AddPosition;
 
-public sealed class AddPositionRequestValidator : AbstractValidator<AddPositionRequest>
+public sealed class AddPositionCommandValidator : AbstractValidator<AddPositionCommand>
 {
-    public AddPositionRequestValidator()
+    public AddPositionCommandValidator()
     {
         RuleFor(apr => apr.Name)
             .NotEmpty().WithMessage("Name is required.")

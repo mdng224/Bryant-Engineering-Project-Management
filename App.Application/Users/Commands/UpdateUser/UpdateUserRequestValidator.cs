@@ -1,10 +1,9 @@
 ﻿using System.Text.RegularExpressions;
-using App.Api.Features.Users.UpdateUser;
 using FluentValidation;
 
-namespace App.Api.Contracts.Users.Validators;
+namespace App.Application.Users.Commands.UpdateUser;
 
-public sealed class UpdateUserRequestValidator : AbstractValidator<UpdateUserRequest>
+public sealed class UpdateUserRequestValidator : AbstractValidator<UpdateUserCommand>
 {
     private static readonly Regex RoleRegex = new("^[A-Za-z0-9 _-]+$", RegexOptions.Compiled);
 

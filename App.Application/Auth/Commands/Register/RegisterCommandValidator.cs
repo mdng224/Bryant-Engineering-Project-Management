@@ -1,11 +1,10 @@
-﻿using App.Api.Features.Auth.Register;
-using FluentValidation;
+﻿using FluentValidation;
 
-namespace App.Api.Contracts.Auth.Validators;
+namespace App.Application.Auth.Commands.Register;
 
-public sealed class RegisterRequestValidator : AbstractValidator<RegisterRequest>
+public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 {
-    public RegisterRequestValidator()
+    public RegisterCommandValidator()
     {
         RuleFor(rr => rr.Email)
             .NotEmpty()

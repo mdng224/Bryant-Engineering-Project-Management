@@ -8,16 +8,18 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using App.Api.Contracts.Auth.Validators;
-using App.Api.Contracts.Positions.Validators;
-using App.Api.Contracts.Users.Validators;
 using App.Api.Features.Auth.Login;
 using App.Api.Features.Auth.Register;
 using App.Api.Features.Employees.AddEmployee;
 using App.Api.Features.Positions.AddPosition;
 using App.Api.Features.Positions.UpdatePosition;
 using App.Api.Features.Users.UpdateUser;
+using App.Application.Auth.Commands.Register;
+using App.Application.Auth.Queries.Login;
 using App.Application.Employees.Commands.AddEmployee;
+using App.Application.Positions.Commands.AddPosition;
+using App.Application.Positions.Commands.UpdatePosition;
+using App.Application.Users.Commands.UpdateUser;
 
 namespace App.Api.Extensions;
 
@@ -94,14 +96,6 @@ public static class ServiceCollectionExtensions
         });
         services.AddApplication();
         services.AddInfrastructure(cfg);
-
-        // --- Validators -------------------------------------------------------
-        services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
-        services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
-        services.AddScoped<IValidator<AddPositionRequest>, AddPositionRequestValidator>();
-        services.AddScoped<IValidator<UpdatePositionRequest>, UpdatePositionRequestValidator>();
-        services.AddScoped<IValidator<UpdateUserRequest>, UpdateUserRequestValidator>();
-        services.AddScoped<IValidator<AddEmployeeCommand>, AddEmployeeCommandValidator>();
 
         return services;
     }

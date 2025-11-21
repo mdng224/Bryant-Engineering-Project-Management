@@ -15,13 +15,13 @@ public static class DependencyInjection
     {
         // Modules
         services.AddAuthApplication();
+        services.AddClientsApplication();
+        services.AddContactsApplication();
         services.AddEmployeesApplication();
         services.AddPositionsApplication();
-        services.AddUsersApplication();
-        services.AddClientsApplication();
         services.AddProjectsApplication();
-        services.AddContactsApplication();
-
+        services.AddUsersApplication();
+        
         return services;
     }
 }

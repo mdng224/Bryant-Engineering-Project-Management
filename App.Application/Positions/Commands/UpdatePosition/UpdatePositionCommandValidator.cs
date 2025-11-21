@@ -1,11 +1,10 @@
-﻿using App.Api.Features.Positions.UpdatePosition;
-using FluentValidation;
+﻿using FluentValidation;
 
-namespace App.Api.Contracts.Positions.Validators;
+namespace App.Application.Positions.Commands.UpdatePosition;
 
-public sealed class UpdatePositionRequestValidator : AbstractValidator<UpdatePositionRequest>
+public sealed class UpdatePositionCommandValidator : AbstractValidator<UpdatePositionCommand>
 {
-    public UpdatePositionRequestValidator()
+    public UpdatePositionCommandValidator()
     {
         RuleFor(upr => upr.Name)
             .NotEmpty().WithMessage("Name is required.")

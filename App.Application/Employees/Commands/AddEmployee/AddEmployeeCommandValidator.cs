@@ -1,7 +1,6 @@
-﻿using App.Application.Employees.Commands.AddEmployee;
-using FluentValidation;
+﻿using FluentValidation;
 
-namespace App.Api.Features.Employees.AddEmployee;
+namespace App.Application.Employees.Commands.AddEmployee;
 
 public sealed class AddEmployeeCommandValidator : AbstractValidator<AddEmployeeCommand>
 {
