@@ -58,12 +58,10 @@ public static class AddEmployeeEndpoint
             HireDate           : request.HireDate,
             CompanyEmail       : request.CompanyEmail,
             WorkLocation       : request.WorkLocation,
-            Notes              : request.Notes,
             Line1              : request.Line1,
             Line2              : request.Line2,
             City               : request.City,
             State              : request.State,
-            PostalCode         : request.PostalCode,
-            RecommendedRoleId  : request.RecommendedRoleId
+            PostalCode         : request.PostalCode
         );
 }

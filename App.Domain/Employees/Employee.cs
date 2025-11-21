@@ -116,10 +116,10 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
             postalCode:        null,
             recommendedRoleId: recommendedRoleId,
             isPreapproved:     isPreapproved
-        );
-
-        // override generated v7 with deterministic seed id
-        employee.Id = id;
+        )
+        {
+            Id = id
+        };
 
         if (positionIds is not null)
         {
@@ -224,7 +224,7 @@ public sealed class Employee : IAuditableEntity, ISoftDeletable
 
 
     // --- Lifecycle ----------------------------------------------------------
-    private void SoftDelete()
+    public void SoftDelete()
     {
         if (DeletedAtUtc is not null) return;
         DeletedAtUtc = DateTimeOffset.UtcNow;

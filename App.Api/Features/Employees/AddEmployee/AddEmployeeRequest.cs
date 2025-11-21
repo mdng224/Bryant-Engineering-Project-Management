@@ -7,17 +7,15 @@ public sealed record AddEmployeeRequest(
     string LastName,
     string? PreferredName,
     Guid? UserId,
-    EmploymentType? EmploymentType,
-    SalaryType? SalaryType,
-    DepartmentType? Department,
+    EmploymentType EmploymentType,
+    SalaryType SalaryType,
+    DepartmentType Department,
     DateTimeOffset? HireDate,
     string CompanyEmail, // Email required for add requests, nullable on domain because of seed data
     string? WorkLocation,
-    string? Notes,
     string? Line1,
     string? Line2,
     string? City,
     string? State,
-    string? PostalCode,
-    Guid? RecommendedRoleId
+    string? PostalCode
 );

@@ -1,12 +1,10 @@
 ﻿using App.Application.Abstractions.Persistence.Readers;
 using App.Application.Common.Pagination;
-using App.Application.Employees.Queries;
 using App.Application.Employees.Queries.ListEmployees;
-using App.Domain.Employees;
 using FluentAssertions;
 using Moq;
 
-namespace App.Tests.Application.Employees.Queries;
+namespace App.Tests.Application.Employees.Queries.ListEmployees;
 
  public class ListEmployeesHandlerTests
 {

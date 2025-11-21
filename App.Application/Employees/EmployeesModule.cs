@@ -25,6 +25,7 @@ public static class EmployeesModule
         
         // Validators
         services.AddScoped<IValidator<AddEmployeeCommand>, AddEmployeeCommandValidator>();
+        services.AddScoped<IValidator<ListEmployeesQuery>, ListEmployeesQueryValidator>();
         
         return services;
     }

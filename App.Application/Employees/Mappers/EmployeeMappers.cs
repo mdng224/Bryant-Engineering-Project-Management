@@ -17,13 +17,13 @@ public static class EmployeeMappers
             hireDate:        command.HireDate,
             companyEmail:    command.CompanyEmail,
             workLocation:    command.WorkLocation,
-            notes:           command.Notes,
+            notes:           null,
             line1:           command.Line1,
             line2:           command.Line2,
             city:            command.City,
             state:           command.State,
             postalCode:      command.PostalCode,
-            recommendedRoleId: command.RecommendedRoleId,
+            recommendedRoleId: null,
             isPreapproved:   true
         );
 }

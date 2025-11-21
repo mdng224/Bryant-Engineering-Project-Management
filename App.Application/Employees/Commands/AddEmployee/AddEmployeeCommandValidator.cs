@@ -6,35 +6,39 @@ public sealed class AddEmployeeCommandValidator : AbstractValidator<AddEmployeeC
 {
     public AddEmployeeCommandValidator()
     {
-        RuleFor(c => c.FirstName)
+        RuleFor(aec => aec.FirstName)
             .NotEmpty()
             .MaximumLength(100);
 
-        RuleFor(c => c.LastName)
+        RuleFor(aec => aec.LastName)
             .NotEmpty()
             .MaximumLength(100);
         
-        RuleFor(c => c.CompanyEmail)
+        RuleFor(aec => aec.PreferredName)
+            .MaximumLength(100)
+            .When(c => !string.IsNullOrWhiteSpace(c.PreferredName));
+
+        
+        RuleFor(aec => aec.CompanyEmail)
             .NotEmpty().WithMessage("Company email is required.")
             .EmailAddress().WithMessage("Company email must be a valid email.");
+
+        RuleFor(aec => aec.WorkLocation)
+            .MaximumLength(200)
+            .When(c => !string.IsNullOrWhiteSpace(c.WorkLocation));
         
-        RuleFor(c => c.CompanyEmail)
-            .EmailAddress()
-            .When(c => !string.IsNullOrWhiteSpace(c.CompanyEmail));
+        RuleFor(aec => aec.EmploymentType)
+            .NotNull().WithMessage("Employment type is required.")
+            .IsInEnum();
 
-        RuleFor(c => c.SalaryType)
-            .IsInEnum()
-            .When(c => c.SalaryType.HasValue);
+        RuleFor(aec => aec.SalaryType)
+            .NotNull().WithMessage("Salary type is required.")
+            .IsInEnum();
 
-        RuleFor(c => c.EmploymentType)
-            .IsInEnum()
-            .When(c => c.EmploymentType.HasValue);
+        RuleFor(aec => aec.Department)
+            .NotNull().WithMessage("Department is required.")
+            .IsInEnum();
 
-        RuleFor(c => c.Department)
-            .IsInEnum()
-            .When(c => c.Department.HasValue);
-
-        // address all-or-nothing rule
         RuleFor(c => c)
             .Must(AllOrNothingAddress)
             .WithMessage("Address must include line1, city, state, and postalCode, or be omitted entirely.");
