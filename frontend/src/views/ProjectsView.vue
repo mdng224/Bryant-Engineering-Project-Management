@@ -46,6 +46,7 @@
   </data-table>
 
   <table-footer :table :totalCount :totalPages :pagination :setPageSize />
+
   <add-project-dialog
     :open="addDialogIsOpen"
     @close="addDialogIsOpen = false"
@@ -231,9 +232,6 @@
   });
 
   // ─────────────────────────── Data Fetching ─────────────────────────
-  const projectDetails = ref<GetProjectDetailsResponse[]>([]);
-  const projectDetailsById = computed(() => new Map(projectDetails.value.map(p => [p.id, p])));
-
   const fetchProjects = async ({ page, pageSize, query }: FetchParams<ProjectQuery>) => {
     const request: ListProjectsRequest = {
       page,
@@ -268,10 +266,16 @@
     }
   };
 
-  const { table, loading, totalCount, totalPages, pagination, setPageSize, destroy } = useDataTable<
-    ProjectRowResponse,
-    ProjectQuery
-  >(columns, fetchProjects, query);
+  const {
+    table,
+    loading,
+    totalCount,
+    totalPages,
+    pagination,
+    setPageSize,
+    fetchNow: refetch,
+    destroy,
+  } = useDataTable<ProjectRowResponse, ProjectQuery>(columns, fetchProjects, query);
 
   // ───────────────────────────── Dialog State ─────────────────────────
   const addDialogIsOpen = ref(false);
@@ -312,6 +316,7 @@
   const handleProjectSaved = () => {
     // however you currently refresh; if useDataTable returns a `reload`, call that
     pagination.pageIndex = 0; // or call your own reload function
+    refetch();
   };
 
   // ───────────────────────────── Cleanup ──────────────────────────────

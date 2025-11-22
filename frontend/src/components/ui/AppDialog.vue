@@ -1,4 +1,4 @@
-<!-- components/ui/AppDialog.vue -->
+<!-- src/components/ui/AppDialog.vue -->
 <template>
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-[100]" role="dialog" aria-modal="true">
@@ -10,8 +10,6 @@
         <div
           class="w-full rounded-xl border border-slate-700 bg-slate-900/95 p-6 text-slate-100 shadow-2xl"
           :class="width"
-          ref="panel"
-          @keydown.esc="handleClose"
         >
           <!-- Header -->
           <header class="relative mb-4 flex items-center justify-center">
@@ -50,7 +48,7 @@
 
 <script setup lang="ts">
   import { X } from 'lucide-vue-next';
-  import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+  import { onBeforeUnmount, onMounted, watch } from 'vue';
 
   const props = defineProps<{
     open: boolean;
@@ -64,11 +62,8 @@
     (e: 'confirm'): void;
   }>();
 
-  const panel = ref<HTMLElement | null>(null);
-
   const handleClose = () => emit('close');
 
-  /* Escape key binding (global) */
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') handleClose();
   };

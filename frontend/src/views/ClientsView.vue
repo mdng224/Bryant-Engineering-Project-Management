@@ -50,7 +50,11 @@
   <table-footer :table :totalCount :totalPages :pagination :setPageSize />
 
   <!-- Dialogs -->
-  <add-client-dialog :open="addDialogIsOpen" @close="addDialogIsOpen = false" @saved="refetch" />
+  <add-client-dialog
+    :open="addDialogIsOpen"
+    @close="addDialogIsOpen = false"
+    @saved="handleClientSaved"
+  />
 
   <details-dialog
     :open="openDetailsDialog"
@@ -211,11 +215,6 @@
     cancel: cancelNameDebounce, // cleanup on unmount
   } = useDebouncedRef<string | null>(null, 500);
 
-  onBeforeUnmount(() => {
-    cancelNameDebounce();
-    destroy();
-  });
-
   watch(selectedCategoryId, () => {
     selectedTypeId.value = null;
   });
@@ -294,6 +293,12 @@
   const openDetailsDialog = ref(false);
   const selectedClient = ref<GetClientDetailsResponse | null>(null);
 
+  const handleClientSaved = () => {
+    // ensure we show the fresh data from the first page
+    pagination.pageIndex = 0;
+    refetch();
+  };
+
   const handleOpenClientDetails = async (id: string): Promise<void> => {
     errorMessage.value = null;
 
@@ -319,4 +324,9 @@
   };
 
   onMounted(loadLookups);
+
+  onBeforeUnmount(() => {
+    cancelNameDebounce();
+    destroy();
+  });
 </script>

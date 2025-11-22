@@ -306,6 +306,7 @@
   import { AppDialog } from '@/components/ui';
   import AppAlert from '@/components/ui/AppAlert.vue';
   import { useClientLookups } from '@/composables/useClientLookups';
+  import { useDialogForm } from '@/composables/useDialogForm';
   import { AlertTriangle, Plus } from 'lucide-vue-next';
   import { computed, onMounted, ref, watch } from 'vue';
 
@@ -315,27 +316,9 @@
   const props = defineProps<{ open: boolean }>();
   const emit = defineEmits<{ (e: 'close'): void; (e: 'saved'): void }>();
 
-  const errorMessage = ref<string | null>(null);
   const showAddress = ref(false);
-  const submitting = ref(false);
-  const touched = ref(false);
-  const enableAddress = () => {
-    if (!form.value.address) {
-      form.value.address = {
-        line1: '',
-        line2: '',
-        city: '',
-        state: '',
-        postalCode: '',
-      };
-    }
-    showAddress.value = true;
-  };
-  const clearAddress = () => {
-    showAddress.value = false;
-    form.value.address = null;
-  };
-  const form = ref<AddClientRequest>({
+
+  const createInitialForm = (): AddClientRequest => ({
     name: '',
     namePrefix: '',
     firstName: '',
@@ -350,6 +333,27 @@
     clientTypeId: '',
   });
 
+  const { form, submitting, errorMessage, touched, reset } =
+    useDialogForm<AddClientRequest>(createInitialForm);
+
+  const enableAddress = () => {
+    if (!form.value.address) {
+      form.value.address = {
+        line1: '',
+        line2: '',
+        city: '',
+        state: '',
+        postalCode: '',
+      };
+    }
+    showAddress.value = true;
+  };
+
+  const clearAddress = () => {
+    showAddress.value = false;
+    form.value.address = null;
+  };
+
   // Lookups (shared composable)
   const { categories, loadLookups, getTypesForCategory } = useClientLookups();
   const filteredTypes = computed(() => getTypesForCategory(form.value.clientCategoryId || null));
@@ -359,23 +363,8 @@
     () => props.open,
     isOpen => {
       if (isOpen) {
-        form.value = {
-          name: '',
-          namePrefix: '',
-          firstName: '',
-          middleName: '',
-          lastName: '',
-          nameSuffix: '',
-          email: '',
-          phone: '',
-          address: null,
-          note: '',
-          clientCategoryId: '',
-          clientTypeId: '',
-        };
-        submitting.value = false;
-        touched.value = false;
-        errorMessage.value = null;
+        reset();
+        showAddress.value = false;
       }
     },
     { immediate: true },

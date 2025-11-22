@@ -39,7 +39,11 @@
 
   <table-footer :table :totalCount :totalPages :pagination :setPageSize />
 
-  <add-employee-dialog :open="addDialogIsOpen" @close="addDialogIsOpen = false" @saved="refetch" />
+  <add-employee-dialog
+    :open="addDialogIsOpen"
+    @close="addDialogIsOpen = false"
+    @saved="handleEmployeeSaved"
+  />
 
   <details-dialog
     :open="openDetailsDialog"
@@ -187,11 +191,6 @@
     cancel: cancelNameDebounce, // cleanup on unmount
   } = useDebouncedRef('', 500);
 
-  onBeforeUnmount(() => {
-    cancelNameDebounce();
-    destroy();
-  });
-
   /* ------------------------------- Fetching ------------------------------- */
   type EmpQuery = { name?: string; isDeleted?: boolean | null };
 
@@ -242,7 +241,7 @@
     setPageSize,
     fetchNow: refetch,
     destroy,
-  } = useDataTable<EmployeeRowResponse, typeof query.value>(columns, fetchEmployees, query);
+  } = useDataTable<EmployeeRowResponse, EmpQuery>(columns, fetchEmployees, query);
 
   /* ------------------------------- Dialogs/UX ----------------------------- */
   const addDialogIsOpen = ref(false);
@@ -277,8 +276,8 @@
   };
 
   const handleEmployeeSaved = () => {
-    // however you currently refresh; if useDataTable returns a `reload`, call that
-    pagination.pageIndex = 0; // or call your own reload function
+    pagination.pageIndex = 0;
+    refetch();
   };
 
   const handleOpenDeleteDialog = (summary: EmployeeRowResponse): void => {
@@ -289,4 +288,9 @@
   const handleOpenReactivateDialog = (position: EmployeeRowResponse): void => {
     // TODO: Call reactivate service
   };
+
+  onBeforeUnmount(() => {
+    cancelNameDebounce();
+    destroy();
+  });
 </script>

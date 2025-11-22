@@ -74,7 +74,7 @@
 
 <script setup lang="ts">
   // Vue
-  import { ref, watch } from 'vue';
+  import { watch } from 'vue';
 
   // Icons & UI
   import { AppDialog } from '@/components/ui';
@@ -85,6 +85,7 @@
   import { extractApiError } from '@/api/error';
   import type { AddPositionRequest } from '@/api/positions';
   import { positionService } from '@/api/positions/services';
+  import { useDialogForm } from '@/composables/useDialogForm';
 
   const labelClass = 'mb-1 block text-sm font-medium text-slate-200';
   const formClass = 'w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-white';
@@ -92,29 +93,29 @@
   const props = defineProps<{ open: boolean }>();
   const emit = defineEmits<{ (e: 'close'): void; (e: 'saved'): void }>();
 
-  const errorMessage = ref<string | null>(null);
-  const submitting = ref(false);
-  const touched = ref(false);
-
-  const form = ref<AddPositionRequest>({
+  const createInitialForm = (): AddPositionRequest => ({
     name: '',
     code: '',
     requiresLicense: false,
   });
+
+  const { form, submitting, errorMessage, touched, reset } =
+    useDialogForm<AddPositionRequest>(createInitialForm);
 
   // Reset when dialog opens
   watch(
     () => props.open,
     isOpen => {
       if (isOpen) {
-        form.value = { name: '', code: '', requiresLicense: false };
-        submitting.value = false;
-        touched.value = false;
-        errorMessage.value = null;
+        reset();
       }
     },
     { immediate: true },
   );
+
+  const errors = {
+    unexpected: 'An unexpected error occurred.',
+  };
 
   const submit = async (): Promise<void> => {
     touched.value = true;
@@ -129,10 +130,8 @@
       emit('close');
     } catch (e) {
       let msg = extractApiError(e, 'name');
-      if (!msg) {
-        msg = extractApiError(e, 'code');
-      }
-      errorMessage.value = msg;
+      if (!msg) msg = extractApiError(e, 'code');
+      errorMessage.value = msg || errors.unexpected;
     } finally {
       submitting.value = false;
     }

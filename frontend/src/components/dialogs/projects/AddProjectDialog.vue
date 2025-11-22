@@ -163,9 +163,10 @@
   import { projectService } from '@/api/projects';
   import AppAlert from '@/components/ui/AppAlert.vue';
   import AppDialog from '@/components/ui/AppDialog.vue';
+  import { useDialogForm } from '@/composables/useDialogForm';
   import { useProjectLookups } from '@/composables/useProjectLookups';
   import { AlertTriangle, Plus } from 'lucide-vue-next';
-  import { onMounted, ref, watch } from 'vue';
+  import { onMounted, watch } from 'vue';
 
   const labelClass = 'mb-1 block text-sm font-medium text-slate-200';
   const formClass = 'w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-white';
@@ -173,25 +174,7 @@
   const props = defineProps<{ open: boolean }>();
   const emit = defineEmits<{ (e: 'close'): void; (e: 'saved'): void }>();
 
-  const errorMessage = ref<string | null>(null);
-  const submitting = ref(false);
-  const touched = ref(false);
-
-  // NOTE: Shape of AddProjectRequest should be defined in src/api/projects/contracts.ts
-  // e.g.:
-  // export type AddProjectRequest = {
-  //   code: string;
-  //   name: string;
-  //   clientId: string | null;
-  //   scopeId: string | null;
-  //   manager: string;
-  //   type: string | null;
-  //   location: string | null;
-  //   year: number | null;
-  //   number: number | null;
-  // };
-
-  const form = ref<AddProjectRequest>({
+  const createInitialForm = (): AddProjectRequest => ({
     code: '',
     name: '',
     clientId: null,
@@ -206,29 +189,14 @@
   // Lookups
   const { managers, loadLookups } = useProjectLookups();
 
-  // Reset when dialog opens
-  const resetForm = () => {
-    form.value = {
-      code: '',
-      name: '',
-      clientId: null,
-      scopeId: null,
-      manager: '',
-      type: null,
-      location: null,
-      year: null,
-      number: null,
-    };
-    submitting.value = false;
-    touched.value = false;
-    errorMessage.value = null;
-  };
+  const { form, submitting, errorMessage, touched, reset } =
+    useDialogForm<AddProjectRequest>(createInitialForm);
 
   watch(
     () => props.open,
     isOpen => {
       if (isOpen) {
-        resetForm();
+        reset();
       }
     },
     { immediate: true },
@@ -237,18 +205,12 @@
   onMounted(loadLookups);
 
   const errors = {
-    required: 'Please fill in all required fields.',
     unexpected: 'An unexpected error occurred.',
   };
 
   const submit = async (): Promise<void> => {
     touched.value = true;
     errorMessage.value = null;
-
-    if (!form.value.name || !form.value.code || !form.value.manager) {
-      errorMessage.value = errors.required;
-      return;
-    }
 
     if (submitting.value) return;
     submitting.value = true;

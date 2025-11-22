@@ -170,8 +170,9 @@
   import { employeeService, type AddEmployeeRequest } from '@/api/employees';
   import { extractApiError } from '@/api/error';
   import { AppAlert, AppDialog } from '@/components/ui';
+  import { useDialogForm } from '@/composables/useDialogForm';
   import { AlertTriangle, Plus } from 'lucide-vue-next';
-  import { computed, ref, watch } from 'vue';
+  import { computed, watch } from 'vue';
 
   const props = defineProps<{ open: boolean }>();
   const emit = defineEmits<{ (e: 'close'): void; (e: 'saved'): void }>();
@@ -179,11 +180,7 @@
   const labelClass = 'mb-1 block text-sm font-medium text-slate-200';
   const formClass = 'w-full rounded-md border border-slate-700 bg-slate-800 p-2 text-sm text-white';
 
-  const errorMessage = ref<string | null>(null);
-  const submitting = ref(false);
-  const touched = ref(false);
-
-  const form = ref<AddEmployeeRequest>({
+  const createInitialForm = (): AddEmployeeRequest => ({
     firstName: '',
     lastName: '',
     preferredName: null,
@@ -196,6 +193,9 @@
     licenseNotes: null,
     notes: null,
   });
+
+  const { form, submitting, errorMessage, touched, reset } =
+    useDialogForm<AddEmployeeRequest>(createInitialForm);
 
   // Simple local option lists – keep in sync with backend enums
   const employmentTypeOptions = [
@@ -216,27 +216,11 @@
     { value: 'OfficeAdmin', label: 'Office Admin' },
   ];
 
-  // Reset when dialog opens
   watch(
     () => props.open,
     isOpen => {
       if (isOpen) {
-        form.value = {
-          firstName: '',
-          lastName: '',
-          preferredName: null,
-          employmentType: null,
-          salaryType: null,
-          hireDate: null,
-          department: null,
-          companyEmail: '',
-          workLocation: null,
-          licenseNotes: null,
-          notes: null,
-        };
-        submitting.value = false;
-        touched.value = false;
-        errorMessage.value = null;
+        reset();
       }
     },
     { immediate: true },

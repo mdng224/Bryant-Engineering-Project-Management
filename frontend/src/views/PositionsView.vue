@@ -67,7 +67,11 @@
   <table-footer :table :total-count :total-pages :pagination :set-page-size />
 
   <!-- Dialogs -->
-  <add-position-dialog :open="addDialogIsOpen" @close="addDialogIsOpen = false" @saved="refetch" />
+  <add-position-dialog
+    :open="addDialogIsOpen"
+    @close="addDialogIsOpen = false"
+    @saved="handlePositionSaved"
+  />
 
   <delete-dialog
     :open="deleteDialogIsOpen"
@@ -162,11 +166,6 @@
     cancel: cancelNameDebounce, // cleanup on unmount
   } = useDebouncedRef('', 500);
 
-  onBeforeUnmount(() => {
-    cancelNameDebounce();
-    destroy();
-  });
-
   /* ------------------------------ Fetching ------------------------------- */
   type PosQuery = { position: string | null; deletedFilter: boolean | null };
 
@@ -256,6 +255,12 @@
     }
   };
 
+  const handlePositionSaved = () => {
+    // reset to first page so the new/updated position is visible
+    pagination.pageIndex = 0;
+    refetch();
+  };
+
   const handleOpenDeleteDialog = (position: PositionRowResponse): void => {
     selectedPosition.value = position;
     deleteDialogIsOpen.value = true;
@@ -270,4 +275,9 @@
     restoreDialogIsOpen.value = true;
     selectedPosition.value = position;
   };
+
+  onBeforeUnmount(() => {
+    cancelNameDebounce();
+    destroy();
+  });
 </script>
